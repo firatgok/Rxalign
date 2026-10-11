@@ -116,9 +116,122 @@
             background: #f97316;
             color: white;
         }
-        
+
         .btn-undo-checkin:hover {
             background: #ea580c;
+        }
+
+        .btn-edit {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #d97706;
+        }
+
+        /* Şifre modalı (asistan arşivinden hekim düzenlemesi) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .modal-subtitle {
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-button {
+            flex: 1;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-confirm {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-confirm:hover {
+            background: #5568d3;
+        }
+
+        .btn-cancel {
+            background: #ddd;
+            color: #666;
+        }
+
+        .btn-cancel:hover {
+            background: #ccc;
+        }
+
+        .error-message {
+            color: #f5576c;
+            font-size: 14px;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
         }
         
         .loading {
@@ -199,6 +312,20 @@
     
     <div class="version-info">
         Copyright © 2026 <span id="appVersion">v2</span>
+    </div>
+
+    <!-- Şifre Modal: asistan arşivinden formu düzenlemek için hekim şifresi -->
+    <div class="modal" id="passwordModal">
+        <div class="modal-content">
+            <h2 class="modal-title">Hekim Girişi</h2>
+            <p class="modal-subtitle" id="passwordSubtitle">Formu düzenlemek için hekim şifresini girin</p>
+            <input type="password" id="passwordInput" class="modal-input" placeholder="Şifre giriniz" autocomplete="off" onkeydown="if(event.key === 'Enter') checkPassword()">
+            <p class="error-message" id="errorMessage">Hatalı şifre! Lütfen tekrar deneyin.</p>
+            <div class="modal-buttons">
+                <button class="modal-button btn-cancel" onclick="closePasswordModal()">İptal</button>
+                <button class="modal-button btn-confirm" onclick="checkPassword()">Giriş</button>
+            </div>
+        </div>
     </div>
 
     <!-- Firebase SDK -->
@@ -318,6 +445,7 @@
                     <p class="date">Kayıt Tarihi: ${date}</p>
                     <div class="form-card-actions">
                         <button class="btn-small btn-view" data-action="view">Görüntüle</button>
+                        <button class="btn-small btn-edit" data-action="edit">Düzenle</button>
                         ${deleteButton}
                         ${undoCheckInButton}
                     </div>
@@ -327,6 +455,7 @@
                 card.querySelector('.tedavi-paketi').textContent = tedaviPaketi;
 
                 card.querySelector('[data-action="view"]').addEventListener('click', () => viewForm(form.id));
+                card.querySelector('[data-action="edit"]').addEventListener('click', () => editForm(form.id, patientLabel));
                 card.querySelector('[data-action="delete"]')?.addEventListener('click', () => deleteForm(form.id, patientLabel));
                 card.querySelector('[data-action="undo"]')?.addEventListener('click', () => undoCheckIn(form.id, patientLabel));
 
@@ -354,6 +483,54 @@
             // form.html'e yönlendir (ID ve role ile)
             window.location.href = `form.html?view=${formId}&role=${userRole}`;
         }
+
+        // ---- Düzenleme: hekim doğrudan, asistan hekim şifresiyle ----
+        const DOCTOR_PASSWORD = '1234';
+        let pendingEditFormId = null;
+
+        function openEditMode(formId) {
+            // Hekim arşivine geçer ve kartı değişiklik yapılır modda açar
+            window.location.href = `form.html?view=${formId}&role=doctor&edit=true`;
+        }
+
+        function editForm(formId, patientName) {
+            if (userRole === 'doctor') {
+                openEditMode(formId);
+                return;
+            }
+            pendingEditFormId = formId;
+            document.getElementById('passwordSubtitle').textContent =
+                `"${patientName}" formunu düzenlemek için hekim şifresini girin`;
+            document.getElementById('errorMessage').classList.remove('show');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordModal').classList.add('active');
+            document.getElementById('passwordInput').focus();
+        }
+
+        function closePasswordModal() {
+            pendingEditFormId = null;
+            document.getElementById('passwordModal').classList.remove('active');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('errorMessage').classList.remove('show');
+        }
+
+        function checkPassword() {
+            const input = document.getElementById('passwordInput');
+            if (input.value === DOCTOR_PASSWORD) {
+                const formId = pendingEditFormId;
+                closePasswordModal();
+                if (formId) openEditMode(formId);
+            } else {
+                document.getElementById('errorMessage').classList.add('show');
+                input.value = '';
+                input.focus();
+            }
+        }
+
+        // Modal dışına tıklayınca kapat
+        document.getElementById('passwordModal').addEventListener('click', function(e) {
+            if (e.target === this) closePasswordModal();
+        });
         
         // Form sil
         async function deleteForm(formId, patientName) {
@@ -396,6 +573,11 @@
         // ESC tuşuna basıldığında ana sayfaya dön
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
+                // Şifre penceresi açıksa önce onu kapat
+                if (document.getElementById('passwordModal').classList.contains('active')) {
+                    closePasswordModal();
+                    return;
+                }
                 window.location.href = 'index.html';
             }
         });
