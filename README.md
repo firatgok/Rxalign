@@ -93,8 +93,8 @@ const firebaseConfig = {
 
 1. **Repoyu klonlayın:**
 ```bash
-git clone https://github.com/firatgok/invisalign-form.git
-cd invisalign-form
+git clone https://github.com/firatgok/Rxalign.git
+cd Rxalign
 ```
 
 2. **Firebase'i yapılandırın** (yukarıdaki adımları takip edin)
@@ -154,7 +154,7 @@ npx http-server
 ## 📁 Proje Yapısı
 
 ```
-invisalign-form/
+Rxalign/
 ├── index.html          # Ana form sayfası
 ├── list.html           # Kaydedilen formları listele
 ├── form.html           # Form sayfası (yeni form, görüntüleme, düzenleme)
