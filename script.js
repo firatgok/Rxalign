@@ -167,6 +167,7 @@ function updateVisibilityChain({ scroll = false } = {}) {
         show(hastaTipiSection);
         show(refinementSection);
         initRefinement();
+        applyFormDefaults(refinementSection);
         return;
     }
 
@@ -192,6 +193,7 @@ function updateVisibilityChain({ scroll = false } = {}) {
         if (!flexSection) return;
         show(flexSection);
         initFlexForm(flexSection);
+        applyFormDefaults(flexSection);
         if (scroll) {
             setTimeout(() => flexSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
         }
@@ -202,6 +204,7 @@ function updateVisibilityChain({ scroll = false } = {}) {
     if (!form) return;
     show(form);
     initDetailedForm(form);
+    applyFormDefaults(form);
     if (scroll) {
         setTimeout(() => form.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     }
@@ -264,6 +267,218 @@ function syncFlexForm(section) {
 function handleFlexChange(section, input) {
     if (input.id === 'flex_atasman_tumunu_sec') {
         section.querySelectorAll('input[name="flex_atasman_sinir"]').forEach(cb => cb.checked = input.checked);
+    }
+}
+
+// ---------------------------------------------------------------------
+// 3c. Form varsayılanları
+//     Ayarlar > Form Varsayılanlarını Değiştir (form.html?defaults=<anahtar>) ile kaydedilen
+//     seçimler, aynı form her açıldığında hazır gelir. Katalog ve depolama: defaults.js
+// ---------------------------------------------------------------------
+
+// Hastaya özgü alanlar varsayılana girmez
+const DEFAULTS_SKIP = /^(hasta_adi|hasta_soyadi|hasta_mi|hasta_adi_refinement|itero_siparis_kodu_[a-z_]+|flex_itero_siparis_kodu)$/;
+
+// Kayıt görüntüleme/düzenlemede varsayılan uygulanmaz; yeni form ve varsayılan modunda uygulanır
+function defaultsApplyEnabled() {
+    return typeof getFormDefault === 'function' && !new URLSearchParams(window.location.search).has('view');
+}
+
+// Bölümün varsayılan anahtarı: detaylı form -> son eki; Flex / Refinement -> hasta tipine göre
+function defaultsKeyFor(section) {
+    if (!section) return null;
+    if (section.classList.contains('detailed-form')) return section.dataset.suffix;
+    const hastaTipi = checkedValue(document, 'hasta_tipi');
+    if (!hastaTipi) return null;
+    if (section.id === 'flex_form_section') return 'flex_' + hastaTipi;
+    if (section.id === 'refinement_form_section') return 'refinement_' + hastaTipi;
+    return null;
+}
+
+// Şu an açık olan varsayılan bölümü (Refinement, Flex veya detaylı form)
+function currentDefaultsSection() {
+    const R = refinementRoot();
+    if (R && R.style.display === 'block') return R;
+    return getVisibleDetailedForm();
+}
+
+// Bölümün tam durumu: her alan için değer (boşlar dahil) — sıfırla + uygula için gerekir
+function snapshotSection(section) {
+    const data = {};
+    section.querySelectorAll('input[name], select[name], textarea[name]').forEach(input => {
+        const name = input.name;
+        if (DEFAULTS_SKIP.test(name)) return;
+        if (input.type === 'checkbox') {
+            if (!Array.isArray(data[name])) data[name] = [];
+            if (input.checked) data[name].push(input.value);
+        } else if (input.type === 'radio') {
+            if (!(name in data)) data[name] = '';
+            if (input.checked) data[name] = input.value;
+        } else {
+            data[name] = input.value;
+        }
+    });
+    return data;
+}
+
+// Bölümü HTML'deki fabrika durumuna döndür
+function resetSectionToHtml(section) {
+    section.querySelectorAll('input, select, textarea').forEach(input => {
+        if (input.type === 'checkbox' || input.type === 'radio') {
+            input.checked = input.defaultChecked;
+        } else if (input.tagName === 'SELECT') {
+            [...input.options].forEach(o => { o.selected = o.defaultSelected; });
+        } else {
+            input.value = input.defaultValue;
+        }
+    });
+}
+
+function applySnapshot(section, data) {
+    Object.keys(data).forEach(name => {
+        const value = data[name];
+        section.querySelectorAll(`[name="${name}"]`).forEach(input => {
+            if (input.type === 'checkbox') {
+                input.checked = Array.isArray(value) && value.includes(input.value);
+            } else if (input.type === 'radio') {
+                input.checked = input.value === value;
+            } else {
+                input.value = value == null ? '' : value;
+            }
+        });
+    });
+}
+
+// Bölümün kurallarını ve sayaçlarını yeniden hesapla
+function syncSection(section) {
+    if (section.classList.contains('detailed-form')) initDetailedForm(section);
+    else if (section.id === 'flex_form_section') initFlexForm(section);
+    else if (section.id === 'refinement_form_section') syncRefinement();
+}
+
+// Bölüm ilk açıldığında (veya anahtarı değişince, kullanıcı henüz dokunmadıysa) varsayılanı uygula
+function applyFormDefaults(section, { force = false } = {}) {
+    if (!section || !defaultsApplyEnabled()) return;
+    const key = defaultsKeyFor(section);
+    if (!key) return;
+    if (!force && (section.dataset.defaultsKey === key || section.dataset.dirty)) return;
+    section.dataset.defaultsKey = key;
+
+    const data = getFormDefault(key);
+    // Özel varsayılan yoksa ve bölüm zaten fabrika durumundaysa dokunma
+    if (!data && !section.dataset.defaultsCustom) return;
+    resetSectionToHtml(section);
+    if (data) applySnapshot(section, data);
+    section.dataset.defaultsCustom = data ? '1' : '';
+    syncSection(section);
+}
+
+// Varsayılanlar buluttan gelince açık bölüme (kullanıcı dokunmadıysa) yeniden uygula
+function reapplyDefaultsAfterLoad() {
+    const section = currentDefaultsSection();
+    if (!section || section.dataset.dirty) return;
+    delete section.dataset.defaultsKey;
+    applyFormDefaults(section);
+}
+
+// ---- Varsayılan düzenleme modu (form.html?defaults=<anahtar>) ----
+
+function initDefaultsMode(key) {
+    const entry = DEFAULTS_CATALOG.find(e => e.key === key);
+    if (!entry) {
+        alert('Bilinmeyen form anahtarı: ' + key);
+        window.location.href = 'settings.html';
+        return;
+    }
+    document.body.classList.add('defaults-mode');
+
+    // Üst seçimleri işaretle (CSS ile gizli kalırlar), ilgili formu aç
+    Object.entries(entry.select).forEach(([name, value]) => {
+        const radio = document.querySelector(`input[name="${name}"][value="${value}"]`);
+        if (radio) radio.checked = true;
+    });
+    updateCardSelection();
+    updateVisibilityChain();
+
+    const title = `${HASTA_TIPI_LABELS[entry.hasta]} › ${entry.label}`;
+    document.title = `Varsayılanlar: ${title} - Rxalign`;
+    const h1 = document.querySelector('header h1');
+    if (h1) h1.textContent = 'Form Varsayılanları';
+    const sub = document.querySelector('header .subtitle');
+    if (sub) sub.textContent = title;
+
+    const banner = document.createElement('div');
+    banner.className = 'defaults-banner';
+    banner.innerHTML = '<strong>⚙️ Varsayılan düzenleme modu</strong><span class="defaults-banner-text"></span><span class="defaults-status" id="defaultsStatus"></span>';
+    banner.querySelector('.defaults-banner-text').textContent =
+        ` — ${title} formunda işaretlediğiniz seçimler, bu form her açıldığında hazır gelir. ` +
+        'Hasta adı ve iTero sipariş kodu varsayılana alınmaz.';
+    document.getElementById('formContent').prepend(banner);
+
+    // Alt düğmeler: kaydet / fabrika / ayarlara dön
+    ['saveBtn', 'resetBtn', 'checkInBtn', 'generatePdfBtn', 'viewFormsBtn'].forEach(id => hide(document.getElementById(id)));
+    const footer = document.querySelector('footer.action-buttons');
+    const addBtn = (text, cls, onClick) => {
+        const b = document.createElement('button');
+        b.className = 'btn ' + cls;
+        b.textContent = text;
+        b.addEventListener('click', onClick);
+        footer.appendChild(b);
+    };
+    addBtn('Varsayılanları Kaydet', 'btn-success', () => saveDefaultsFromForm(entry));
+    addBtn('Fabrika Ayarlarına Dön', 'btn-secondary', () => resetDefaultsToFactory(entry));
+    addBtn('Ayarlara Dön', 'btn-info', () => { window.location.href = 'settings.html'; });
+
+    updateDefaultsStatus(key);
+}
+
+function updateDefaultsStatus(key) {
+    const el = document.getElementById('defaultsStatus');
+    if (!el) return;
+    const entry = formDefaults[key];
+    el.textContent = entry
+        ? `Özel varsayılan kayıtlı (${new Date(entry.updatedAt).toLocaleDateString('tr-TR')})`
+        : 'Şu an fabrika ayarı kullanılıyor';
+    el.classList.toggle('custom', !!entry);
+}
+
+async function saveDefaultsFromForm(entry) {
+    const section = currentDefaultsSection();
+    if (!section) {
+        alert('Form bölümü açık değil.');
+        return;
+    }
+    const data = snapshotSection(section);
+    try {
+        await saveFormDefault(entry.key, data);
+        delete section.dataset.dirty;
+        section.dataset.defaultsKey = entry.key;
+        section.dataset.defaultsCustom = '1';
+        updateDefaultsStatus(entry.key);
+        showToast('✓ Varsayılanlar kaydedildi');
+    } catch (error) {
+        console.error('Varsayılan kaydetme hatası:', error);
+        alert('Varsayılanlar buluta yazılamadı (yalnızca bu tarayıcıda saklandı): ' + error.message);
+    }
+}
+
+async function resetDefaultsToFactory(entry) {
+    const title = `${HASTA_TIPI_LABELS[entry.hasta]} › ${entry.label}`;
+    if (!confirm(`${title} formunun özel varsayılanı silinsin ve fabrika ayarına dönülsün mü?`)) return;
+    const section = currentDefaultsSection();
+    try {
+        await deleteFormDefault(entry.key);
+        if (section) {
+            resetSectionToHtml(section);
+            syncSection(section);
+            delete section.dataset.dirty;
+            section.dataset.defaultsCustom = '';
+        }
+        updateDefaultsStatus(entry.key);
+        showToast('Fabrika ayarına dönüldü');
+    } catch (error) {
+        console.error('Varsayılan silme hatası:', error);
+        alert('Varsayılan silinemedi: ' + error.message);
     }
 }
 
@@ -1173,6 +1388,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            // Kullanıcı bölüme dokundu: varsayılanlar artık üzerine yazmaz
+            const touched = t.closest('.detailed-form, #flex_form_section, #refinement_form_section');
+            if (touched) touched.dataset.dirty = '1';
+
             const form = t.closest('.detailed-form');
             if (form) {
                 handleDetailedFormChange(form, t);
@@ -1232,11 +1451,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     updateCardSelection();
 
-    // Görüntüleme / düzenleme modu
-    const viewFormId = new URLSearchParams(window.location.search).get('view');
+    // Görüntüleme / düzenleme modu, varsayılan düzenleme modu veya yeni form
+    const params = new URLSearchParams(window.location.search);
+    const viewFormId = params.get('view');
+    const defaultsKey = params.get('defaults');
+    const defaultsReady = (typeof loadFormDefaults === 'function') ? loadFormDefaults() : Promise.resolve();
     if (viewFormId) {
         loadFormForViewing(viewFormId);
+    } else if (defaultsKey) {
+        defaultsReady.then(() => initDefaultsMode(defaultsKey));
     } else {
         updateVisibilityChain();
+        defaultsReady.then(reapplyDefaultsAfterLoad);
     }
 });

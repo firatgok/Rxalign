@@ -1408,3 +1408,41 @@ main {
         grid-template-columns: 1fr;
     }
 }
+
+/* ---------------------------------------------------------------------
+   Form varsayılanları düzenleme modu (form.html?defaults=<anahtar>)
+   --------------------------------------------------------------------- */
+body.defaults-mode #hasta_bilgileri_section,
+body.defaults-mode #form_turu_section,
+body.defaults-mode #hasta_tipi_section,
+body.defaults-mode .product-section,
+body.defaults-mode .treatment-section {
+    display: none !important;
+}
+
+.defaults-banner {
+    margin: 20px 20px 0;
+    padding: 16px 20px;
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-left: 6px solid #f59e0b;
+    border-radius: 8px;
+    color: #78350f;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.defaults-banner strong {
+    color: #92400e;
+}
+
+.defaults-status {
+    display: block;
+    margin-top: 6px;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.defaults-status.custom {
+    color: #047857;
+}

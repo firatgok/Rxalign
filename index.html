@@ -142,6 +142,16 @@
             box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
         }
 
+        .btn-settings {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .btn-settings:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+        }
+
         .btn-info {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
@@ -302,6 +312,7 @@
             <div class="button-group">
                 <button class="main-button btn-primary" onclick="createNewForm()">Yeni Form Oluştur</button>
                 <button class="main-button btn-secondary" onclick="openArchive('doctor')">Form Arşivi</button>
+                <button class="main-button btn-settings" onclick="openSettings()">⚙️ Ayarlar</button>
             </div>
         </div>
 
@@ -357,13 +368,18 @@
 
         function checkPassword() {
             const password = document.getElementById('passwordInput').value;
-            
+
             if (password === DOCTOR_PASSWORD) {
+                const action = pendingAction;
                 closeModal();
-                if (pendingAction === 'verify') {
-                    // Sadece doğrulama için açıldı, başka bir şey yapma
-                    return;
+                // Ayarlar sayfası bu oturumda tekrar şifre sormasın
+                try { sessionStorage.setItem('rx_doctor_ok', '1'); } catch (e) { /* yoksay */ }
+                if (action === 'doctor') {
+                    window.location.href = 'list.html?role=doctor';
+                } else if (action === 'settings') {
+                    window.location.href = 'settings.html';
                 }
+                // 'verify': sadece doğrulama için açıldı, başka bir şey yapma
             } else {
                 document.getElementById('errorMessage').classList.add('show');
                 document.getElementById('passwordInput').value = '';
@@ -378,28 +394,19 @@
 
         function openArchive(role) {
             if (role === 'doctor') {
-                // Hekim için şifre iste
+                // Hekim için şifre iste; doğrulanınca hekim arşivine git
                 pendingAction = 'doctor';
                 openPasswordModal();
-                
-                // Şifre kontrolünden sonra yönlendir
-                const originalCheck = checkPassword;
-                checkPassword = function() {
-                    const password = document.getElementById('passwordInput').value;
-                    
-                    if (password === DOCTOR_PASSWORD) {
-                        closeModal();
-                        window.location.href = 'list.html?role=doctor';
-                    } else {
-                        document.getElementById('errorMessage').classList.add('show');
-                        document.getElementById('passwordInput').value = '';
-                        document.getElementById('passwordInput').focus();
-                    }
-                };
             } else {
                 // Asistan için direkt yönlendir
                 window.location.href = 'list.html?role=assistant';
             }
+        }
+
+        function openSettings() {
+            // Ayarlar yalnızca hekim şifresiyle
+            pendingAction = 'settings';
+            openPasswordModal();
         }
 
         // Modal dışına tıklayınca kapat
