@@ -692,11 +692,10 @@ async function updateFormData(formId) {
         await db.collection('invisalign_forms').doc(formId).update(update);
         showToast('✓ Değişiklikler kaydedildi');
 
-        // Düzenleme modundan çık
+        // Kısa bildirimden sonra doğrudan form arşivine dön (aynı rolle)
         setTimeout(() => {
-            const urlParams = new URLSearchParams(window.location.search);
-            urlParams.delete('edit');
-            window.location.search = urlParams.toString();
+            const role = new URLSearchParams(window.location.search).get('role') || 'doctor';
+            window.location.href = `list.html?role=${role}`;
         }, 900);
     } catch (error) {
         if (error.message !== 'Hasta adı eksik') {
