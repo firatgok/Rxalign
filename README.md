@@ -1,6 +1,6 @@
-# Invisalign Form Yazılımı
+# Rxalign
 
-Web tabanlı Invisalign tedavi formu uygulaması. Doktorların hızlıca tedavi detaylarını girmesini, kaydetmesini ve PDF çıktısı almasını sağlar.
+Rxalign: web tabanlı Invisalign tedavi formu uygulaması. Doktorların hızlıca tedavi detaylarını girmesini, kaydetmesini ve PDF çıktısı almasını sağlar.
 
 ## 🚀 Özellikler
 
