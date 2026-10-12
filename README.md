@@ -151,19 +151,40 @@ npx http-server
 3. Forma tıklayarak detayları görün
 4. PDF oluşturun veya formu silin
 
+## 🎨 Yeni tasarım ve eski tasarım
+
+Kök sayfalar (rxalign.fgoapps.com) **yeni tasarımdır**: sihirbaz akışlı form, akordeon tedavi detayları,
+gece modu, Ayarlar (tema, görünüm, form varsayılanları). Ayrıntı: `docs/yeniden-tasarim.md`.
+
+**Eski tasarım** `eski/` altında aynen durur ve aynı veriyle çalışır. Her yeni sayfanın altında
+"Eski tasarım" bağlantısı, her eski sayfanın sağ üstünde "Yeni tasarım" düğmesi vardır; ikisi de
+**aynı sayfayı aynı sorguyla** (rol, görüntülenen form, varsayılan anahtarı) karşı tarafta açar.
+
+Form alanlarının kaynağı `eski/form.html`'dir: kök `form.html` **üretilmiş dosyadır**.
+`eski/form.html` değişince `node build-form.js` çalıştırın.
+
 ## 📁 Proje Yapısı
 
 ```
 Rxalign/
-├── index.html          # Ana form sayfası
-├── list.html           # Kaydedilen formları listele
-├── form.html           # Form sayfası (yeni form, görüntüleme, düzenleme)
-├── styles.css          # Tüm stiller
-├── script.js           # Form logic + PDF generation
-├── firebase-config.js  # Firebase yapılandırması
-├── netlify.toml        # Netlify config
-├── README.md           # Proje dokümantasyonu
-└── .gitignore          # Git ignore dosyası
+├── index.html            # Giriş (yeni tasarım)
+├── list.html             # Form arşivi (yeni tasarım)
+├── form.html             # ÜRETİLMİŞ — node build-form.js (eski/form.html + yeni kabuk)
+├── settings.html         # Ayarlar: tema, görünüm, form varsayılanları
+├── build-form.js         # form.html üreticisi
+├── css/app.css           # Yeni tasarım stilleri (gündüz + gece)
+├── js/app.js             # Ortak: PIN, bildirim, tema, arayüz ayarları, eski tasarım bağlantısı
+├── js/wizard.js          # Form sihirbazı, akordeon, özet, taslak, klasik görünüm
+├── js/theme.js           # Temayı ilk boyamadan önce uygular
+├── eski/                 # Eski tasarım (index, list, form, settings, styles.css)
+├── script.js             # Form mantığı + PDF (her iki tasarım ortak)
+├── defaults.js           # Form varsayılanları kataloğu ve depolama (ortak)
+├── firebase-config.js    # Firebase yapılandırması (ortak)
+├── version.js            # Otomatik sürüm (pre-commit / GitHub Actions)
+├── images/               # Logo ve simgeler
+├── docs/                 # Tasarım notları
+├── netlify.toml          # Netlify config
+└── README.md             # Proje dokümantasyonu
 ```
 
 ## 🔧 Geliştirme

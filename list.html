@@ -2,588 +2,408 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#F6F5F1">
     <title>Form Arşivi - Rxalign</title>
+    <script src="js/theme.js"></script>
     <link rel="icon" type="image/png" href="images/favicon.png">
     <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
-    <link rel="stylesheet" href="styles.css">
-    <style>
-        .search-container {
-            margin: 20px 0;
-            padding: 20px;
-            background: #f5f5f5;
-            border-radius: 8px;
-        }
-        
-        .search-input {
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            margin-bottom: 10px;
-        }
-        
-        .forms-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        
-        .form-card {
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer;
-        }
-        
-        .form-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-        }
-        
-        .form-card h3 {
-            color: #667eea;
-            margin-bottom: 10px;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .status-badge {
-            font-size: 20px;
-            line-height: 1;
-        }
-        
-        .status-checked-in {
-            color: #10b981;
-        }
-        
-        .status-not-checked-in {
-            color: #ef4444;
-        }
-        
-        .form-card p {
-            color: #666;
-            margin: 5px 0;
-            font-size: 14px;
-        }
-        
-        .form-card .date {
-            color: #999;
-            font-size: 12px;
-            margin-top: 10px;
-        }
-        
-        .form-card-actions {
-            margin-top: 15px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        
-        .btn-small {
-            padding: 6px 12px;
-            font-size: 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        
-        .btn-view {
-            background: #667eea;
-            color: white;
-        }
-        
-        .btn-view:hover {
-            background: #5568d3;
-        }
-        
-        .btn-delete {
-            background: #ef4444;
-            color: white;
-        }
-        
-        .btn-delete:hover {
-            background: #dc2626;
-        }
-        
-        .btn-undo-checkin {
-            background: #f97316;
-            color: white;
-        }
-
-        .btn-undo-checkin:hover {
-            background: #ea580c;
-        }
-
-        .btn-edit {
-            background: #f59e0b;
-            color: white;
-        }
-
-        .btn-edit:hover {
-            background: #d97706;
-        }
-
-        /* Şifre modalı (asistan arşivinden hekim düzenlemesi) */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 16px;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 400px;
-            width: 100%;
-        }
-
-        .modal-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 8px;
-            text-align: center;
-        }
-
-        .modal-subtitle {
-            color: #666;
-            font-size: 14px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-input {
-            width: 100%;
-            padding: 15px;
-            font-size: 16px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            transition: border-color 0.3s;
-        }
-
-        .modal-input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .modal-button {
-            flex: 1;
-            padding: 15px;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-confirm {
-            background: #667eea;
-            color: white;
-        }
-
-        .btn-confirm:hover {
-            background: #5568d3;
-        }
-
-        .btn-cancel {
-            background: #ddd;
-            color: #666;
-        }
-
-        .btn-cancel:hover {
-            background: #ccc;
-        }
-
-        .error-message {
-            color: #f5576c;
-            font-size: 14px;
-            margin-top: -10px;
-            margin-bottom: 10px;
-            display: none;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
-        
-        .no-results {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-        
-        .back-btn {
-            display: inline-block;
-            margin-bottom: 20px;
-            padding: 10px 20px;
-            background: #667eea;
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            transition: background 0.2s;
-        }
-        
-        .back-btn:hover {
-            background: #5568d3;
-        }
-        
-        .version-info {
-            text-align: center;
-            padding: 20px;
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            color: white !important;
-            font-weight: 300;
-            letter-spacing: 1px;
-            margin-top: 20px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            position: relative;
-            z-index: 10;
-            width: 100%;
-        }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/app.css">
 </head>
-<body>
-    <div class="container">
-        <header>
-            <img class="header-logo" src="images/rxalign-logo-white.png" alt="Rxalign">
-            <h1>Form Arşivi</h1>
-            <p class="subtitle">Invisalign Tedavi Formları</p>
-        </header>
+<body class="page-list">
 
-        <main>
-            <a href="index.html" class="back-btn">← Ana Sayfa</a>
-            
-            <div class="search-container">
-                <input 
-                    type="text" 
-                    id="searchInput" 
-                    class="search-input" 
-                    placeholder="Hasta adı veya soyadı ile ara..."
-                    onkeyup="searchForms()"
-                >
-                <p style="color: #666; font-size: 14px;">Toplam: <span id="totalCount">0</span> form</p>
-            </div>
-            
-            <div id="loadingDiv" class="loading">
-                <p>Formlar yükleniyor...</p>
-            </div>
-            
-            <div id="formsGrid" class="forms-grid"></div>
-            
-            <div id="noResults" class="no-results" style="display: none;">
-                <p>Henüz kaydedilmiş form bulunmuyor.</p>
-            </div>
-        </main>
-    </div>
-    
-    <div class="version-info">
-        Copyright © 2026 <span id="appVersion">v2</span>
-    </div>
+    <header class="appbar">
+        <a class="appbar-logo" href="index.html" aria-label="Rxalign ana sayfa"><img class="logo-full" src="images/rxalign-logo.png" alt="Rxalign"><img class="logo-mark" src="images/rxalign-mark.png" alt=""></a>
+        <nav class="topnav" aria-label="Ana gezinme">
+            <a href="#" aria-current="page">Arşiv</a>
+            <a href="form.html" id="navNewForm" class="nav-new" hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+                <span>Yeni form</span>
+            </a>
+            <a href="settings.html" id="navSettings" hidden>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"></path><circle cx="16" cy="7" r="2.5"></circle><circle cx="8" cy="17" r="2.5"></circle></svg>
+                <span class="nav-text-opt">Ayarlar</span>
+            </a>
+        </nav>
+        <div class="appbar-actions">
+            <button type="button" class="icon-btn theme-btn" data-theme-toggle aria-label="Gece moduna geç" title="Gece modu">
+                <svg class="ic-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>
+                <svg class="ic-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+            </button>
+            <span class="role-badge" id="roleBadge"><span class="avatar" id="roleAvatar"></span><span id="roleName"></span></span>
+            <a class="btn btn-ghost btn-sm" href="index.html">Çıkış</a>
+        </div>
+    </header>
 
-    <!-- Şifre Modal: asistan arşivinden formu düzenlemek için hekim şifresi -->
-    <div class="modal" id="passwordModal">
-        <div class="modal-content">
-            <h2 class="modal-title">Hekim Girişi</h2>
-            <p class="modal-subtitle" id="passwordSubtitle">Formu düzenlemek için hekim şifresini girin</p>
-            <input type="password" id="passwordInput" class="modal-input" placeholder="Şifre giriniz" autocomplete="off" onkeydown="if(event.key === 'Enter') checkPassword()">
-            <p class="error-message" id="errorMessage">Hatalı şifre! Lütfen tekrar deneyin.</p>
-            <div class="modal-buttons">
-                <button class="modal-button btn-cancel" onclick="closePasswordModal()">İptal</button>
-                <button class="modal-button btn-confirm" onclick="checkPassword()">Giriş</button>
+    <main class="list-main">
+        <div class="list-head">
+            <div>
+                <h1 id="listTitle">Form arşivi</h1>
+                <p id="listSubtitle">Yükleniyor…</p>
+            </div>
+            <a class="btn btn-accent btn-lg btn-new" href="form.html" id="newFormBtn" hidden>
+                <span class="plus"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span>
+                <span>Yeni form oluştur</span>
+            </a>
+        </div>
+
+        <div class="list-tools">
+            <div class="search-field">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+                <label class="sr-only" for="searchInput">Hasta ara</label>
+                <input id="searchInput" type="search" placeholder="Hasta adı, soyadı veya MI ile ara" autocomplete="off">
+            </div>
+            <div class="seg" role="group" aria-label="Durum filtresi" id="statusSeg">
+                <button type="button" data-status="all" aria-pressed="true">Tümü <span class="n" id="cntAll">0</span></button>
+                <button type="button" data-status="pending" aria-pressed="false"><span class="dot" style="background: var(--warn-dot)"></span>Bekliyor <span class="n" id="cntPending">0</span></button>
+                <button type="button" data-status="done" aria-pressed="false"><span class="dot" style="background: var(--ok-strong)"></span>Girildi <span class="n" id="cntDone">0</span></button>
+            </div>
+            <div class="type-chips" role="group" aria-label="Form türü filtresi" id="typeChips">
+                <button type="button" class="filter-chip" data-type="yeni_hasta" aria-pressed="false">Yeni hasta</button>
+                <button type="button" class="filter-chip" data-type="yeni_hasta_flex" aria-pressed="false">Flex Rx</button>
+                <button type="button" class="filter-chip" data-type="refinement" aria-pressed="false">Refinement</button>
+            </div>
+            <label class="sort">
+                <span>Sırala</span>
+                <select id="sortSelect">
+                    <option value="newest">Yeniden eskiye</option>
+                    <option value="oldest">Eskiden yeniye</option>
+                    <option value="name">Hasta soyadı A–Z</option>
+                </select>
+            </label>
+        </div>
+
+        <div class="list-table-wrap">
+            <div class="list-scroll">
+                <table class="list-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Durum</th>
+                            <th scope="col">Hasta</th>
+                            <th scope="col">Form türü</th>
+                            <th scope="col">Hasta tipi</th>
+                            <th scope="col">Paket</th>
+                            <th scope="col">Kayıt</th>
+                            <th scope="col">İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+            <div class="list-state" id="tableState">Formlar yükleniyor…</div>
+            <div class="list-footer" id="tableFooter" hidden>
+                <span id="footerInfo"></span>
+                <button type="button" class="btn btn-secondary btn-sm" id="moreBtn">Daha fazla göster</button>
             </div>
         </div>
-    </div>
+
+        <div class="list-cards" id="cardList"></div>
+        <div class="list-state mobile-only" id="cardState" hidden></div>
+        <button type="button" class="btn btn-secondary btn-block mobile-only" id="moreBtnMobile" hidden>Daha fazla göster</button>
+    </main>
+
+    <a class="fab" href="form.html" id="fabNew" hidden>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+        <span>Yeni form</span>
+    </a>
+
+    <div class="version-info">© 2026 Rxalign · <span id="appVersion">v2</span> · <a href="eski/index.html" data-legacy-link class="legacy-link">Eski tasarım</a></div>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="firebase-config.js"></script>
-    
+    <script src="js/app.js"></script>
     <script>
-        let allForms = [];
-        let userRole = 'assistant'; // varsayılan: asistan
-        
-        // URL'den role parametresini al
-        function getUserRole() {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('role') || 'assistant';
-        }
-        
-        // Formları yükle
-        async function loadForms() {
-            // Kullanıcı rolünü belirle
-            userRole = getUserRole();
-            
-            if (!db) {
-                document.getElementById('loadingDiv').innerHTML = '<p style="color: red;">Firebase bağlantısı kurulamadı!</p>';
-                return;
-            }
-            
-            try {
-                const snapshot = await db.collection('invisalign_forms')
-                    .orderBy('createdAt', 'desc')
-                    .get();
-                
-                allForms = [];
-                snapshot.forEach(doc => {
-                    allForms.push({
-                        id: doc.id,
-                        ...doc.data()
-                    });
-                });
-                
-                document.getElementById('loadingDiv').style.display = 'none';
-                document.getElementById('totalCount').textContent = allForms.length;
-                
-                if (allForms.length === 0) {
-                    document.getElementById('noResults').style.display = 'block';
-                } else {
-                    displayForms(allForms);
+        (function () {
+            const PAGE = 25;
+            const params = new URLSearchParams(window.location.search);
+            let userRole = params.get('role') === 'doctor' ? 'doctor' : 'assistant';
+            let allForms = [];
+            let status = 'all';
+            let types = new Set();
+            let sort = 'newest';
+            let shown = PAGE;
+            let openMenu = null;
+
+            const $ = id => document.getElementById(id);
+            const esc = RX.escapeHtml;
+
+            // ---- Rol ----
+            function applyRole() {
+                const doctor = userRole === 'doctor';
+                $('roleBadge').className = 'role-badge ' + (doctor ? 'doctor' : 'assistant');
+                $('roleAvatar').textContent = doctor ? 'FG' : 'AS';
+                $('roleName').textContent = doctor ? 'Hekim' : 'Asistan';
+                ['navNewForm', 'navSettings', 'newFormBtn', 'fabNew'].forEach(id => { $(id).hidden = !doctor; });
+                $('listTitle').textContent = doctor ? 'Form arşivi' : 'Giriş bekleyen formlar';
+                if (!doctor) {
+                    status = 'pending';
+                    sort = 'oldest';
+                    $('sortSelect').value = 'oldest';
+                    $('statusSeg').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.status === 'pending')));
                 }
-            } catch (error) {
-                console.error('Formları yükleme hatası:', error);
-                document.getElementById('loadingDiv').innerHTML = '<p style="color: red;">Formlar yüklenemedi: ' + error.message + '</p>';
             }
-        }
-        
-        // Formları görüntüle
-        function displayForms(forms) {
-            const grid = document.getElementById('formsGrid');
-            grid.innerHTML = '';
-            
-            if (forms.length === 0) {
-                document.getElementById('noResults').style.display = 'block';
-                return;
+
+            async function ensureRole() {
+                if (userRole !== 'doctor' || RX.doctorRemembered()) return;
+                const ok = await RX.askPin({ text: 'Hekim arşivi için 4 haneli PIN kodunu girin.' });
+                if (!ok) {
+                    userRole = 'assistant';
+                    history.replaceState(null, '', 'list.html?role=assistant');
+                }
             }
-            
-            document.getElementById('noResults').style.display = 'none';
-            
-            forms.forEach(form => {
-                const card = document.createElement('div');
-                card.className = 'form-card';
-                
-                const date = form.createdAt ? new Date(form.createdAt.seconds * 1000).toLocaleDateString('tr-TR') : 'Tarih yok';
-                const hastaAdi = form.hasta_adi || '-';
-                const hastaSoyadi = form.hasta_soyadi || '-';
-                const hastaMI = form.hasta_mi || '';
-                const hastaTipi = form.hasta_tipi || '-';
-                const formTuru = form.form_turu === 'refinement' ? '🔄 Refinement' : (form.form_turu === 'yeni_hasta_flex' ? '⚡ Flex Rx' : '📋 Yeni Hasta');
-                
-                // Tedavi paketini bul - farklı name'lerden herhangi biri olabilir
-                const tedaviPaketi = form.tedavi_secenegi || 
-                                     form.tedavi_secenegi_ergen || 
-                                     form.tedavi_secenegi_vivera || 
-                                     form.tedavi_secenegi_gulumseme ||
-                                     form.tedavi_secenegi_ergen_vivera ||
-                                     form.tedavi_secenegi_palatal ||
-                                     form.tedavi_secenegi_cocuk_first ||
-                                     form.tedavi_secenegi_cocuk_vivera ||
-                                     form.tedavi_secenegi_cocuk_palatal ||
-                                     '-';
-                
-                // Giriş durumu badge'i
-                const checkedIn = form.checked_in || false;
-                const statusBadge = checkedIn 
-                    ? '<span class="status-badge status-checked-in" title="Giriş Yapıldı">✓</span>'
-                    : '<span class="status-badge status-not-checked-in" title="Giriş Yapılmadı">✗</span>';
-                
-                // Hasta adı metin olarak yazılır (kesme işareti, < > gibi karakterler sorun çıkarmasın)
-                const patientLabel = `${hastaSoyadi}, ${hastaAdi}`;
 
-                // Silme butonu sadece hekim için görünür
-                const deleteButton = userRole === 'doctor'
-                    ? `<button class="btn-small btn-delete" data-action="delete">Sil</button>`
-                    : '';
-
-                // Giriş iptal butonu sadece hekim için ve giriş yapılmışsa görünür
-                const undoCheckInButton = (userRole === 'doctor' && checkedIn)
-                    ? `<button class="btn-small btn-undo-checkin" data-action="undo">Girişi İptal Et</button>`
-                    : '';
-
-                card.innerHTML = `
-                    <h3>
-                        ${statusBadge}
-                        <span class="patient-name"></span>
-                    </h3>
-                    <p><strong>Form Türü:</strong> ${formTuru}</p>
-                    <p><strong>Hasta Tipi:</strong> <span class="hasta-tipi"></span></p>
-                    <p><strong>Tedavi Paketi:</strong> <span class="tedavi-paketi"></span></p>
-                    <p class="date">Kayıt Tarihi: ${date}</p>
-                    <div class="form-card-actions">
-                        <button class="btn-small btn-view" data-action="view">Görüntüle</button>
-                        <button class="btn-small btn-edit" data-action="edit">Düzenle</button>
-                        ${deleteButton}
-                        ${undoCheckInButton}
-                    </div>
-                `;
-                card.querySelector('.patient-name').textContent = `${patientLabel} ${hastaMI}`.trim();
-                card.querySelector('.hasta-tipi').textContent = hastaTipi;
-                card.querySelector('.tedavi-paketi').textContent = tedaviPaketi;
-
-                card.querySelector('[data-action="view"]').addEventListener('click', () => viewForm(form.id));
-                card.querySelector('[data-action="edit"]').addEventListener('click', () => editForm(form.id, patientLabel));
-                card.querySelector('[data-action="delete"]')?.addEventListener('click', () => deleteForm(form.id, patientLabel));
-                card.querySelector('[data-action="undo"]')?.addEventListener('click', () => undoCheckIn(form.id, patientLabel));
-
-                grid.appendChild(card);
-            });
-        }
-        
-        // Arama
-        function searchForms() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            
-            const filtered = allForms.filter(form => {
-                const hastaAdi = (form.hasta_adi || '').toLowerCase();
-                const hastaSoyadi = (form.hasta_soyadi || '').toLowerCase();
-                const fullName = `${hastaSoyadi} ${hastaAdi}`;
-                
-                return fullName.includes(searchTerm);
-            });
-            
-            displayForms(filtered);
-        }
-        
-        // Form görüntüle
-        function viewForm(formId) {
-            // form.html'e yönlendir (ID ve role ile)
-            window.location.href = `form.html?view=${formId}&role=${userRole}`;
-        }
-
-        // ---- Düzenleme: hekim doğrudan, asistan hekim şifresiyle ----
-        const DOCTOR_PASSWORD = '1234';
-        let pendingEditFormId = null;
-
-        function openEditMode(formId) {
-            // Hekim arşivine geçer ve kartı değişiklik yapılır modda açar
-            window.location.href = `form.html?view=${formId}&role=doctor&edit=true`;
-        }
-
-        function editForm(formId, patientName) {
-            if (userRole === 'doctor') {
-                openEditMode(formId);
-                return;
-            }
-            pendingEditFormId = formId;
-            document.getElementById('passwordSubtitle').textContent =
-                `"${patientName}" formunu düzenlemek için hekim şifresini girin`;
-            document.getElementById('errorMessage').classList.remove('show');
-            document.getElementById('passwordInput').value = '';
-            document.getElementById('passwordModal').classList.add('active');
-            document.getElementById('passwordInput').focus();
-        }
-
-        function closePasswordModal() {
-            pendingEditFormId = null;
-            document.getElementById('passwordModal').classList.remove('active');
-            document.getElementById('passwordInput').value = '';
-            document.getElementById('errorMessage').classList.remove('show');
-        }
-
-        function checkPassword() {
-            const input = document.getElementById('passwordInput');
-            if (input.value === DOCTOR_PASSWORD) {
-                const formId = pendingEditFormId;
-                closePasswordModal();
-                if (formId) openEditMode(formId);
-            } else {
-                document.getElementById('errorMessage').classList.add('show');
-                input.value = '';
-                input.focus();
-            }
-        }
-
-        // Modal dışına tıklayınca kapat
-        document.getElementById('passwordModal').addEventListener('click', function(e) {
-            if (e.target === this) closePasswordModal();
-        });
-        
-        // Form sil
-        async function deleteForm(formId, patientName) {
-            if (!confirm(`"${patientName}" adlı hastanın formunu silmek istediğinizden emin misiniz?`)) {
-                return;
-            }
-            
-            try {
-                await db.collection('invisalign_forms').doc(formId).delete();
-                alert('Form başarıyla silindi!');
-                loadForms(); // Listeyi yenile
-            } catch (error) {
-                console.error('Form silme hatası:', error);
-                alert('Form silinemedi: ' + error.message);
-            }
-        }
-        
-        // Girişi iptal et
-        async function undoCheckIn(formId, patientName) {
-            if (!confirm(`"${patientName}" adlı hastanın girişini iptal etmek istediğinizden emin misiniz?`)) {
-                return;
-            }
-            
-            try {
-                await db.collection('invisalign_forms').doc(formId).update({
-                    checked_in: false,
-                    checked_in_at: null
-                });
-                alert('Giriş işlemi başarıyla iptal edildi!');
-                loadForms(); // Listeyi yenile
-            } catch (error) {
-                console.error('Giriş iptal hatası:', error);
-                alert('Giriş iptal edilemedi: ' + error.message);
-            }
-        }
-        
-        // Sayfa yüklendiğinde formları getir
-        document.addEventListener('DOMContentLoaded', loadForms);
-        
-        // ESC tuşuna basıldığında ana sayfaya dön
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                // Şifre penceresi açıksa önce onu kapat
-                if (document.getElementById('passwordModal').classList.contains('active')) {
-                    closePasswordModal();
+            // ---- Yükleme ----
+            async function loadForms() {
+                if (typeof db === 'undefined' || !db) {
+                    setState('Firebase bağlantısı kurulamadı.', true);
                     return;
                 }
-                window.location.href = 'index.html';
+                try {
+                    const snapshot = await db.collection('invisalign_forms').orderBy('createdAt', 'desc').get();
+                    allForms = [];
+                    snapshot.forEach(doc => allForms.push({ id: doc.id, ...doc.data() }));
+                    render();
+                } catch (error) {
+                    console.error('Formları yükleme hatası:', error);
+                    setState('Formlar yüklenemedi: ' + error.message, true);
+                }
             }
-        });
+
+            function setState(text, isError) {
+                [$('tableState'), $('cardState')].forEach(el => {
+                    el.hidden = !text;
+                    el.textContent = text || '';
+                    el.classList.toggle('error', !!isError);
+                });
+            }
+
+            // ---- Filtre / sıralama ----
+            function filtered() {
+                const q = $('searchInput').value.trim().toLowerCase();
+                let list = allForms.filter(f => {
+                    if (status === 'pending' && f.checked_in) return false;
+                    if (status === 'done' && !f.checked_in) return false;
+                    const type = f.form_turu || 'yeni_hasta';
+                    if (types.size && !types.has(type)) return false;
+                    if (q) {
+                        const hay = `${f.hasta_soyadi || ''} ${f.hasta_adi || ''} ${f.hasta_mi || ''}`.toLowerCase();
+                        if (!hay.includes(q)) return false;
+                    }
+                    return true;
+                });
+                const t = f => (f.createdAt && f.createdAt.seconds) || 0;
+                if (sort === 'newest') list.sort((a, b) => t(b) - t(a));
+                else if (sort === 'oldest') list.sort((a, b) => t(a) - t(b));
+                else list.sort((a, b) => `${a.hasta_soyadi || ''} ${a.hasta_adi || ''}`.localeCompare(`${b.hasta_soyadi || ''} ${b.hasta_adi || ''}`, 'tr'));
+                return list;
+            }
+
+            function statusPill(f) {
+                return f.checked_in
+                    ? '<span class="pill pill-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 7"></path></svg>Girildi</span>'
+                    : '<span class="pill pill-pending"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>Bekliyor</span>';
+            }
+
+            function nameHtml(f) {
+                const label = `${f.hasta_soyadi || '-'}, ${f.hasta_adi || '-'}`;
+                return `<span class="name">${esc(label)}${f.hasta_mi ? ` <span class="mi">· ${esc(f.hasta_mi)}</span>` : ''}</span>`;
+            }
+
+            const MENU_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg>';
+            const EYE_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+            const ICONS = {
+                edit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4l10-10-4-4L4 16v4z"></path><path d="M12.5 7.5l4 4"></path></svg>',
+                undo: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"></path><path d="M4 9h10a6 6 0 0 1 0 12h-3"></path></svg>',
+                delete: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"></path></svg>'
+            };
+
+            function render() {
+                closeMenu();
+                const pending = allForms.filter(f => !f.checked_in).length;
+                $('cntAll').textContent = allForms.length;
+                $('cntPending').textContent = pending;
+                $('cntDone').textContent = allForms.length - pending;
+                $('listSubtitle').textContent = allForms.length
+                    ? `${allForms.length} form · ${pending} tanesi IDS girişi bekliyor`
+                    : 'Henüz kaydedilmiş form yok';
+
+                const list = filtered();
+                const page = list.slice(0, shown);
+                const tbody = $('tableBody');
+                const cards = $('cardList');
+                tbody.innerHTML = '';
+                cards.innerHTML = '';
+
+                if (!allForms.length) { setState('Henüz kaydedilmiş form bulunmuyor.'); }
+                else if (!list.length) { setState('Bu filtreyle eşleşen form yok.'); }
+                else setState('');
+
+                page.forEach(f => {
+                    const type = RX.FORM_TURU[f.form_turu] || 'Yeni hasta';
+                    const ht = RX.HASTA_TIPI[f.hasta_tipi] || f.hasta_tipi || '—';
+                    const pkg = RX.packageOf(f) || '—';
+                    const date = RX.formatDate(f.createdAt) || '—';
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${statusPill(f)}</td>
+                        <td>${nameHtml(f)}</td>
+                        <td>${esc(type)}</td>
+                        <td>${esc(ht)}</td>
+                        <td>${esc(pkg)}</td>
+                        <td class="date">${esc(date)}</td>
+                        <td class="actions"><span class="row-actions">${actionsHtml(f, '')}</span></td>`;
+                    bindActions(tr, f);
+                    tbody.appendChild(tr);
+
+                    const card = document.createElement('div');
+                    card.className = 'list-card';
+                    card.innerHTML = `
+                        <div class="top">${nameHtml(f)}${statusPill(f)}</div>
+                        <div class="meta"><span>${esc(type)}</span><span>·</span><span>${esc(ht)}</span><span>·</span><strong>${esc(pkg)}</strong></div>
+                        <div class="bottom"><span>${esc(date)}</span><span class="card-actions">${actionsHtml(f, 'btn-sm')}</span></div>`;
+                    bindActions(card, f);
+                    cards.appendChild(card);
+                });
+
+                const more = list.length > shown;
+                $('tableFooter').hidden = !list.length;
+                $('footerInfo').textContent = `${Math.min(shown, list.length)} / ${list.length} gösteriliyor`;
+                $('moreBtn').hidden = !more;
+                $('moreBtnMobile').hidden = !more;
+            }
+
+            // Satır eylemleri: Görüntüle · Düzenle · (⋯ yalnızca giriş iptali varsa) · Sil (simge, en sonda)
+            // Her iki rolde de üçü görünür; asistanda Düzenle ve Sil hekim PIN'i ister.
+            function hasMenu(f) {
+                return userRole === 'doctor' && !!f.checked_in;
+            }
+            function actionsHtml(f, size) {
+                const menu = hasMenu(f)
+                    ? `<button type="button" class="menu-btn" data-act="menu" aria-label="Diğer işlemler" aria-haspopup="menu">${MENU_ICON}</button>`
+                    : '';
+                return `<button type="button" class="btn btn-view ${size}" data-act="view">${EYE_ICON}<span>Görüntüle</span></button>` +
+                    `<button type="button" class="btn btn-edit ${size}" data-act="edit">${ICONS.edit}<span>Düzenle</span></button>` +
+                    menu +
+                    `<button type="button" class="btn btn-delete btn-icon ${size}" data-act="delete" aria-label="Formu sil" title="Sil">${ICONS.delete}</button>`;
+            }
+
+            function bindActions(el, f) {
+                const label = `${f.hasta_soyadi || '-'}, ${f.hasta_adi || '-'}`;
+                el.querySelector('[data-act="view"]').addEventListener('click', () => viewForm(f.id));
+                el.querySelector('[data-act="edit"]').addEventListener('click', () => editForm(f.id, label));
+                el.querySelector('[data-act="delete"]').addEventListener('click', () => deleteForm(f.id, label));
+                el.querySelector('[data-act="menu"]')?.addEventListener('click', e => { e.stopPropagation(); toggleMenu(e.currentTarget, f); });
+            }
+
+            // ---- Satır menüsü ----
+            function closeMenu() {
+                if (openMenu) { openMenu.remove(); openMenu = null; }
+            }
+            function toggleMenu(btn, f) {
+                if (openMenu && openMenu._for === btn) { closeMenu(); return; }
+                closeMenu();
+                const label = `${f.hasta_soyadi || '-'}, ${f.hasta_adi || '-'}`;
+                const menu = document.createElement('div');
+                menu.className = 'row-menu';
+                menu.setAttribute('role', 'menu');
+                // Görüntüle, Düzenle ve Sil satırda; menüde yalnızca giriş iptali kalır (hekim, girilmiş form)
+                const items = [['undo', 'Girişi iptal et', 'undo']];
+                menu.innerHTML = items.map(([act, text, cls]) => `<button type="button" role="menuitem" class="mi mi-${cls}" data-act="${act}"><span class="mi-icon">${ICONS[cls]}</span><span>${text}</span></button>`).join('');
+                menu.querySelector('[data-act="undo"]').addEventListener('click', () => { closeMenu(); undoCheckIn(f.id, label); });
+                document.body.appendChild(menu);
+                const r = btn.getBoundingClientRect();
+                const w = menu.offsetWidth;
+                menu.style.top = `${window.scrollY + r.bottom + 6}px`;
+                menu.style.left = `${Math.max(8, window.scrollX + r.right - w)}px`;
+                menu._for = btn;
+                openMenu = menu;
+            }
+            document.addEventListener('click', closeMenu);
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+            window.addEventListener('scroll', closeMenu, { passive: true });
+
+            // ---- İşlemler ----
+            function viewForm(id) {
+                window.location.href = `form.html?view=${id}&role=${userRole}`;
+            }
+            async function editForm(id, label) {
+                if (userRole !== 'doctor') {
+                    const ok = await RX.askPin({ text: `"${label}" formunu düzenlemek için hekim PIN kodunu girin.`, rememberOption: false, grantSession: false });
+                    if (!ok) return;
+                }
+                window.location.href = `form.html?view=${id}&role=doctor&edit=true`;
+            }
+            async function deleteForm(id, label) {
+                if (userRole !== 'doctor') {
+                    const ok = await RX.askPin({ title: 'Formu sil', text: `"${label}" formunu silmek için hekim PIN kodunu girin.`, rememberOption: false, grantSession: false });
+                    if (!ok) return;
+                }
+                if (!confirm(`"${label}" adlı hastanın formunu silmek istediğinizden emin misiniz?`)) return;
+                try {
+                    await db.collection('invisalign_forms').doc(id).delete();
+                    RX.toast(`Silindi: ${label}`);
+                    loadForms();
+                } catch (error) {
+                    console.error('Form silme hatası:', error);
+                    alert('Form silinemedi: ' + error.message);
+                }
+            }
+            async function undoCheckIn(id, label) {
+                if (!confirm(`"${label}" adlı hastanın girişini iptal etmek istediğinizden emin misiniz?`)) return;
+                try {
+                    await db.collection('invisalign_forms').doc(id).update({ checked_in: false, checked_in_at: null });
+                    RX.toast(`Giriş iptal edildi: ${label}`);
+                    loadForms();
+                } catch (error) {
+                    console.error('Giriş iptal hatası:', error);
+                    alert('Giriş iptal edilemedi: ' + error.message);
+                }
+            }
+
+            // ---- Olaylar ----
+            $('searchInput').addEventListener('input', () => { shown = PAGE; render(); });
+            $('statusSeg').addEventListener('click', e => {
+                const b = e.target.closest('button[data-status]');
+                if (!b) return;
+                status = b.dataset.status;
+                $('statusSeg').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+                shown = PAGE;
+                render();
+            });
+            $('typeChips').addEventListener('click', e => {
+                const b = e.target.closest('button[data-type]');
+                if (!b) return;
+                const t = b.dataset.type;
+                if (types.has(t)) types.delete(t); else types.add(t);
+                b.setAttribute('aria-pressed', String(types.has(t)));
+                shown = PAGE;
+                render();
+            });
+            $('sortSelect').addEventListener('change', e => { sort = e.target.value; render(); });
+            $('moreBtn').addEventListener('click', () => { shown += PAGE; render(); });
+            $('moreBtnMobile').addEventListener('click', () => { shown += PAGE; render(); });
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && !document.getElementById('rxPinModal') && !openMenu) window.location.href = 'index.html';
+            });
+            document.addEventListener('keydown', e => {
+                if (e.key === '/' && document.activeElement !== $('searchInput') && !document.getElementById('rxPinModal')) {
+                    e.preventDefault();
+                    $('searchInput').focus();
+                }
+            });
+
+            document.addEventListener('DOMContentLoaded', async () => {
+                await ensureRole();
+                applyRole();
+                loadForms();
+            });
+        })();
     </script>
     <script src="version.js"></script>
 </body>

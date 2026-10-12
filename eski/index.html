@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rxalign</title>
+    <link rel="icon" type="image/png" href="../images/favicon.png">
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            padding-bottom: 80px;
+        }
+        
+        .header-branding {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 40px;
+            width: 100%;
+            max-width: 1200px;
+        }
+        
+        .logo-container img {
+            height: 84px;
+            width: auto;
+            filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.25));
+        }
+
+        /* Logo yazıyı zaten içeriyor; başlık yalnızca ekran okuyucular için */
+        .header-title {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+        }
+        
+        .slogan-container {
+            margin-top: 20px;
+        }
+        
+        .slogan-container img {
+            height: 60px;
+            width: auto;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 20px;
+            padding: 50px 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .panel-title:hover {
+            color: #667eea;
+        }
+
+        .panel-subtitle {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 50px;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .main-button {
+            padding: 20px 40px;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+            text-align: center;
+            display: block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-settings {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .btn-settings:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .btn-info:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-button {
+            flex: 1;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-confirm {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-confirm:hover {
+            background: #5568d3;
+        }
+
+        .btn-cancel {
+            background: #ddd;
+            color: #666;
+        }
+
+        .btn-cancel:hover {
+            background: #ccc;
+        }
+
+        .error-message {
+            color: #f5576c;
+            font-size: 14px;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+        
+        .version-info {
+            text-align: center;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            color: white !important;
+            font-weight: 300;
+            letter-spacing: 1px;
+            margin-top: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 10;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-branding {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .logo-container img {
+                height: 64px;
+            }
+            
+            .slogan-container img {
+                max-height: 45px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Yeni tasarıma geçiş (aynı sayfa ve sorgu ile) -->
+<style>
+.rx-design-switch{position:fixed;top:12px;right:12px;z-index:5000;display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.92);color:#1b1f2a;font:600 13px/1 'Segoe UI',Tahoma,sans-serif;text-decoration:none;box-shadow:0 6px 18px rgba(0,0,0,.18);border:1px solid rgba(0,0,0,.08)}
+.rx-design-switch:hover{background:#fff}
+.rx-design-switch .dot{width:9px;height:9px;border-radius:999px;background:#FD5652}
+@media print{.rx-design-switch{display:none}}
+</style>
+<a class="rx-design-switch" id="rxDesignSwitch" href="../index.html" title="Yeni tasarıma geç"><span class="dot"></span>Yeni tasarım</a>
+<script>
+(function(){var a=document.getElementById('rxDesignSwitch');var page=location.pathname.split('/').pop()||'index.html';a.href='../'+page+location.search;})();
+</script>
+
+    <!-- Header Branding -->
+    <div class="header-branding">
+        <div class="logo-container">
+            <img src="../images/rxalign-logo-white.png" alt="Rxalign">
+        </div>
+        <h1 class="header-title">Rxalign</h1>
+        <div class="slogan-container">
+            <img src="../images/slogan.png" alt="Slogan">
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Hekim Paneli -->
+        <div class="panel">
+            <h1 class="panel-title" id="doctorTitle">Hekim Girişi</h1>
+            <p class="panel-subtitle">Yeni form oluşturun veya arşivi yönetin</p>
+            <div class="button-group">
+                <button class="main-button btn-primary" onclick="createNewForm()">Yeni Form Oluştur</button>
+                <button class="main-button btn-secondary" onclick="openArchive('doctor')">Form Arşivi</button>
+                <button class="main-button btn-settings" onclick="openSettings()">⚙️ Ayarlar</button>
+            </div>
+        </div>
+
+        <!-- Asistan Paneli -->
+        <div class="panel">
+            <h1 class="panel-title">Asistan Girişi</h1>
+            <p class="panel-subtitle">Kaydedilmiş formları görüntüleyin</p>
+            <div class="button-group">
+                <button class="main-button btn-info" onclick="openArchive('assistant')">Form Arşivi</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="version-info">
+        Copyright © 2026 <span id="appVersion">v2</span>
+    </div>
+
+    <!-- Şifre Modal -->
+    <div class="modal" id="passwordModal">
+        <div class="modal-content">
+            <h2 class="modal-title">Hekim Girişi</h2>
+            <input type="password" id="passwordInput" class="modal-input" placeholder="Şifre giriniz" onkeypress="if(event.key === 'Enter') checkPassword()">
+            <p class="error-message" id="errorMessage">Hatalı şifre! Lütfen tekrar deneyin.</p>
+            <div class="modal-buttons">
+                <button class="modal-button btn-cancel" onclick="closeModal()">İptal</button>
+                <button class="modal-button btn-confirm" onclick="checkPassword()">Giriş</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DOCTOR_PASSWORD = '1234';
+        let pendingAction = null;
+
+        // Hekim Girişi başlığına tıklayınca şifre iste
+        document.getElementById('doctorTitle').addEventListener('click', function() {
+            pendingAction = 'verify';
+            openPasswordModal();
+        });
+
+        function openPasswordModal() {
+            document.getElementById('passwordModal').classList.add('active');
+            document.getElementById('passwordInput').focus();
+            document.getElementById('errorMessage').classList.remove('show');
+        }
+
+        function closeModal() {
+            document.getElementById('passwordModal').classList.remove('active');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('errorMessage').classList.remove('show');
+            pendingAction = null;
+        }
+
+        function checkPassword() {
+            const password = document.getElementById('passwordInput').value;
+
+            if (password === DOCTOR_PASSWORD) {
+                const action = pendingAction;
+                closeModal();
+                // Ayarlar sayfası bu oturumda tekrar şifre sormasın
+                try { sessionStorage.setItem('rx_doctor_ok', '1'); } catch (e) { /* yoksay */ }
+                if (action === 'doctor') {
+                    window.location.href = 'list.html?role=doctor';
+                } else if (action === 'settings') {
+                    window.location.href = 'settings.html';
+                }
+                // 'verify': sadece doğrulama için açıldı, başka bir şey yapma
+            } else {
+                document.getElementById('errorMessage').classList.add('show');
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
+            }
+        }
+
+        function createNewForm() {
+            // Direkt yeni form sayfasına git
+            window.location.href = 'form.html';
+        }
+
+        function openArchive(role) {
+            if (role === 'doctor') {
+                // Hekim için şifre iste; doğrulanınca hekim arşivine git
+                pendingAction = 'doctor';
+                openPasswordModal();
+            } else {
+                // Asistan için direkt yönlendir
+                window.location.href = 'list.html?role=assistant';
+            }
+        }
+
+        function openSettings() {
+            // Ayarlar yalnızca hekim şifresiyle
+            pendingAction = 'settings';
+            openPasswordModal();
+        }
+
+        // Modal dışına tıklayınca kapat
+        document.getElementById('passwordModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+    <script src="../version.js"></script>
+</body>
+</html>

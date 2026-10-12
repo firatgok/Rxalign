@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayarlar - Rxalign</title>
+    <link rel="icon" type="image/png" href="../images/favicon.png">
+    <link rel="apple-touch-icon" href="../images/apple-touch-icon.png">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #5568d3;
+        }
+
+        .settings-intro {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .settings-intro h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 6px;
+        }
+
+        .hasta-tabs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 24px 0 16px;
+        }
+
+        .hasta-tab {
+            flex: 1 1 140px;
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #555;
+            transition: all 0.2s;
+        }
+
+        .hasta-tab:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .hasta-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: transparent;
+            color: white;
+        }
+
+        .forms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .form-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-card h3 {
+            color: #667eea;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-card .desc {
+            color: #666;
+            font-size: 13px;
+            flex: 1;
+        }
+
+        .default-status {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6b7280;
+        }
+
+        .default-status.custom {
+            color: #047857;
+        }
+
+        .btn-defaults {
+            margin-top: 8px;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #f59e0b;
+            color: white;
+            transition: background 0.2s;
+        }
+
+        .btn-defaults:hover {
+            background: #d97706;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+
+        /* Şifre modalı */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .modal-subtitle {
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-button {
+            flex: 1;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-confirm {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-confirm:hover {
+            background: #5568d3;
+        }
+
+        .btn-cancel {
+            background: #ddd;
+            color: #666;
+        }
+
+        .btn-cancel:hover {
+            background: #ccc;
+        }
+
+        .error-message {
+            color: #f5576c;
+            font-size: 14px;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .version-info {
+            text-align: center;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            color: white !important;
+            font-weight: 300;
+            letter-spacing: 1px;
+            margin-top: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 10;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+<!-- Yeni tasarıma geçiş (aynı sayfa ve sorgu ile) -->
+<style>
+.rx-design-switch{position:fixed;top:12px;right:12px;z-index:5000;display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.92);color:#1b1f2a;font:600 13px/1 'Segoe UI',Tahoma,sans-serif;text-decoration:none;box-shadow:0 6px 18px rgba(0,0,0,.18);border:1px solid rgba(0,0,0,.08)}
+.rx-design-switch:hover{background:#fff}
+.rx-design-switch .dot{width:9px;height:9px;border-radius:999px;background:#FD5652}
+@media print{.rx-design-switch{display:none}}
+</style>
+<a class="rx-design-switch" id="rxDesignSwitch" href="../index.html" title="Yeni tasarıma geç"><span class="dot"></span>Yeni tasarım</a>
+<script>
+(function(){var a=document.getElementById('rxDesignSwitch');var page=location.pathname.split('/').pop()||'index.html';a.href='../'+page+location.search;})();
+</script>
+
+    <div class="container">
+        <header>
+            <img class="header-logo" src="../images/rxalign-logo-white.png" alt="Rxalign">
+            <h1>Ayarlar</h1>
+            <p class="subtitle">Form Varsayılanları</p>
+        </header>
+
+        <main id="settingsMain" style="display: none;">
+            <a href="index.html" class="back-btn">← Ana Sayfa</a>
+
+            <div class="settings-intro">
+                <h2>Form varsayılanlarını belirleyin</h2>
+                Önce hasta tipini, sonra formu seçin. "Form Varsayılanlarını Değiştir" ile form açılır;
+                işaretlediğiniz seçimleri kaydettiğinizde o form her açıldığında bu seçimlerle gelir.
+                Hasta adı ve iTero sipariş kodu varsayılana alınmaz.
+            </div>
+
+            <div class="hasta-tabs" id="hastaTabs"></div>
+
+            <div id="loadingDiv" class="loading"><p>Varsayılanlar yükleniyor...</p></div>
+            <div id="formsGrid" class="forms-grid"></div>
+        </main>
+    </div>
+
+    <div class="version-info">
+        Copyright © 2026 <span id="appVersion">v2</span>
+    </div>
+
+    <!-- Şifre Modal -->
+    <div class="modal" id="passwordModal">
+        <div class="modal-content">
+            <h2 class="modal-title">Hekim Girişi</h2>
+            <p class="modal-subtitle">Ayarlar için hekim şifresini girin</p>
+            <input type="password" id="passwordInput" class="modal-input" placeholder="Şifre giriniz" autocomplete="off" onkeydown="if(event.key === 'Enter') checkPassword()">
+            <p class="error-message" id="errorMessage">Hatalı şifre! Lütfen tekrar deneyin.</p>
+            <div class="modal-buttons">
+                <button class="modal-button btn-cancel" onclick="window.location.href='index.html'">İptal</button>
+                <button class="modal-button btn-confirm" onclick="checkPassword()">Giriş</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="../firebase-config.js"></script>
+    <script src="../defaults.js"></script>
+
+    <script>
+        const DOCTOR_PASSWORD = '1234';
+        const DOCTOR_FLAG = 'rx_doctor_ok';
+        let activeHasta = 'yetiskin';
+
+        function isDoctorVerified() {
+            try { return sessionStorage.getItem(DOCTOR_FLAG) === '1'; } catch (e) { return false; }
+        }
+
+        function checkPassword() {
+            const input = document.getElementById('passwordInput');
+            if (input.value === DOCTOR_PASSWORD) {
+                try { sessionStorage.setItem(DOCTOR_FLAG, '1'); } catch (e) { /* yoksay */ }
+                document.getElementById('passwordModal').classList.remove('active');
+                input.value = '';
+                startSettings();
+            } else {
+                document.getElementById('errorMessage').classList.add('show');
+                input.value = '';
+                input.focus();
+            }
+        }
+
+        function renderTabs() {
+            const tabs = document.getElementById('hastaTabs');
+            tabs.innerHTML = '';
+            Object.keys(HASTA_TIPI_LABELS).forEach(hasta => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'hasta-tab' + (hasta === activeHasta ? ' active' : '');
+                b.textContent = HASTA_TIPI_LABELS[hasta];
+                b.addEventListener('click', () => {
+                    activeHasta = hasta;
+                    renderTabs();
+                    renderCards();
+                });
+                tabs.appendChild(b);
+            });
+        }
+
+        function renderCards() {
+            const grid = document.getElementById('formsGrid');
+            grid.innerHTML = '';
+            DEFAULTS_CATALOG.filter(e => e.hasta === activeHasta).forEach(entry => {
+                const saved = formDefaults[entry.key];
+                const card = document.createElement('div');
+                card.className = 'form-card';
+                card.innerHTML = `
+                    <h3><span class="icon"></span><span class="label"></span></h3>
+                    <p class="desc"></p>
+                    <p class="default-status"></p>
+                    <button type="button" class="btn-defaults">Form Varsayılanlarını Değiştir</button>
+                `;
+                card.querySelector('.icon').textContent = entry.icon;
+                card.querySelector('.label').textContent = entry.label;
+                card.querySelector('.desc').textContent = entry.desc || '';
+                const status = card.querySelector('.default-status');
+                if (saved) {
+                    status.textContent = '✓ Özel varsayılan • ' + new Date(saved.updatedAt).toLocaleDateString('tr-TR');
+                    status.classList.add('custom');
+                } else {
+                    status.textContent = 'Fabrika ayarı';
+                }
+                card.querySelector('.btn-defaults').addEventListener('click', () => {
+                    window.location.href = 'form.html?defaults=' + encodeURIComponent(entry.key);
+                });
+                grid.appendChild(card);
+            });
+        }
+
+        async function startSettings() {
+            document.getElementById('settingsMain').style.display = 'block';
+            renderTabs();
+            await loadFormDefaults();
+            document.getElementById('loadingDiv').style.display = 'none';
+            renderCards();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (isDoctorVerified()) {
+                startSettings();
+            } else {
+                document.getElementById('passwordModal').classList.add('active');
+                document.getElementById('passwordInput').focus();
+            }
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') window.location.href = 'index.html';
+        });
+    </script>
+    <script src="../version.js"></script>
+</body>
+</html>

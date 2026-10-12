@@ -2,419 +2,215 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#F6F5F1">
     <title>Rxalign</title>
+    <script src="js/theme.js"></script>
     <link rel="icon" type="image/png" href="images/favicon.png">
     <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Montserrat', 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            padding-bottom: 80px;
-        }
-        
-        .header-branding {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 40px;
-            margin-bottom: 40px;
-            width: 100%;
-            max-width: 1200px;
-        }
-        
-        .logo-container img {
-            height: 84px;
-            width: auto;
-            filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.25));
-        }
-
-        /* Logo yazıyı zaten içeriyor; başlık yalnızca ekran okuyucular için */
-        .header-title {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            overflow: hidden;
-            clip: rect(0 0 0 0);
-            white-space: nowrap;
-        }
-        
-        .slogan-container {
-            margin-top: 20px;
-        }
-        
-        .slogan-container img {
-            height: 60px;
-            width: auto;
-        }
-
-        .container {
-            max-width: 1200px;
-            width: 100%;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-        }
-
-        .panel {
-            background: white;
-            border-radius: 20px;
-            padding: 50px 40px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .panel-title {
-            font-size: 36px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-
-        .panel-title:hover {
-            color: #667eea;
-        }
-
-        .panel-subtitle {
-            font-size: 16px;
-            color: #666;
-            margin-bottom: 50px;
-        }
-
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            width: 100%;
-            max-width: 300px;
-        }
-
-        .main-button {
-            padding: 20px 40px;
-            font-size: 18px;
-            font-weight: 600;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            text-decoration: none;
-            text-align: center;
-            display: block;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
-        }
-
-        .btn-settings {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: white;
-        }
-
-        .btn-settings:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
-        }
-
-        .btn-info {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-        }
-
-        .btn-info:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 400px;
-            width: 100%;
-        }
-
-        .modal-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .modal-input {
-            width: 100%;
-            padding: 15px;
-            font-size: 16px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            transition: border-color 0.3s;
-        }
-
-        .modal-input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .modal-button {
-            flex: 1;
-            padding: 15px;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .btn-confirm {
-            background: #667eea;
-            color: white;
-        }
-
-        .btn-confirm:hover {
-            background: #5568d3;
-        }
-
-        .btn-cancel {
-            background: #ddd;
-            color: #666;
-        }
-
-        .btn-cancel:hover {
-            background: #ccc;
-        }
-
-        .error-message {
-            color: #f5576c;
-            font-size: 14px;
-            margin-top: -10px;
-            margin-bottom: 10px;
-            display: none;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-        
-        .version-info {
-            text-align: center;
-            padding: 20px;
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            color: white !important;
-            font-weight: 300;
-            letter-spacing: 1px;
-            margin-top: 20px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            position: relative;
-            z-index: 10;
-            width: 100%;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-            
-            .header-branding {
-                flex-direction: column;
-                gap: 16px;
-            }
-
-            .logo-container img {
-                height: 64px;
-            }
-            
-            .slogan-container img {
-                max-height: 45px;
-            }
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/app.css">
 </head>
-<body>
-    <!-- Header Branding -->
-    <div class="header-branding">
-        <div class="logo-container">
-            <img src="./images/rxalign-logo-white.png" alt="Rxalign">
+<body class="page-home">
+
+    <header class="home-top">
+        <img src="images/rxalign-logo.png" alt="Rxalign">
+        <div class="home-top-right">
+            <span class="home-version"><span id="appVersion">v2</span> · <a href="eski/index.html" data-legacy-link class="legacy-link">Eski tasarım</a></span>
+            <button type="button" class="icon-btn theme-btn" data-theme-toggle aria-label="Gece moduna geç" title="Gece modu">
+                <svg class="ic-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>
+                <svg class="ic-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+            </button>
         </div>
-        <h1 class="header-title">Rxalign</h1>
-        <div class="slogan-container">
-            <img src="./images/slogan.png" alt="Slogan">
-        </div>
-    </div>
-    
-    <div class="container">
-        <!-- Hekim Paneli -->
-        <div class="panel">
-            <h1 class="panel-title" id="doctorTitle">Hekim Girişi</h1>
-            <p class="panel-subtitle">Yeni form oluşturun veya arşivi yönetin</p>
-            <div class="button-group">
-                <button class="main-button btn-primary" onclick="createNewForm()">Yeni Form Oluştur</button>
-                <button class="main-button btn-secondary" onclick="openArchive('doctor')">Form Arşivi</button>
-                <button class="main-button btn-settings" onclick="openSettings()">⚙️ Ayarlar</button>
+    </header>
+
+    <div class="home-deco" aria-hidden="true"><img class="home-mark" src="images/rxalign-mark.png" alt=""></div>
+
+    <main class="home-main">
+        <div class="home-inner">
+            <div class="home-head">
+                <span class="eyebrow">Invisalign reçete formu</span>
+                <h1>Kim olarak devam ediyorsunuz?</h1>
+                <p>Hekim yeni reçete formu oluşturur, arşivi ve form varsayılanlarını yönetir; asistan kaydedilmiş formları IDS'e girer.</p>
+            </div>
+
+            <div class="home-cards">
+                <section class="role-card" aria-labelledby="hekimTitle">
+                    <div class="role-head">
+                        <span class="role-icon coral">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"></rect><path d="M9 4V2h6v2M9 11h6M9 15h4"></path></svg>
+                        </span>
+                        <div>
+                            <h2 id="hekimTitle">Hekim</h2>
+                            <p>Yeni form, arşiv ve form varsayılanları</p>
+                        </div>
+                    </div>
+
+                    <!-- PIN girişi -->
+                    <form class="role-body" id="pinForm" autocomplete="off">
+                        <label class="field-label" for="pin1">4 haneli PIN</label>
+                        <div class="pin-row" id="pinRow">
+                            <input id="pin1" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="PIN 1. hane">
+                            <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="PIN 2. hane">
+                            <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="PIN 3. hane">
+                            <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" aria-label="PIN 4. hane">
+                        </div>
+                        <p class="rx-modal-error" id="pinError" hidden>Hatalı PIN, tekrar deneyin.</p>
+                        <label class="check-row"><input type="checkbox" id="pinRemember" checked><span>Bu cihazda 30 gün hatırla</span></label>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <span>Giriş yap</span>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+                        </button>
+                    </form>
+
+                    <!-- Doğrulanmış hekim -->
+                    <div class="role-body" id="doctorActions" hidden>
+                        <div class="doctor-signed">
+                            <span>Hekim olarak doğrulandı</span>
+                            <button type="button" id="doctorLogout">Çıkış</button>
+                        </div>
+                        <div class="role-actions">
+                            <a class="btn btn-accent btn-lg" href="form.html">
+                                <span class="plus"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span>
+                                <span>Yeni form oluştur</span>
+                            </a>
+                            <a class="btn btn-outline" href="list.html?role=doctor">Form arşivi</a>
+                            <a class="btn btn-secondary" href="settings.html">Ayarlar · varsayılanlar ve görünüm</a>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="role-card" aria-labelledby="asistanTitle">
+                    <div class="role-head">
+                        <span class="role-icon blue">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"></path><path d="M3.5 6l1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2"></path></svg>
+                        </span>
+                        <div>
+                            <h2 id="asistanTitle">Asistan</h2>
+                            <p>Kaydedilmiş formları IDS'e girin</p>
+                        </div>
+                    </div>
+                    <div class="role-body">
+                        <div class="stat-row warn" id="pendingStat" hidden>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+                            <span id="pendingText"></span>
+                            <span class="right" id="pendingOldest"></span>
+                        </div>
+                        <div class="stat-row neutral" id="doneStat" hidden>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4L19 7"></path></svg>
+                            <span id="doneText"></span>
+                        </div>
+                    </div>
+                    <a class="btn btn-outline" href="list.html?role=assistant">
+                        <span>Arşivi aç</span>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+                    </a>
+                </section>
             </div>
         </div>
+    </main>
 
-        <!-- Asistan Paneli -->
-        <div class="panel">
-            <h1 class="panel-title">Asistan Girişi</h1>
-            <p class="panel-subtitle">Kaydedilmiş formları görüntüleyin</p>
-            <div class="button-group">
-                <button class="main-button btn-info" onclick="openArchive('assistant')">Form Arşivi</button>
-            </div>
-        </div>
-    </div>
-    
-    <div class="version-info">
-        Copyright © 2026 <span id="appVersion">v2</span>
-    </div>
+    <footer class="home-foot">
+        <span>© 2026 Rxalign · Dr. Fırat Gök</span>
+        <span>Veriler yalnızca klinik içi kullanım içindir</span>
+    </footer>
 
-    <!-- Şifre Modal -->
-    <div class="modal" id="passwordModal">
-        <div class="modal-content">
-            <h2 class="modal-title">Hekim Girişi</h2>
-            <input type="password" id="passwordInput" class="modal-input" placeholder="Şifre giriniz" onkeypress="if(event.key === 'Enter') checkPassword()">
-            <p class="error-message" id="errorMessage">Hatalı şifre! Lütfen tekrar deneyin.</p>
-            <div class="modal-buttons">
-                <button class="modal-button btn-cancel" onclick="closeModal()">İptal</button>
-                <button class="modal-button btn-confirm" onclick="checkPassword()">Giriş</button>
-            </div>
-        </div>
-    </div>
-
+    <!-- Firebase (bekleyen form sayısı için yalnızca okuma) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="js/app.js"></script>
     <script>
-        const DOCTOR_PASSWORD = '1234';
-        let pendingAction = null;
+        (function () {
+            const form = document.getElementById('pinForm');
+            const actions = document.getElementById('doctorActions');
+            const inputs = [...document.querySelectorAll('#pinRow input')];
+            const error = document.getElementById('pinError');
 
-        // Hekim Girişi başlığına tıklayınca şifre iste
-        document.getElementById('doctorTitle').addEventListener('click', function() {
-            pendingAction = 'verify';
-            openPasswordModal();
-        });
+            function showDoctor(on) {
+                form.hidden = on;
+                actions.hidden = !on;
+            }
+            showDoctor(RX.doctorRemembered());
 
-        function openPasswordModal() {
-            document.getElementById('passwordModal').classList.add('active');
-            document.getElementById('passwordInput').focus();
-            document.getElementById('errorMessage').classList.remove('show');
-        }
-
-        function closeModal() {
-            document.getElementById('passwordModal').classList.remove('active');
-            document.getElementById('passwordInput').value = '';
-            document.getElementById('errorMessage').classList.remove('show');
-            pendingAction = null;
-        }
-
-        function checkPassword() {
-            const password = document.getElementById('passwordInput').value;
-
-            if (password === DOCTOR_PASSWORD) {
-                const action = pendingAction;
-                closeModal();
-                // Ayarlar sayfası bu oturumda tekrar şifre sormasın
-                try { sessionStorage.setItem('rx_doctor_ok', '1'); } catch (e) { /* yoksay */ }
-                if (action === 'doctor') {
-                    window.location.href = 'list.html?role=doctor';
-                } else if (action === 'settings') {
-                    window.location.href = 'settings.html';
+            function submit() {
+                const pin = inputs.map(i => i.value).join('');
+                if (pin.length < 4) { inputs.find(i => !i.value)?.focus(); return; }
+                if (RX.checkPin(pin)) {
+                    RX.rememberDoctor(document.getElementById('pinRemember').checked ? 30 : 0);
+                    showDoctor(true);
+                    actions.querySelector('a').focus();
+                } else {
+                    error.hidden = false;
+                    inputs.forEach(i => { i.value = ''; i.classList.add('error'); });
+                    inputs[0].focus();
                 }
-                // 'verify': sadece doğrulama için açıldı, başka bir şey yapma
-            } else {
-                document.getElementById('errorMessage').classList.add('show');
-                document.getElementById('passwordInput').value = '';
-                document.getElementById('passwordInput').focus();
             }
-        }
+            form.addEventListener('submit', e => { e.preventDefault(); submit(); });
+            inputs.forEach((input, idx) => {
+                input.addEventListener('input', () => {
+                    error.hidden = true;
+                    input.classList.remove('error');
+                    const digits = input.value.replace(/\D/g, '');
+                    digits.split('').slice(0, inputs.length - idx).forEach((d, i) => { inputs[idx + i].value = d; });
+                    if (!digits) input.value = '';
+                    const next = Math.min(idx + Math.max(digits.length, 1), inputs.length - 1);
+                    if (digits) inputs[next].focus();
+                    if (inputs.every(i => i.value)) submit();
+                });
+                input.addEventListener('keydown', e => {
+                    if (e.key === 'Backspace' && !input.value && idx > 0) inputs[idx - 1].focus();
+                });
+                input.addEventListener('paste', e => {
+                    const digits = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 4);
+                    if (!digits) return;
+                    e.preventDefault();
+                    digits.split('').forEach((d, i) => { if (inputs[i]) inputs[i].value = d; });
+                    if (digits.length === 4) submit(); else inputs[Math.min(digits.length, 3)].focus();
+                });
+            });
+            document.getElementById('doctorLogout').addEventListener('click', () => {
+                RX.forgetDoctor();
+                inputs.forEach(i => { i.value = ''; });
+                showDoctor(false);
+                inputs[0].focus();
+            });
 
-        function createNewForm() {
-            // Direkt yeni form sayfasına git
-            window.location.href = 'form.html';
-        }
-
-        function openArchive(role) {
-            if (role === 'doctor') {
-                // Hekim için şifre iste; doğrulanınca hekim arşivine git
-                pendingAction = 'doctor';
-                openPasswordModal();
-            } else {
-                // Asistan için direkt yönlendir
-                window.location.href = 'list.html?role=assistant';
+            // Bekleyen form sayısı (yalnızca okuma)
+            async function loadStats() {
+                if (typeof db === 'undefined' || !db) return;
+                try {
+                    const snap = await db.collection('invisalign_forms').orderBy('createdAt', 'desc').get();
+                    let pending = 0, doneToday = 0, oldest = null;
+                    const today = new Date(); today.setHours(0, 0, 0, 0);
+                    snap.forEach(doc => {
+                        const d = doc.data();
+                        if (!d.checked_in) {
+                            pending++;
+                            if (d.createdAt && d.createdAt.seconds) {
+                                const t = d.createdAt.seconds * 1000;
+                                if (oldest === null || t < oldest) oldest = t;
+                            }
+                        } else if (d.checked_in_at && d.checked_in_at.seconds * 1000 >= today.getTime()) {
+                            doneToday++;
+                        }
+                    });
+                    const pendingStat = document.getElementById('pendingStat');
+                    const doneStat = document.getElementById('doneStat');
+                    pendingStat.hidden = false;
+                    document.getElementById('pendingText').textContent = pending ? `${pending} form giriş bekliyor` : 'Giriş bekleyen form yok';
+                    document.getElementById('pendingOldest').textContent = oldest ? 'En eski: ' + RX.formatDate(oldest) : '';
+                    if (!pending) { pendingStat.classList.remove('warn'); pendingStat.classList.add('neutral'); }
+                    doneStat.hidden = false;
+                    document.getElementById('doneText').textContent = doneToday ? `Bugün ${doneToday} form girildi` : `Toplam ${snap.size} kayıtlı form`;
+                } catch (e) {
+                    console.warn('İstatistik okunamadı:', e);
+                }
             }
-        }
-
-        function openSettings() {
-            // Ayarlar yalnızca hekim şifresiyle
-            pendingAction = 'settings';
-            openPasswordModal();
-        }
-
-        // Modal dışına tıklayınca kapat
-        document.getElementById('passwordModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
+            loadStats();
+        })();
     </script>
     <script src="version.js"></script>
 </body>
