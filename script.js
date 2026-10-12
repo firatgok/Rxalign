@@ -1009,14 +1009,19 @@ async function loadFormForViewing(formId) {
 
         if (userRole === 'assistant' && checkInBtn) {
             if (loadedFormData.checked_in) {
+                // Giriş yapılmış: düğme tıklanabilir kalır, tıklayınca uyarıyla iptal edilir
                 checkInBtn.textContent = '✓ Giriş Yapıldı';
                 checkInBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-                checkInBtn.disabled = true;
-                checkInBtn.style.cursor = 'not-allowed';
+                checkInBtn.disabled = false;
+                checkInBtn.style.cursor = 'pointer';
+                checkInBtn.title = 'Girişi iptal etmek için tıklayın';
+                checkInBtn.dataset.checkedIn = '1';
             } else {
                 checkInBtn.textContent = 'Formu Gönder';
                 checkInBtn.disabled = false;
                 checkInBtn.style.cursor = 'pointer';
+                checkInBtn.title = '';
+                delete checkInBtn.dataset.checkedIn;
             }
         }
 
@@ -1430,6 +1435,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Form ID bulunamadı!');
                 return;
             }
+            // Giriş yapılmış formda: uyarıyla girişi iptal et
+            if (this.dataset.checkedIn) {
+                if (!confirm('DİKKAT: Bu hastanın girişi yapılmış görünüyor.\n\nGirişi iptal etmek istediğinizden emin misiniz? Form tekrar "giriş yapılmadı" durumuna döner.')) return;
+                try {
+                    await db.collection('invisalign_forms').doc(formId).update({
+                        checked_in: false,
+                        checked_in_at: null
+                    });
+                    delete this.dataset.checkedIn;
+                    this.textContent = 'Formu Gönder';
+                    this.style.background = '';
+                    this.title = '';
+                    showToast('Giriş iptal edildi');
+                    setTimeout(() => {
+                        window.location.href = 'list.html?role=assistant';
+                    }, 1200);
+                } catch (error) {
+                    console.error('Giriş iptal hatası:', error);
+                    alert('Giriş iptal edilemedi: ' + error.message);
+                }
+                return;
+            }
+
             if (!confirm('Bu hastanın girişini yapmak istediğinizden emin misiniz?')) return;
             try {
                 await db.collection('invisalign_forms').doc(formId).update({
