@@ -1442,6 +1442,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.style.cursor = 'not-allowed';
                 this.style.opacity = '0.7';
                 showToast('✓ Giriş işlemi tamamlandı');
+                // Kısa bildirimden sonra asistan form arşivine dön
+                setTimeout(() => {
+                    window.location.href = 'list.html?role=assistant';
+                }, 1200);
             } catch (error) {
                 console.error('Giriş işlemi hatası:', error);
                 alert('Giriş işlemi yapılamadı: ' + error.message);
