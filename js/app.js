@@ -207,6 +207,8 @@ const RX = (() => {
             b.setAttribute('aria-pressed', String(dark));
             b.setAttribute('aria-label', dark ? 'Gündüz moduna geç' : 'Gece moduna geç');
             b.title = dark ? 'Gündüz modu' : 'Gece modu';
+            const label = b.querySelector('.rail-label');
+            if (label) label.textContent = dark ? 'Gündüz modu' : 'Gece modu';
         });
         return dark;
     }

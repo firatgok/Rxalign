@@ -26,6 +26,8 @@ const icon = {
     pdf: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h8l5 5v15H6z"></path><path d="M14 2v5h5M9 13h6M9 17h6"></path></svg>',
     cloud: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a4 4 0 0 1-.5-8A6 6 0 0 1 18 9a4 4 0 0 1 0 9H7z"></path><path d="M9 14l2 2 4-4"></path></svg>',
     edit: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4l10-10-4-4L4 16v4z"></path><path d="M12.5 7.5l4 4"></path></svg>',
+    home: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"></path><path d="M5 10v10h5v-6h4v6h5V10"></path></svg>',
+    gear: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg>',
     theme: '<svg class="ic-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg><svg class="ic-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>'
 };
 
@@ -72,9 +74,13 @@ const html = `<!DOCTYPE html>
         </div>
         <div class="appbar-actions">
             <span class="draft-status" id="draftStatus" hidden>${icon.cloud}<span class="draft-status-text"></span></span>
-            <button type="button" class="icon-btn theme-btn" data-theme-toggle aria-label="Gece moduna geç" title="Gece modu">${icon.theme}</button>
-            <button type="button" class="icon-btn" id="resetBtn" title="Formu temizle" aria-label="Formu temizle">${icon.trash}</button>
-            <a class="icon-btn" href="index.html" id="viewFormsBtn" title="Kapat" aria-label="Kapat">${icon.close}</a>
+            <nav class="icon-rail" aria-label="Hızlı erişim">
+                <a class="rail-btn" href="index.html" title="Ana sayfa" aria-label="Ana sayfa">${icon.home}<span class="rail-label">Ana sayfa</span></a>
+                <a class="rail-btn" href="settings.html" title="Ayarlar" aria-label="Ayarlar">${icon.gear}<span class="rail-label">Ayarlar</span></a>
+                <button type="button" class="rail-btn theme-btn" data-theme-toggle aria-label="Gece moduna geç" title="Gece modu">${icon.theme}<span class="rail-label">Gece modu</span></button>
+                <button type="button" class="rail-btn danger" id="resetBtn" title="Formu temizle" aria-label="Formu temizle">${icon.trash}<span class="rail-label">Formu temizle</span></button>
+                <a class="rail-btn" href="index.html" id="viewFormsBtn" title="Kapat" aria-label="Kapat">${icon.close}<span class="rail-label">Kapat</span></a>
+            </nav>
         </div>
     </header>
 

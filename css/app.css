@@ -206,6 +206,42 @@ img { max-width: 100%; }
 html[data-theme="dark"] .theme-btn .ic-sun { display: block; }
 html[data-theme="dark"] .theme-btn .ic-moon { display: none; }
 
+/* Simge rayı: sağ üstteki hızlı düğmeler. Üzerine gelince genişler, adı yanında belirir. */
+.icon-rail { display: inline-flex; align-items: center; gap: 6px; }
+.rail-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    height: 44px;
+    padding: 0 11px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--r-ctl);
+    background: var(--surface);
+    color: var(--muted);
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: gap 0.2s ease, padding 0.2s ease, color 0.15s, border-color 0.15s, background 0.15s;
+}
+.rail-btn svg { width: 18px; height: 18px; flex: 0 0 auto; }
+.rail-label {
+    display: inline-block;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    transition: max-width 0.22s ease, opacity 0.15s ease;
+}
+.rail-btn:hover, .rail-btn:focus-visible { color: var(--ink); border-color: var(--line-strong); background: var(--surface-2); }
+.rail-btn.danger:hover, .rail-btn.danger:focus-visible { color: var(--danger); border-color: var(--danger-tint); background: var(--danger-tint-2); }
+@media (hover: hover) and (pointer: fine) {
+    .rail-btn:hover, .rail-btn:focus-visible { gap: 8px; padding: 0 14px 0 11px; }
+    .rail-btn:hover .rail-label, .rail-btn:focus-visible .rail-label { max-width: 150px; opacity: 1; }
+}
+
 .icon-btn {
     display: inline-flex;
     align-items: center;
@@ -626,6 +662,8 @@ body[data-mode="view"][data-role="assistant"] #assistantEditBtn { display: inlin
 body[data-mode="view"] #resetBtn, body[data-mode="defaults"] #resetBtn { display: none !important; }
 /* Görüntüleme/düzenleme: tüm bölümler alt alta; adım başlığı yerine kart başlıkları */
 body:not([data-mode="new"]) .step-header { display: none; }
+/* Yeni formda Ev düğmesi varken Kapat gereksiz; görüntüleme/düzenlemede arşive döner */
+body[data-mode="new"] #viewFormsBtn { display: none !important; }
 .mode-pill { display: inline-flex; align-items: center; height: 28px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
 .mode-pill.view { background: var(--info-tint); color: var(--info); }
 .mode-pill.edit { background: var(--warn-tint); color: var(--warn); }
@@ -1396,6 +1434,10 @@ body.pdf-mode .appbar, body.pdf-mode .stepper { display: none; }
     .role-badge > span:not(.avatar) { display: none; }
     .appbar-actions { gap: 6px; }
     .appbar-actions .btn-sm { padding: 0 10px; }
+    .icon-rail { gap: 4px; }
+    .rail-btn { height: 40px; padding: 0 9px; border-radius: 9px; }
+    .topnav .nav-settings { display: none; } /* rayda dişli var */
+    .draft-status { display: none; }
     .rx-toast, .toast { bottom: calc(var(--footer-h) + 12px); }
     .settings-main { padding: 16px var(--gutter) 40px; gap: 20px; }
     .view-options { grid-template-columns: 1fr; }
