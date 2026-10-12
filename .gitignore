@@ -25,3 +25,7 @@ build/
 
 # Claude Code yerel ayarları
 .claude/
+
+# IDS Yardımcısı imza anahtarı (gizli)
+ids-extension-key.pem
+ids-extension-key.pub.b64
