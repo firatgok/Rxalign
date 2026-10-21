@@ -1,6 +1,6 @@
 {
-  "version": "0.23.0",
-  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.23.0.zip",
-  "notes": "Fotoğraflar yüklenmeden önce kendiliğinden kırpılır",
-  "at": "2026-10-21T19:51:48.574Z"
+  "version": "0.23.1",
+  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.23.1.zip",
+  "notes": "Kırpma sonrası yön okuması kırpılmamış kareden",
+  "at": "2026-10-21T20:19:30.082Z"
 }
