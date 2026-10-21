@@ -56,13 +56,22 @@
                 <option value="1">1:1</option>
             </select>
         </label>
+        <label>Yüz payı (%) <input type="number" id="faceMargin" value="0" min="0" max="40"></label>
+        <label>Yüz en-boy
+            <select id="faceRatio">
+                <option value="0.6667">2:3 (dikey)</option>
+                <option value="0.75">3:4 (dikey)</option>
+                <option value="">Serbest</option>
+            </select>
+        </label>
         <label>Fotoğraflar <input type="file" id="files" multiple accept="image/*"></label>
         <button id="run">Kırp</button>
         <button id="rerender" class="ghost" title="Modeli yeniden çağırmadan pay ve en-boy değişikliğini uygular">Payı yeniden uygula</button>
         <label style="flex-direction: row; align-items: center; gap: 6px"><input type="checkbox" id="mock"> Model yok (deneme kutuları)</label>
     </div>
     <div id="status"></div>
-    <div class="legend">Soldaki görüntüde <i style="border-color:#ffd400"></i> modelin kutusu, <i style="border-color:#ff3b30"></i> pay ve en-boy uygulanmış son kutu.</div>
+    <div class="legend">Soldaki görüntüde <i style="border-color:#ffd400"></i> modelin kutusu, <i style="border-color:#ff3b30"></i> pay ve en-boy uygulanmış son kutu.
+        "Pay" ve "En-boy" ağız içi fotoğraflara, "Yüz payı" ve "Yüz en-boy" profil ve önden yüz fotoğraflarına uygulanır.</div>
     <div id="out"></div>
 
     <script>
@@ -79,7 +88,7 @@ slot: profile_repose (face in profile), frontal_repose (face from the front, lip
 box: [x0, y0, x1, y1] as fractions of the image width and height (0..1, x to the right, y downward), the SMALLEST box that still contains everything clinically needed, measured on the image exactly as shown (do not rotate or mirror it, even if it is sideways or upside down):
 - intraoral front and side views (labial_anterior, buccal): every visible tooth including the last molars on both sides, the gums above and below them and the full height of the teeth; retractor blades and lips may be cut.
 - occlusal mirror views: the whole dental arch as seen in the mirror, including the last molars; the mirror edge and the lips may be cut.
-- face views: the whole head from above the hair to below the chin, face centred; the shoulders may be cut.
+- face views (frontal and profile): a portrait framing like a passport photo with more room. Top edge slightly above the top of the hair; bottom edge at the upper chest, just below the collar line, so the neck and the top of the clothing are included (do not stop at the chin); side edges a little outside the ears on both sides (for a profile view: from behind the head to a little in front of the face). The head fills most of the frame and is centred horizontally.
 The software adds its own safety margin, so do not add margin yourself, but never exclude any tooth.
 
 confidence: 0..1 for the box. note: a short remark in Turkish only when the photo is unusable for its slot or the box is uncertain, otherwise an empty string.
@@ -92,7 +101,7 @@ Answer with JSON only, no prose: {"items":[{"index":1,"slot":"labial_anterior","
         let photos = [];
         let lastItems = null;
 
-        ['key', 'model', 'margin', 'ratio'].forEach(function (id) {
+        ['key', 'model', 'margin', 'ratio', 'faceMargin', 'faceRatio'].forEach(function (id) {
             try {
                 const saved = localStorage.getItem('crop-trial-' + id);
                 if (saved !== null) $(id).value = saved;
@@ -221,10 +230,14 @@ Answer with JSON only, no prose: {"items":[{"index":1,"slot":"labial_anterior","
             out.textContent = '';
             const marginPct = Number($('margin').value) || 0;
             const ratio = Number($('ratio').value) || 0;
+            const faceMarginPct = Number($('faceMargin').value) || 0;
+            const faceRatio = Number($('faceRatio').value) || 0;
             photos.forEach(function (p, i) {
                 const item = items.find(function (it) { return Number(it.index) === i + 1; }) || {};
                 const modelBox = Array.isArray(item.box) && item.box.length === 4 ? item.box : null;
-                const box = modelBox ? finalBox(modelBox, marginPct, ratio, p.w, p.h) : null;
+                // Yüz fotoğrafları (profil, önden) kendi payı ve en-boyuyla; ağız içi genel ayarla.
+                const face = /^(profile|frontal)_/.test(item.slot || '');
+                const box = modelBox ? finalBox(modelBox, face ? faceMarginPct : marginPct, face ? faceRatio : ratio, p.w, p.h) : null;
 
                 const card = document.createElement('div');
                 card.className = 'card';
