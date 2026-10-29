@@ -1,6 +1,6 @@
 {
-  "version": "0.31.0",
-  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.31.0.zip",
-  "notes": "Yön kararlı ve kırpma sırasında uygulanıyor: bağımsız tek fotoğraflık okumalar, tutarlılık denetimi, iki okuma + Opus hakem, çekim serisi çoğunluğu; kare IDS'e dik yüklenir, sonradan model okuması ve IDS döndürmesi yalnız belirsiz karelerde. Üst/alt oklüzal oy çokluğuyla.",
-  "at": "2026-10-29T19:49:40.142Z"
+  "version": "0.32.0",
+  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.32.0.zip",
+  "notes": "Yeni akış: orijinaller IDS'e olduğu gibi bırakılır, IDS yerleştirir; yükleme bitince yön orijinalden okunur, her yuva yuvası bilinerek kırpılıp döndürülür ve Değiştir ile yuvaya konur. Kırpma-önce akışı ve onun yamaları (uzlaştırma, yan/çene/yön oylaması) kaldırıldı.",
+  "at": "2026-10-29T21:02:31.171Z"
 }
