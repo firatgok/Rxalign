@@ -96,6 +96,7 @@ Do not add extra margin beyond these rules, but never exclude any tooth.
 
 Measurements, for labial_anterior and buccal views only (0 for every number and an empty arms list for all other slots), as fractions of the image exactly as shown. The software derives the final frame and the rotation from these measurements, so they matter more than the box itself:
 - plane_x0, plane_y0, plane_x1, plane_y1: two points on the occlusal plane, the line along which the upper and lower teeth meet: the first at the left end of the visible dentition (on the last tooth on the left), the second at the right end. The software rotates the image so that this line becomes level, so place both points exactly on the contact line between the upper and lower teeth; a small vertical error changes the rotation. Give them even if the photo is sideways or upside down.
+- midline_x: for labial_anterior only (0 for every other slot): the x of the dental midline, the contact between the two upper central incisors.
 - teeth_top, teeth_bottom, teeth_left, teeth_right: the bounding box of all visible tooth crowns (enamel only, gums excluded): the y of the highest and of the lowest point, the x of the leftmost and of the rightmost point.
 - lip_upper_y, lip_lower_y: the y of the fold where the inner surface of the upper lip meets the gum above the upper teeth (the deepest point of the upper vestibule, usually a change of colour above the pale attached gum), and of the fold where the inner surface of the lower lip meets the gum below the lower teeth; 0 when that fold is not visible.
 - arms: one entry per visible retractor arm, each with x, top and bottom: x is where the arm is measured, near its end closest to the teeth where its full thickness is visible; top and bottom are the y of the upper and lower edges of the arm at that x (its thickness there). A front view normally shows four arms (left and right retractor, upper and lower arm each), a side view at least the two arms of the near-side retractor. Measure every arm you can see; leave the list empty when no retractor is visible.
@@ -289,11 +290,33 @@ Answer with JSON only, no prose: {"items":[{"index":1,"slot":"buccal_right","x0"
                     x0 = Math.min(x0, rotX(tl, pivot[1]) - SETTINGS.teethPadX);
                     x1 = Math.max(x1, rotX(tr, pivot[1]) + SETTINGS.teethPadX);
                 }
-                // Döndürme köşeleri görüntü dışına taşırırsa o yan içeri çekilir (siyah köşe kalmasın; en çok %25).
+                // Önden ağız içi: orta hat (üst orta kesiciler arası; ölçülemezse diş sınırının ortası) ortada, dişlerle çerçeve
+                // arasında sağ ve solda eşit mesafe. Çerçeve orta hat etrafında simetrik yapılır (geniş olan yan esas alınır, diş
+                // kesilmez); orta hat görüntü kenarına yakınsa ya da diş sığmıyorsa simetri uygulanmaz.
+                let symmetric = false;
+                if (/^labial_/.test(item.slot || '')) {
+                    const midRaw = num(item.midline_x);
+                    const c = midRaw > 0 && midRaw < 1 ? rotX(midRaw, pivot[1]) : (tr > tl ? rotX((tl + tr) / 2, pivot[1]) : (x0 + x1) / 2);
+                    let hw = Math.max(c - x0, x1 - c);
+                    const fits = Math.min(c, 1 - c);
+                    const need = tr > tl ? Math.max(c - rotX(tl, pivot[1]), rotX(tr, pivot[1]) - c) + SETTINGS.teethPadX : 0;
+                    if (c > 0 && c < 1 && fits >= need && fits > 0.1) {
+                        hw = Math.min(hw, fits);
+                        x0 = c - hw;
+                        x1 = c + hw;
+                        symmetric = true;
+                    }
+                }
+                // Döndürme köşeleri görüntü dışına taşırırsa yanlar içeri çekilir (siyah köşe kalmasın; en çok %25); simetrik
+                // çerçevede iki yan birlikte çekilir.
                 if (tilt) {
                     const limit0 = x0 + (x1 - x0) * 0.25, limit1 = x1 - (x1 - x0) * 0.25;
-                    while (x0 < limit0 && !(inside(x0, y0) && inside(x0, y1))) x0 += 0.003;
-                    while (x1 > limit1 && !(inside(x1, y0) && inside(x1, y1))) x1 -= 0.003;
+                    if (symmetric) {
+                        while (x0 < limit0 && !(inside(x0, y0) && inside(x0, y1) && inside(x1, y0) && inside(x1, y1))) { x0 += 0.003; x1 -= 0.003; }
+                    } else {
+                        while (x0 < limit0 && !(inside(x0, y0) && inside(x0, y1))) x0 += 0.003;
+                        while (x1 > limit1 && !(inside(x1, y0) && inside(x1, y1))) x1 -= 0.003;
+                    }
                 }
             }
             if (!(y1 - y0 > 0.1) || !(x1 - x0 > 0.2)) { x0 = box[0]; y0 = box[1]; x1 = box[2]; y1 = box[3]; }
