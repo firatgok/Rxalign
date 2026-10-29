@@ -1,6 +1,6 @@
 {
-  "version": "0.28.1",
-  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.28.1.zip",
-  "notes": "Klasörde 30'dan fazla fotoğraf varsa son kareler (oklüzaller) hiç kırpılmıyordu: sınır 80'e çıktı; sınırı aşan olursa panele not düşer. 0.28.0'daki kendiliğinden kurulum dahil.",
-  "at": "2026-10-29T16:52:50.272Z"
+  "version": "0.28.2",
+  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.28.2.zip",
+  "notes": "Hız: kırpma modeli orta effort + yavaş çağrıya ikinci istek + oklüzal ölçüm Sonnet ile (13 karede 74 sn yerine ~21 sn). Dik tutulmuş ön kare oklüzal sanılıp ince şeride kırpılmıyor; dişleri saran dar çerçeve genişletiliyor.",
+  "at": "2026-10-29T17:25:57.947Z"
 }
