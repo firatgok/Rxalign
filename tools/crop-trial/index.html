@@ -95,6 +95,7 @@ Crop box: x0, y0, x1, y1 as fractions of the image width and height (0..1, x to 
 Do not add extra margin beyond these rules, but never exclude any tooth.
 
 Measurements, for labial_anterior and buccal views only (0 for every number and an empty arms list for all other slots), except teeth_top, teeth_bottom, teeth_left and teeth_right, which are also required for occlusal views and used there to crop the picture tightly around the arch, as fractions of the image exactly as shown. The software derives the final frame and the rotation from these measurements, so they matter more than the box itself:
+- view_rotation: for labial_anterior and buccal views only (0 for every other slot): 0 when the occlusal plane already runs roughly horizontally in the picture as shown (even if it is upside down), otherwise 90 or 270 (either one) when the photo is held sideways so the occlusal plane runs vertically. When it is 90 or 270, give ALL the measurements below and also the box x0, y0, x1, y1 in the coordinates of the picture after turning it by that many degrees clockwise (so that the plane runs horizontally), as fractions of that turned picture's width and height; the software turns them back. Do not rotate for any other reason.
 - plane_x0, plane_y0, plane_x1, plane_y1: two points on the occlusal plane, the line along which the upper and lower teeth meet: the first at the left end of the visible dentition (on the last tooth on the left), the second at the right end. The software rotates the image so that this line becomes level, so place both points exactly on the contact line between the upper and lower teeth; a small vertical error changes the rotation. Give them even if the photo is sideways or upside down.
 - midline_x: for labial_anterior only (0 for every other slot): the x of the dental midline, the contact between the two upper central incisors.
 - teeth_top, teeth_bottom, teeth_left, teeth_right: the bounding box of all visible tooth crowns (enamel only, gums excluded): the y of the highest and of the lowest point, the x of the leftmost and of the rightmost point.
@@ -338,6 +339,23 @@ Answer with JSON only, no prose: {"items":[{"index":1,"slot":"buccal_right","x0"
             return [l, t, r, b];
         }
 
+        // Yan duran (dik tutulmuş) kare: model ölçümleri ve kutuyu düzlemi yatay yapan döndürülmüş karede verir (view_rotation 90/270);
+        // çerçeve orada hesaplanır, sonuç ham kareye geri çevrilir. Çıkan kutu ham kare eksenlerindedir; eğim (tilt) aynı yönde ve
+        // pivot ham karede olduğundan cropOne değişmez. Ham kareye ait olmayan ayrıntılar (düzlem, kollar vb.) boşaltılır.
+        function intraoralFrameAny(item, w, h) {
+            const rot = Number(item.view_rotation) || 0;
+            if (rot !== 90 && rot !== 270) return intraoralFrame(item, w, h);
+            const f = intraoralFrame(item, h, w);
+            const back = function (x, y) { return rot === 90 ? [y, 1 - x] : [1 - y, x]; };
+            const a = back(f.box[0], f.box[1]);
+            const b = back(f.box[2], f.box[3]);
+            f.box = [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[0], b[0]), Math.max(a[1], b[1])];
+            f.pivot = back(f.pivot[0], f.pivot[1]);
+            f.plane = null; f.teeth = null; f.lips = null; f.sides = null; f.arms = [];
+            f.rotated = rot;
+            return f;
+        }
+
         function drawOverlay(canvas, p, modelBox, frame, box) {
             const scale = Math.min(1, 480 / Math.max(p.w, p.h));
             canvas.width = Math.round(p.w * scale);
@@ -455,7 +473,7 @@ Answer with JSON only, no prose: {"items":[{"index":1,"slot":"buccal_right","x0"
                 const modelBox = raw.every(isFinite) && raw[2] > raw[0] && raw[3] > raw[1] ? raw : null;
                 // Yüz fotoğrafları (profil, önden) kendi payı ve en-boyuyla; ön/yan ağız içi ölçümlerden; oklüzal modelin kutusu.
                 const face = /^(profile|frontal)_/.test(item.slot || '');
-                const frame = modelBox && INTRAORAL.test(item.slot || '') ? intraoralFrame(item, p.w, p.h) : null;
+                const frame = modelBox && INTRAORAL.test(item.slot || '') ? intraoralFrameAny(item, p.w, p.h) : null;
                 lastFrames.push(frame);
                 const occ = /^occlussal_/.test(item.slot || "") ? occlusalBox(item) : null;
                 const box = modelBox ? finalBox(frame ? frame.box : (occ || modelBox), face ? faceMarginPct : (occ ? 10 : marginPct), face ? faceRatio : ratio, p.w, p.h) : null;
