@@ -1,6 +1,6 @@
 {
-  "version": "0.29.0",
-  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.29.0.zip",
-  "notes": "Panelde uyarılı/hatalı yuva satırlarında ↻ 90°/180°/270° döndürme düğmeleri ve \"sağ/sol şüpheli\" uyarısında \"Karşı yuvaya taşı\" düğmesi.",
-  "at": "2026-10-29T18:08:29.909Z"
+  "version": "0.29.1",
+  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.29.1.zip",
+  "notes": "Sağ/sol bukkal yer değiştirme: aynı görünümün 2-3 benzer çekimi olan klasörlerde dosya eşleşmesi tek kare vermediği için yapılamıyordu; artık gruptan en iyi kare alınır (Karşı yuvaya taşı düğmesi dahil).",
+  "at": "2026-10-29T18:16:28.697Z"
 }
