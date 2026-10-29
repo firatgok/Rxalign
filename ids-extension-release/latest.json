@@ -1,6 +1,6 @@
 {
-  "version": "0.30.1",
-  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.30.1.zip",
-  "notes": "Notlar artık durum metnine dökülmüyor: kapalı bir ⓘ Notlar düğmesinin arkasında, tıklanınca açılıyor.",
-  "at": "2026-10-29T18:57:48.916Z"
+  "version": "0.31.0",
+  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.31.0.zip",
+  "notes": "Yön kararlı ve kırpma sırasında uygulanıyor: bağımsız tek fotoğraflık okumalar, tutarlılık denetimi, iki okuma + Opus hakem, çekim serisi çoğunluğu; kare IDS'e dik yüklenir, sonradan model okuması ve IDS döndürmesi yalnız belirsiz karelerde. Üst/alt oklüzal oy çokluğuyla.",
+  "at": "2026-10-29T19:49:40.142Z"
 }
