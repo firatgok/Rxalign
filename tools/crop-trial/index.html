@@ -48,7 +48,7 @@
             </select>
         </label>
         <label>Pay (%) <input type="number" id="margin" value="0" min="0" max="40"></label>
-        <label title="Ekartör kolunun ne kadarı karede kalsın (50 = yarısı)">Ekartör kolu içeride (%) <input type="number" id="keep" value="50" min="0" max="100" step="5"></label>
+        <label title="Ekartör kolunun ne kadarı karede kalsın (30 = yaklaşık üçte biri; yarısı için 50)">Ekartör kolu içeride (%) <input type="number" id="keep" value="30" min="0" max="100" step="5"></label>
         <label>En-boy
             <select id="ratio">
                 <option value="">Serbest</option>
@@ -208,7 +208,7 @@ Answer with JSON only, no prose: {"items":[{"index":1,"slot":"buccal_right","x0"
         //                        kolun dişe bakan kenarından retractorKeep oranında dışarıda; döndürülmüş karede y.
         //   teeth_top/bottom   : diş tacı sınırı → emniyet, hiçbir diş kesilmez.
         // Düzlem 45°'den eğikse (kare yan duruyor) ölçümlere güvenilmez, modelin kutusu olduğu gibi kalır.
-        const SETTINGS = { retractorKeep: 0.5, balance: 1.4, teethPad: 0.015, teethPadX: 0.01, minTilt: 0.3, maxTilt: 20 };
+        const SETTINGS = { retractorKeep: 0.3, balance: 1.4, teethPad: 0.015, teethPadX: 0.01, minTilt: 0.3, maxTilt: 20 };
         const INTRAORAL = /^(labial|buccal)_/;
         function num(v) { const n = Number(v); return isFinite(n) ? n : 0; }
         function intraoralFrame(item, w, h) {
