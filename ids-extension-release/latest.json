@@ -1,6 +1,6 @@
 {
-  "version": "0.28.0",
-  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.28.0.zip",
-  "notes": "İndirilen güncelleme artık Kur beklemeden kendiliğinden kurulur (IDS sekmelerinde panel 1 dk boştaysa ve form doldurulmuyorsa); seçeneklerden kapatılabilir",
-  "at": "2026-10-29T16:28:50.926Z"
+  "version": "0.28.1",
+  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.28.1.zip",
+  "notes": "Klasörde 30'dan fazla fotoğraf varsa son kareler (oklüzaller) hiç kırpılmıyordu: sınır 80'e çıktı; sınırı aşan olursa panele not düşer. 0.28.0'daki kendiliğinden kurulum dahil.",
+  "at": "2026-10-29T16:52:50.272Z"
 }
