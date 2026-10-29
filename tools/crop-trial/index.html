@@ -47,7 +47,7 @@
                 <option value="claude-haiku-5-5">claude-haiku-5-5</option>
             </select>
         </label>
-        <label>Pay (%) <input type="number" id="margin" value="8" min="0" max="40"></label>
+        <label>Pay (%) <input type="number" id="margin" value="0" min="0" max="40"></label>
         <label>En-boy
             <select id="ratio">
                 <option value="">Serbest</option>
@@ -86,14 +86,16 @@
 slot: profile_repose (face in profile), frontal_repose (face from the front, lips at rest), frontal_smiling (face from the front, smiling), occlussal_upper (upper arch seen in a mirror, biting surfaces), occlussal_lower (lower arch in a mirror), buccal_right (teeth seen from the patient's right cheek side), buccal_left (from the left cheek side), labial_anterior (front view of both arches with cheek retractors), other (anything else: scans, duplicates, non-clinical).
 
 box: [x0, y0, x1, y1] as fractions of the image width and height (0..1, x to the right, y downward), the SMALLEST box that still contains everything clinically needed, measured on the image exactly as shown (do not rotate or mirror it, even if it is sideways or upside down):
-- intraoral front and side views (labial_anterior, buccal): every visible tooth including the last molars on both sides, the gums above and below them and the full height of the teeth; retractor blades and lips may be cut.
-- occlusal mirror views: the whole dental arch as seen in the mirror, including the last molars; the mirror edge and the lips may be cut.
+- intraoral front and side views (labial_anterior, buccal): sideways, every visible tooth including the last molars on both sides (the outer curve of the cheek retractors may be cut). Vertically, use the C-shaped plastic cheek retractors as the frame: the TOP edge of the box crosses the upper arms (tips) of the retractors at half their height and the BOTTOM edge crosses the lower arms at half their height, so that half of each retractor arm stays inside the picture; the gums and the full height of the teeth are always inside. If no retractor is visible, include the teeth and gums up to the edges of the lips.
+- occlusal mirror views: the whole dental arch as seen in the mirror, including the last molars; where retractor arms are visible apply the same rule (the box edge crosses them at half their height); the mirror edge and the lips may be cut.
 - face views (frontal and profile): a portrait framing like a passport photo with more room. Top edge slightly above the top of the hair; bottom edge at the upper chest, just below the collar line, so the neck and the top of the clothing are included (do not stop at the chin); side edges a little outside the ears on both sides (for a profile view: from behind the head to a little in front of the face). The head fills most of the frame and is centred horizontally.
-The software adds its own safety margin, so do not add margin yourself, but never exclude any tooth.
+Do not add extra margin beyond these rules, but never exclude any tooth.
+
+tilt: for labial_anterior and buccal views only, the angle in degrees between the occlusal plane (the line along which the upper and lower teeth meet) and the horizontal, measured on the image as shown: positive when that line runs downward towards the right (clockwise from horizontal), negative when it runs upward towards the right. The software rotates the image by -tilt before cropping so the plane becomes level. If the photo is turned by 90 degrees so the plane runs vertically, give its deviation from vertical with the same sign rule. Give 0 when the plane is level within half a degree, and 0 for every other slot.
 
 confidence: 0..1 for the box. note: a short remark in Turkish only when the photo is unusable for its slot or the box is uncertain, otherwise an empty string.
 
-Answer with JSON only, no prose: {"items":[{"index":1,"slot":"labial_anterior","box":[0.12,0.3,0.9,0.72],"confidence":0.9,"note":""}]}`;
+Answer with JSON only, no prose: {"items":[{"index":1,"slot":"labial_anterior","box":[0.12,0.3,0.9,0.72],"tilt":2.5,"confidence":0.9,"note":""}]}`;
 
         const $ = (id) => document.getElementById(id);
         const status = $('status');
@@ -202,21 +204,39 @@ Answer with JSON only, no prose: {"items":[{"index":1,"slot":"labial_anterior","
             rect(box, '#ff3b30', false);
         }
 
-        function drawCrop(canvas, p, box) {
+        // Kutuyu (gerekirse -tilt kadar döndürerek) hedef tuvale çizer; tilt: oklüzal düzlemin eğimi (derece).
+        function drawBox(ctx, p, crop, outW, outH) {
+            const scale = outW / crop.sw;
+            if (crop.tilt) {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, outW, outH);
+                ctx.translate(outW / 2, outH / 2);
+                ctx.rotate(-crop.tilt * Math.PI / 180);
+                ctx.scale(scale, scale);
+                ctx.translate(-(crop.sx + crop.sw / 2), -(crop.sy + crop.sh / 2));
+                ctx.drawImage(p.bitmap, 0, 0);
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+            } else {
+                ctx.drawImage(p.bitmap, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, outW, outH);
+            }
+        }
+
+        function drawCrop(canvas, p, box, tilt) {
             const sx = Math.round(box[0] * p.w), sy = Math.round(box[1] * p.h);
             const sw = Math.max(1, Math.round((box[2] - box[0]) * p.w)), sh = Math.max(1, Math.round((box[3] - box[1]) * p.h));
             const scale = Math.min(1, 480 / Math.max(sw, sh));
             canvas.width = Math.round(sw * scale);
             canvas.height = Math.round(sh * scale);
-            canvas.getContext('2d').drawImage(p.bitmap, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
-            return { sx, sy, sw, sh };
+            const crop = { sx, sy, sw, sh, tilt: tilt || 0 };
+            drawBox(canvas.getContext('2d'), p, crop, canvas.width, canvas.height);
+            return crop;
         }
 
         function download(p, crop) {
             const c = document.createElement('canvas');
             c.width = crop.sw;
             c.height = crop.sh;
-            c.getContext('2d').drawImage(p.bitmap, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, crop.sw, crop.sh);
+            drawBox(c.getContext('2d'), p, crop, crop.sw, crop.sh);
             c.toBlob(function (blob) {
                 const a = document.createElement('a');
                 a.href = URL.createObjectURL(blob);
@@ -250,8 +270,11 @@ Answer with JSON only, no prose: {"items":[{"index":1,"slot":"labial_anterior","
                 const mid = document.createElement('div');
                 const cropped = document.createElement('canvas');
                 let crop = null;
+                // Eğim düzeltmesi yalnızca ön ve yan ağız içi karelerde, en çok 20°.
+                let tilt = /^(labial|buccal)_/.test(item.slot || '') ? Number(item.tilt) || 0 : 0;
+                if (Math.abs(tilt) < 0.5 || Math.abs(tilt) > 20) tilt = 0;
                 if (box) {
-                    crop = drawCrop(cropped, p, box);
+                    crop = drawCrop(cropped, p, box, tilt);
                     mid.appendChild(cropped);
                     mid.insertAdjacentHTML('beforeend', '<div class="cap">Kırpılmış ' + crop.sw + '×' + crop.sh + ' (%' + Math.round(crop.sw * crop.sh / (p.w * p.h) * 100) + ')</div>');
                 } else {
@@ -264,6 +287,7 @@ Answer with JSON only, no prose: {"items":[{"index":1,"slot":"labial_anterior","
                     '<div class="meta">Güven: <b>' + (item.confidence != null ? Math.round(item.confidence * 100) + '%' : '-') + '</b><br>' +
                     'Model kutusu: ' + (modelBox ? modelBox.map(function (v) { return Number(v).toFixed(2); }).join(', ') : '-') + '<br>' +
                     'Son kutu: ' + (box ? box.map(function (v) { return v.toFixed(2); }).join(', ') : '-') +
+                    (tilt ? '<br>Oklüzal düzlem: ' + tilt.toFixed(1) + '° düzeltildi' : '') +
                     (item.note ? '<br><span class="note">' + item.note + '</span>' : '') + '</div>';
                 if (crop) {
                     const button = document.createElement('button');
