@@ -1,6 +1,6 @@
 {
-  "version": "0.27.8",
-  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.27.8.zip",
-  "notes": "Dik tutulmuş (yan duran) ağız içi kareler de ölçümle kırpılır",
-  "at": "2026-10-29T14:16:35.691Z"
+  "version": "0.27.9",
+  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.27.9.zip",
+  "notes": "Oklüzal kareler için diş sırası kutusu ayrı ve güçlü bir modelle okunur (uzaktan çekilmiş karelerde de sıkı kırpma); kutu tüm kareyi kaplarsa panele not düşer",
+  "at": "2026-10-29T16:16:13.471Z"
 }
