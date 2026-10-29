@@ -1,6 +1,6 @@
 {
-  "version": "0.27.4",
-  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.27.4.zip",
-  "notes": "Hiçbir şey silinmez: IDS yerleşimine dokunulmaz, yalnız boş yuva doldurulur",
-  "at": "2026-10-29T11:42:59.686Z"
+  "version": "0.27.5",
+  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.27.5.zip",
+  "notes": "Yüz fotoğrafları biraz daha geniş kırpılır (her kenardan %10)",
+  "at": "2026-10-29T11:44:51.621Z"
 }
