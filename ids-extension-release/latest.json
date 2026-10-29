@@ -1,6 +1,6 @@
 {
-  "version": "0.27.9",
-  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.27.9.zip",
-  "notes": "Oklüzal kareler için diş sırası kutusu ayrı ve güçlü bir modelle okunur (uzaktan çekilmiş karelerde de sıkı kırpma); kutu tüm kareyi kaplarsa panele not düşer",
-  "at": "2026-10-29T16:16:13.471Z"
+  "version": "0.28.0",
+  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.28.0.zip",
+  "notes": "İndirilen güncelleme artık Kur beklemeden kendiliğinden kurulur (IDS sekmelerinde panel 1 dk boştaysa ve form doldurulmuyorsa); seçeneklerden kapatılabilir",
+  "at": "2026-10-29T16:28:50.926Z"
 }
