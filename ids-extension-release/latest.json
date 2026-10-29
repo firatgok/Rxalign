@@ -1,6 +1,6 @@
 {
-  "version": "0.27.1",
-  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.27.1.zip",
-  "notes": "Sağ/sol bukkal yön okumasından hesaplanır, kopya yükleme ve yanlış yerleşim giderildi",
-  "at": "2026-10-29T11:20:57.537Z"
+  "version": "0.27.2",
+  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.27.2.zip",
+  "notes": "Aynı tür içindeki sağ/sol ve üst/alt yuvalara dokunulmaz; yalnız farklı türde yanlış yerleşim düzeltilir",
+  "at": "2026-10-29T11:34:26.297Z"
 }
