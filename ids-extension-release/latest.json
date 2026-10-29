@@ -1,6 +1,6 @@
 {
-  "version": "0.32.2",
-  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.32.2.zip",
-  "notes": "Ağız içi kareler yön bilindikten sonra dikleştirilip ölçülür ve dik karede kırpılır: yan duran bukkallerde ekartör artık çerçevede kalmıyor.",
-  "at": "2026-10-29T21:57:43.305Z"
+  "version": "0.32.3",
+  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.32.3.zip",
+  "notes": "0.32.3: Yanlış alarmlar kalktı: 'ön dişlerin yönü okunamadı' artık not; tek bukkalde 'sağ/sol şüpheli' ve 'üst çenenin yönü okunamadı' ile yön okumasındaki 'tür farklı' çelişkisi, sınıflandırma ve IDS yuvayı doğruluyorsa (2'ye 1) uyarı değil not. Hız: yüz kareleri ağız içi yön okumaları sürerken kırpılıp yuvaya konuyor. Tüm yerleşen kareler tek çağrıda etiketleniyor.",
+  "at": "2026-10-29T23:15:50.932Z"
 }
