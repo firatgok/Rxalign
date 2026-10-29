@@ -1,6 +1,6 @@
 {
-  "version": "0.25.0",
-  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.25.0.zip",
-  "notes": "Ekartör kolu ve oklüzal düzlem eğimi ölçülüp hesaplanıyor",
-  "at": "2026-10-29T09:49:24.808Z"
+  "version": "0.26.0",
+  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.26.0.zip",
+  "notes": "Yan kenarlar ve denge kuralı, boş kalan yuvaya doğrudan yükleme",
+  "at": "2026-10-29T10:09:52.658Z"
 }
