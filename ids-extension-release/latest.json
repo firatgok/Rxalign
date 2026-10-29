@@ -1,6 +1,6 @@
 {
-  "version": "0.32.0",
-  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.32.0.zip",
-  "notes": "Yeni akış: orijinaller IDS'e olduğu gibi bırakılır, IDS yerleştirir; yükleme bitince yön orijinalden okunur, her yuva yuvası bilinerek kırpılıp döndürülür ve Değiştir ile yuvaya konur. Kırpma-önce akışı ve onun yamaları (uzlaştırma, yan/çene/yön oylaması) kaldırıldı.",
-  "at": "2026-10-29T21:02:31.171Z"
+  "version": "0.32.1",
+  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.32.1.zip",
+  "notes": "Yön okuması kararlı okuyucuyla (bağımsız tek kare okumaları, tutarlılık denetimi, Opus hakem); yüz yuvaları da doğrulanır (gülümseme/profil karışıklığı düzeltilir); aynı yana okunan çiftlerde kendiliğinden değiştirme yok, uyarı; daha önce düzeltilmiş yuvalar sayfa yenilense de bir daha döndürülmez.",
+  "at": "2026-10-29T21:44:58.860Z"
 }
