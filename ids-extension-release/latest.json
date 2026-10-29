@@ -1,6 +1,6 @@
 {
-  "version": "0.24.0",
-  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.24.0.zip",
-  "notes": "Ekartör kollarının yarısı içeride, oklüzal düzlem yere paralel",
-  "at": "2026-10-29T08:31:03.561Z"
+  "version": "0.25.0",
+  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.25.0.zip",
+  "notes": "Ekartör kolu ve oklüzal düzlem eğimi ölçülüp hesaplanıyor",
+  "at": "2026-10-29T09:49:24.808Z"
 }
