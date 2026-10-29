@@ -72,7 +72,7 @@
     </div>
     <div id="status"></div>
     <div class="legend">Soldaki görüntüde <i style="border-color:#ffd400"></i> modelin kutusu, <i style="border-color:#ff3b30"></i> son kutu (eğim düzeltilmişse döndürülmüş),
-        <i style="border-color:#00d4ff"></i> oklüzal düzlem, <i style="border-color:#2ecc40"></i> ekartör kolu kalınlığı ve kesme noktası, <i style="border-color:#ff2fd6"></i> diş sınırı (modelin ölçümleri).
+        <i style="border-color:#00d4ff"></i> oklüzal düzlem, <i style="border-color:#2ecc40"></i> ekartör kolu kalınlığı ve kesme noktası, <i style="border-color:#ff2fd6"></i> diş sınırı, <i style="border-color:#ff8ad8"></i> dudak kıvrımı, <i style="border-color:#ff9f1a"></i> yan kenar adayları (C'nin iç ucu düz, karşı ekartör kesikli) — modelin ölçümleri.
         Ön ve yan ağız içi karelerde üst/alt kenar ekartör kollarından, eğim düzlemden hesaplanır; "Ekartör kolu içeride" modeli yeniden çağırmadan uygulanır.
         "Pay" ve "En-boy" ağız içi fotoğraflara, "Yüz payı" ve "Yüz en-boy" profil ve önden yüz fotoğraflarına uygulanır.</div>
     <div id="out"></div>
@@ -89,19 +89,22 @@
 slot: profile_repose (face in profile), frontal_repose (face from the front, lips at rest), frontal_smiling (face from the front, smiling), occlussal_upper (upper arch seen in a mirror, biting surfaces), occlussal_lower (lower arch in a mirror), buccal_right (teeth seen from the patient's right cheek side), buccal_left (from the left cheek side), labial_anterior (front view of both arches with cheek retractors), other (anything else: scans, duplicates, non-clinical).
 
 Crop box: x0, y0, x1, y1 as fractions of the image width and height (0..1, x to the right, y downward), the SMALLEST box that still contains everything clinically needed, measured on the image exactly as shown (do not rotate or mirror it, even if it is sideways or upside down):
-- intraoral front and side views (labial_anterior, buccal): sideways, every visible tooth including the last molars on both sides (the outer curve of the cheek retractors may be cut). Vertically the C-shaped plastic cheek retractors set the frame: the top edge of the box crosses the upper retractor arms at half their thickness and the bottom edge crosses the lower arms at half their thickness, so that half of each arm is inside the picture and the lips are outside; the gums and the full height of the teeth are always inside. If no retractor is visible, include the teeth and gums up to the edges of the lips.
+- intraoral front and side views (labial_anterior, buccal): sideways, the box starts at the innermost point of the concave inner curve of the C-shaped cheek retractor on each side, so the curved back of the C and the cheek beyond it are outside; in a side view, where the opposite retractor shows beyond the front teeth, that edge moves towards the teeth until the opposite retractor is excluded. Every tooth, including the last molars, always stays inside. Vertically the retractor arms set the frame: the top edge crosses the upper retractor arms at half their thickness and the bottom edge crosses the lower arms at half their thickness, so half of each arm is inside the picture and the lips are outside; if the parts above and below the occlusal plane are very unequal, the longer side ends at the fold where the lip meets the gum instead of at the retractor arm. The gums and the full height of the teeth are always inside. If no retractor is visible, include the teeth and gums up to the edges of the lips.
 - occlusal mirror views: the whole dental arch as seen in the mirror, including the last molars; where retractor arms are visible apply the same rule (the box edge crosses them at half their thickness); the mirror edge and the lips may be cut.
 - face views (frontal and profile): a portrait framing like a passport photo with more room. Top edge slightly above the top of the hair; bottom edge at the upper chest, just below the collar line, so the neck and the top of the clothing are included (do not stop at the chin); side edges a little outside the ears on both sides (for a profile view: from behind the head to a little in front of the face). The head fills most of the frame and is centred horizontally.
 Do not add extra margin beyond these rules, but never exclude any tooth.
 
-Measurements, for labial_anterior and buccal views only (0 for every number and an empty arms list for all other slots), as fractions of the image exactly as shown:
+Measurements, for labial_anterior and buccal views only (0 for every number and an empty arms list for all other slots), as fractions of the image exactly as shown. The software derives the final frame and the rotation from these measurements, so they matter more than the box itself:
 - plane_x0, plane_y0, plane_x1, plane_y1: two points on the occlusal plane, the line along which the upper and lower teeth meet: the first at the left end of the visible dentition (on the last tooth on the left), the second at the right end. The software rotates the image so that this line becomes level, so place both points exactly on the contact line between the upper and lower teeth; a small vertical error changes the rotation. Give them even if the photo is sideways or upside down.
-- teeth_top, teeth_bottom: the y of the highest point of any tooth crown and of the lowest point of any tooth crown in the picture (enamel only, gums excluded).
-- arms: one entry per visible retractor arm, each with x, top and bottom: x is where the arm is measured, near its end closest to the teeth where its full thickness is visible; top and bottom are the y of the upper and lower edges of the arm at that x (its thickness there). A front view normally shows four arms (left and right retractor, upper and lower arm each), a side view at least the two arms of the near-side retractor. Measure every arm you can see; leave the list empty when no retractor is visible. The software derives the top and bottom edges of the crop from these arm measurements, so measure them more carefully than y0 and y1.
+- teeth_top, teeth_bottom, teeth_left, teeth_right: the bounding box of all visible tooth crowns (enamel only, gums excluded): the y of the highest and of the lowest point, the x of the leftmost and of the rightmost point.
+- lip_upper_y, lip_lower_y: the y of the fold where the inner surface of the upper lip meets the gum above the upper teeth (the deepest point of the upper vestibule, usually a change of colour above the pale attached gum), and of the fold where the inner surface of the lower lip meets the gum below the lower teeth; 0 when that fold is not visible.
+- arms: one entry per visible retractor arm, each with x, top and bottom: x is where the arm is measured, near its end closest to the teeth where its full thickness is visible; top and bottom are the y of the upper and lower edges of the arm at that x (its thickness there). A front view normally shows four arms (left and right retractor, upper and lower arm each), a side view at least the two arms of the near-side retractor. Measure every arm you can see; leave the list empty when no retractor is visible.
+- c_left_x, c_right_x: when the curved back of a C-shaped retractor is visible at the left / right side of the picture, the x of the innermost point of its concave inner curve (the point of the inside of the C that is closest to the teeth, at the corner of the mouth); 0 when no retractor back is visible on that side.
+- far_left_x, far_right_x: when a retractor intrudes from the left / right edge without its curved back being visible (in a side view, the opposite retractor seen beyond the front teeth), the x of its edge nearest the teeth, so that a frame ending there excludes it; 0 when there is none.
 
 confidence: 0..1 for the box. note: a short remark in Turkish only when the photo is unusable for its slot or the box is uncertain, otherwise an empty string.
 
-Answer with JSON only, no prose: {"items":[{"index":1,"slot":"labial_anterior","x0":0.12,"y0":0.3,"x1":0.9,"y1":0.72,"plane_x0":0.2,"plane_y0":0.5,"plane_x1":0.85,"plane_y1":0.52,"teeth_top":0.36,"teeth_bottom":0.66,"arms":[{"x":0.18,"top":0.28,"bottom":0.34},{"x":0.18,"top":0.7,"bottom":0.76}],"confidence":0.9,"note":""}]}`;
+Answer with JSON only, no prose: {"items":[{"index":1,"slot":"buccal_right","x0":0.28,"y0":0.3,"x1":0.86,"y1":0.72,"plane_x0":0.3,"plane_y0":0.55,"plane_x1":0.82,"plane_y1":0.53,"teeth_top":0.4,"teeth_bottom":0.66,"teeth_left":0.3,"teeth_right":0.83,"lip_upper_y":0.36,"lip_lower_y":0.7,"arms":[{"x":0.34,"top":0.26,"bottom":0.33},{"x":0.34,"top":0.7,"bottom":0.75}],"c_left_x":0.28,"c_right_x":0,"far_left_x":0,"far_right_x":0.86,"confidence":0.9,"note":""}]}`;
 
         const $ = (id) => document.getElementById(id);
         const status = $('status');
@@ -167,6 +170,7 @@ Answer with JSON only, no prose: {"items":[{"index":1,"slot":"labial_anterior","
                 // Ölçümlü deneme verisi: düzlem 2,5° sağa aşağı, dört ekartör kolu, diş sınırı.
                 return { index: i + 1, slot: 'labial_anterior', x0: 0.12, y0: 0.18, x1: 0.88, y1: 0.82,
                     plane_x0: 0.2, plane_y0: 0.48, plane_x1: 0.8, plane_y1: 0.52, teeth_top: 0.36, teeth_bottom: 0.64,
+                    teeth_left: 0.22, teeth_right: 0.78, lip_upper_y: 0.3, lip_lower_y: 0.7, c_left_x: 0.14, c_right_x: 0.86, far_left_x: 0, far_right_x: 0,
                     arms: [{ x: 0.2, top: 0.22, bottom: 0.3 }, { x: 0.8, top: 0.22, bottom: 0.3 }, { x: 0.2, top: 0.7, bottom: 0.78 }, { x: 0.8, top: 0.7, bottom: 0.78 }],
                     confidence: 0.5, note: 'deneme kutusu ve ölçümleri (model çağrılmadı)' };
             });
@@ -204,7 +208,7 @@ Answer with JSON only, no prose: {"items":[{"index":1,"slot":"labial_anterior","
         //                        kolun dişe bakan kenarından retractorKeep oranında dışarıda; döndürülmüş karede y.
         //   teeth_top/bottom   : diş tacı sınırı → emniyet, hiçbir diş kesilmez.
         // Düzlem 45°'den eğikse (kare yan duruyor) ölçümlere güvenilmez, modelin kutusu olduğu gibi kalır.
-        const SETTINGS = { retractorKeep: 0.5, teethPad: 0.015, minTilt: 0.3, maxTilt: 20 };
+        const SETTINGS = { retractorKeep: 0.5, balance: 1.4, teethPad: 0.015, teethPadX: 0.01, minTilt: 0.3, maxTilt: 20 };
         const INTRAORAL = /^(labial|buccal)_/;
         function num(v) { const n = Number(v); return isFinite(n) ? n : 0; }
         function intraoralFrame(item, w, h) {
@@ -213,21 +217,30 @@ Answer with JSON only, no prose: {"items":[{"index":1,"slot":"labial_anterior","
             let p0 = [num(item.plane_x0), num(item.plane_y0)], p1 = [num(item.plane_x1), num(item.plane_y1)];
             if (p0[0] > p1[0]) { const t = p0; p0 = p1; p1 = t; }
             const dx = (p1[0] - p0[0]) * w, dy = (p1[1] - p0[1]) * h;
-            const hasPlane = dx > 0.05 * w;
+            const hasPlane = Math.hypot(dx, dy) > 0.05 * Math.min(w, h);
             const angle = hasPlane ? Math.atan2(dy, dx) * 180 / Math.PI : 0;
             const sideways = Math.abs(angle) > 45;
             let tilt = sideways ? 0 : angle;
             if (Math.abs(tilt) < SETTINGS.minTilt || Math.abs(tilt) > SETTINGS.maxTilt) tilt = 0;
             const rad = -tilt * Math.PI / 180, cos = Math.cos(rad), sin = Math.sin(rad);
             const px = pivot[0] * w, py = pivot[1] * h;
+            // Noktanın döndürülmüş karedeki x'i / y'si (kesir) ve döndürülmüş karedeki noktanın orijinalde içeride olup olmadığı.
+            const rotX = function (x, y) { const X = x * w - px, Y = y * h - py; return (X * cos - Y * sin + px) / w; };
             const rotY = function (x, y) { const X = x * w - px, Y = y * h - py; return (X * sin + Y * cos + py) / h; };
+            const inside = function (x, y) {
+                const X = x * w - px, Y = y * h - py;
+                const ox = (px + X * cos + Y * sin) / w, oy = (py - X * sin + Y * cos) / h;
+                return ox >= 0 && ox <= 1 && oy >= 0 && oy <= 1;
+            };
             const planeY = function (x) {
                 return hasPlane ? p0[1] + (x - p0[0]) * (p1[1] - p0[1]) / (p1[0] - p0[0]) : pivot[1];
             };
-            let y0 = box[1], y1 = box[3];
+            let x0 = box[0], y0 = box[1], x1 = box[2], y1 = box[3];
             const arms = [];
-            let teeth = null;
+            const used = { lip: '', sides: [] };
+            let teeth = null, lips = null, sides = null;
             if (!sideways) {
+                // Üst/alt kenar: ekartör kollarının kesme noktaları (döndürülmüş karede, ortalama).
                 (Array.isArray(item.arms) ? item.arms : []).forEach(function (arm) {
                     const x = num(arm.x), top = num(arm.top), bottom = num(arm.bottom), keep = SETTINGS.retractorKeep;
                     if (!(bottom > top) || bottom - top > 0.25) return;
@@ -240,24 +253,61 @@ Answer with JSON only, no prose: {"items":[{"index":1,"slot":"labial_anterior","
                 const lows = arms.filter(function (a) { return !a.upper; }).map(function (a) { return a.y; });
                 if (ups.length) y0 = mean(ups);
                 if (lows.length) y1 = mean(lows);
-                const tt = num(item.teeth_top), tb = num(item.teeth_bottom);
+                // Denge: düzlemin üstü ile altı çok dengesizse uzun tarafta ekartör yerine dudak-dişeti kıvrımı.
+                const lu = num(item.lip_upper_y), ll = num(item.lip_lower_y);
+                lips = [lu, ll];
+                if (hasPlane) {
+                    const cx = (p0[0] + p1[0]) / 2;
+                    const pc = rotY(cx, planeY(cx));
+                    const up = pc - y0, down = y1 - pc;
+                    if (up > 0 && down > 0) {
+                        if (up > down * SETTINGS.balance && lu > 0) {
+                            const yl = rotY(cx, lu);
+                            if (yl > y0 && yl < pc) { y0 = yl; used.lip = 'üst'; }
+                        } else if (down > up * SETTINGS.balance && ll > 0) {
+                            const yl = rotY(cx, ll);
+                            if (yl < y1 && yl > pc) { y1 = yl; used.lip = 'alt'; }
+                        }
+                    }
+                }
+                // Yanlar: C'nin iç bükey ucu (C'nin sırtı dışarıda), karşı ekartörün dişe bakan kenarı (karşı ekartör dışarıda).
+                sides = { cl: num(item.c_left_x), fl: num(item.far_left_x), cr: num(item.c_right_x), fr: num(item.far_right_x) };
+                [[sides.cl, 'sol C'], [sides.fl, 'sol karşı ekartör']].forEach(function (c) {
+                    if (c[0] > 0 && c[0] < 1) { const r = rotX(c[0], pivot[1]); if (r > x0) { x0 = r; used.sides.push(c[1]); } }
+                });
+                [[sides.cr, 'sağ C'], [sides.fr, 'sağ karşı ekartör']].forEach(function (c) {
+                    if (c[0] > 0 && c[0] < 1) { const r = rotX(c[0], pivot[1]); if (r < x1) { x1 = r; used.sides.push(c[1]); } }
+                });
+                // Diş emniyeti: hiçbir diş kesilmez.
+                const tt = num(item.teeth_top), tb = num(item.teeth_bottom), tl = num(item.teeth_left), tr = num(item.teeth_right);
                 if (tb > tt) {
                     teeth = [tt, tb];
                     y0 = Math.min(y0, rotY(pivot[0], tt) - SETTINGS.teethPad);
                     y1 = Math.max(y1, rotY(pivot[0], tb) + SETTINGS.teethPad);
                 }
+                if (tr > tl) {
+                    x0 = Math.min(x0, rotX(tl, pivot[1]) - SETTINGS.teethPadX);
+                    x1 = Math.max(x1, rotX(tr, pivot[1]) + SETTINGS.teethPadX);
+                }
+                // Döndürme köşeleri görüntü dışına taşırırsa o yan içeri çekilir (siyah köşe kalmasın; en çok %25).
+                if (tilt) {
+                    const limit0 = x0 + (x1 - x0) * 0.25, limit1 = x1 - (x1 - x0) * 0.25;
+                    while (x0 < limit0 && !(inside(x0, y0) && inside(x0, y1))) x0 += 0.003;
+                    while (x1 > limit1 && !(inside(x1, y0) && inside(x1, y1))) x1 -= 0.003;
+                }
             }
-            if (!(y1 - y0 > 0.1)) { y0 = box[1]; y1 = box[3]; }
+            if (!(y1 - y0 > 0.1) || !(x1 - x0 > 0.2)) { x0 = box[0]; y0 = box[1]; x1 = box[2]; y1 = box[3]; }
             return {
-                box: [box[0], y0, box[2], y1], tilt: tilt, angle: angle, pivot: pivot,
-                plane: hasPlane ? [p0[0], p0[1], p1[0], p1[1]] : null, teeth: teeth, arms: arms,
+                box: [x0, y0, x1, y1], tilt: tilt, angle: angle, pivot: pivot,
+                plane: hasPlane ? [p0[0], p0[1], p1[0], p1[1]] : null, teeth: teeth, lips: lips, sides: sides, arms: arms, used: used,
                 upper: arms.filter(function (a) { return a.upper; }).length,
                 lower: arms.filter(function (a) { return !a.upper; }).length
             };
         }
 
-        // Orijinal üzerine: modelin kutusu (sarı), ölçümler (düzlem camgöbeği, kollar yeşil, diş sınırı eflatun),
-        // son kutu (kırmızı; eğim varsa döndürülmüş karede tanımlı olduğundan +eğim döndürülerek çizilir).
+        // Orijinal üzerine: modelin kutusu (sarı), ölçümler (düzlem camgöbeği, kollar yeşil, diş sınırı eflatun,
+        // dudak kıvrımı pembe, yan kenar adayları turuncu), son kutu (kırmızı; eğim varsa döndürülmüş karede
+        // tanımlı olduğundan +eğim döndürülerek çizilir).
         function drawOverlay(canvas, p, modelBox, frame, box) {
             const scale = Math.min(1, 480 / Math.max(p.w, p.h));
             canvas.width = Math.round(p.w * scale);
@@ -266,6 +316,16 @@ Answer with JSON only, no prose: {"items":[{"index":1,"slot":"labial_anterior","
             const ctx = canvas.getContext('2d');
             ctx.drawImage(p.bitmap, 0, 0, W, H);
             ctx.lineWidth = 3;
+            const line = function (x0, y0, x1, y1, color, dash) {
+                ctx.save();
+                ctx.strokeStyle = color;
+                ctx.setLineDash(dash || []);
+                ctx.beginPath();
+                ctx.moveTo(x0 * W, y0 * H);
+                ctx.lineTo(x1 * W, y1 * H);
+                ctx.stroke();
+                ctx.restore();
+            };
             if (modelBox) {
                 ctx.save();
                 ctx.strokeStyle = '#ffd400';
@@ -274,37 +334,21 @@ Answer with JSON only, no prose: {"items":[{"index":1,"slot":"labial_anterior","
                 ctx.restore();
             }
             if (frame) {
-                ctx.save();
-                if (frame.plane) {
-                    ctx.strokeStyle = '#00d4ff';
-                    ctx.beginPath();
-                    ctx.moveTo(frame.plane[0] * W, frame.plane[1] * H);
-                    ctx.lineTo(frame.plane[2] * W, frame.plane[3] * H);
-                    ctx.stroke();
-                }
-                if (frame.teeth) {
-                    ctx.strokeStyle = '#ff2fd6';
-                    ctx.setLineDash([3, 5]);
-                    frame.teeth.forEach(function (y) {
-                        ctx.beginPath();
-                        ctx.moveTo((modelBox ? modelBox[0] : 0) * W, y * H);
-                        ctx.lineTo((modelBox ? modelBox[2] : 1) * W, y * H);
-                        ctx.stroke();
+                const bx0 = modelBox ? modelBox[0] : 0, bx1 = modelBox ? modelBox[2] : 1;
+                const by0 = modelBox ? modelBox[1] : 0, by1 = modelBox ? modelBox[3] : 1;
+                if (frame.plane) line(frame.plane[0], frame.plane[1], frame.plane[2], frame.plane[3], '#00d4ff');
+                if (frame.teeth) frame.teeth.forEach(function (y) { line(bx0, y, bx1, y, '#ff2fd6', [3, 5]); });
+                if (frame.lips) frame.lips.forEach(function (y) { if (y > 0) line(bx0, y, bx1, y, '#ff8ad8', [10, 4]); });
+                if (frame.sides) {
+                    [['cl', false], ['cr', false], ['fl', true], ['fr', true]].forEach(function (s) {
+                        const x = frame.sides[s[0]];
+                        if (x > 0 && x < 1) line(x, by0, x, by1, '#ff9f1a', s[1] ? [6, 5] : []);
                     });
-                    ctx.setLineDash([]);
                 }
-                ctx.strokeStyle = '#2ecc40';
                 frame.arms.forEach(function (a) {
-                    ctx.beginPath();
-                    ctx.moveTo(a.x * W, a.top * H);
-                    ctx.lineTo(a.x * W, a.bottom * H);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(a.x * W - 12, a.cut * H);
-                    ctx.lineTo(a.x * W + 12, a.cut * H);
-                    ctx.stroke();
+                    line(a.x, a.top, a.x, a.bottom, '#2ecc40');
+                    line(a.x - 12 / W, a.cut, a.x + 12 / W, a.cut, '#2ecc40');
                 });
-                ctx.restore();
             }
             if (box) {
                 ctx.save();
@@ -411,6 +455,8 @@ Answer with JSON only, no prose: {"items":[{"index":1,"slot":"labial_anterior","
                     measure += '<br>Ekartör kolu: üst ' + frame.upper + ', alt ' + frame.lower +
                         (frame.upper || frame.lower ? '' : ' (modelin kutusu kullanıldı)');
                     measure += '<br>Diş sınırı: ' + (frame.teeth ? frame.teeth.map(function (v) { return v.toFixed(2); }).join(' – ') : '-');
+                    measure += '<br>Denge: ' + (frame.used.lip ? frame.used.lip + ' tarafta dudak kıvrımı esas alındı' : 'ekartör kolları');
+                    measure += '<br>Yanlar: ' + (frame.used.sides.length ? frame.used.sides.join(', ') : 'modelin kutusu');
                 }
                 const info = document.createElement('div');
                 const slot = SLOT_NAMES[item.slot] || item.slot || '?';
