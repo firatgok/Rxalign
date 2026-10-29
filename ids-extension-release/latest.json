@@ -1,6 +1,6 @@
 {
-  "version": "0.32.1",
-  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.32.1.zip",
-  "notes": "Yön okuması kararlı okuyucuyla (bağımsız tek kare okumaları, tutarlılık denetimi, Opus hakem); yüz yuvaları da doğrulanır (gülümseme/profil karışıklığı düzeltilir); aynı yana okunan çiftlerde kendiliğinden değiştirme yok, uyarı; daha önce düzeltilmiş yuvalar sayfa yenilense de bir daha döndürülmez.",
-  "at": "2026-10-29T21:44:58.860Z"
+  "version": "0.32.2",
+  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.32.2.zip",
+  "notes": "Ağız içi kareler yön bilindikten sonra dikleştirilip ölçülür ve dik karede kırpılır: yan duran bukkallerde ekartör artık çerçevede kalmıyor.",
+  "at": "2026-10-29T21:57:43.305Z"
 }
