@@ -90,11 +90,11 @@ slot: profile_repose (face in profile), frontal_repose (face from the front, lip
 
 Crop box: x0, y0, x1, y1 as fractions of the image width and height (0..1, x to the right, y downward), the SMALLEST box that still contains everything clinically needed, measured on the image exactly as shown (do not rotate or mirror it, even if it is sideways or upside down):
 - intraoral front and side views (labial_anterior, buccal): sideways, the box starts at the innermost point of the concave inner curve of the C-shaped cheek retractor on each side, so the curved back of the C and the cheek beyond it are outside; in a side view, where the opposite retractor shows beyond the front teeth, that edge moves towards the teeth until the opposite retractor is excluded. Every tooth, including the last molars, always stays inside. Vertically the retractor arms set the frame: the top edge crosses the upper retractor arms at half their thickness and the bottom edge crosses the lower arms at half their thickness, so half of each arm is inside the picture and the lips are outside; if the parts above and below the occlusal plane are very unequal, the longer side ends at the fold where the lip meets the gum instead of at the retractor arm. The gums and the full height of the teeth are always inside. If no retractor is visible, include the teeth and gums up to the edges of the lips.
-- occlusal mirror views: the whole dental arch as seen in the mirror, including the last molars; where retractor arms are visible apply the same rule (the box edge crosses them at half their thickness); the mirror edge and the lips may be cut.
+- occlusal views (upper or lower arch, taken with or without a mirror): a TIGHT box around the dental arch, i.e. every tooth of that arch including the last molars and nothing much beyond them. Do not include the face, chin, cheeks, lips, hair, the retractor, the mirror frame or instruments; the software adds a small margin around the teeth bounding box you measure.
 - face views (frontal and profile): a portrait framing like a passport photo with more room. Top edge slightly above the top of the hair; bottom edge at the upper chest, just below the collar line, so the neck and the top of the clothing are included (do not stop at the chin); side edges a little outside the ears on both sides (for a profile view: from behind the head to a little in front of the face). The head fills most of the frame and is centred horizontally.
 Do not add extra margin beyond these rules, but never exclude any tooth.
 
-Measurements, for labial_anterior and buccal views only (0 for every number and an empty arms list for all other slots), as fractions of the image exactly as shown. The software derives the final frame and the rotation from these measurements, so they matter more than the box itself:
+Measurements, for labial_anterior and buccal views only (0 for every number and an empty arms list for all other slots), except teeth_top, teeth_bottom, teeth_left and teeth_right, which are also required for occlusal views and used there to crop the picture tightly around the arch, as fractions of the image exactly as shown. The software derives the final frame and the rotation from these measurements, so they matter more than the box itself:
 - plane_x0, plane_y0, plane_x1, plane_y1: two points on the occlusal plane, the line along which the upper and lower teeth meet: the first at the left end of the visible dentition (on the last tooth on the left), the second at the right end. The software rotates the image so that this line becomes level, so place both points exactly on the contact line between the upper and lower teeth; a small vertical error changes the rotation. Give them even if the photo is sideways or upside down.
 - midline_x: for labial_anterior only (0 for every other slot): the x of the dental midline, the contact between the two upper central incisors.
 - teeth_top, teeth_bottom, teeth_left, teeth_right: the bounding box of all visible tooth crowns (enamel only, gums excluded): the y of the highest and of the lowest point, the x of the leftmost and of the rightmost point.
@@ -331,6 +331,13 @@ Answer with JSON only, no prose: {"items":[{"index":1,"slot":"buccal_right","x0"
         // Orijinal üzerine: modelin kutusu (sarı), ölçümler (düzlem camgöbeği, kollar yeşil, diş sınırı eflatun,
         // dudak kıvrımı pembe, yan kenar adayları turuncu), son kutu (kırmızı; eğim varsa döndürülmüş karede
         // tanımlı olduğundan +eğim döndürülerek çizilir).
+        // Oklüzal: çerçeve ölçülen diş sınırından (eklentideki crop.js occlusalBox ile aynı), %10 pay.
+        function occlusalBox(item) {
+            const l = num(item.teeth_left), r = num(item.teeth_right), t = num(item.teeth_top), b = num(item.teeth_bottom);
+            if (!(r - l > 0.1 && b - t > 0.1) || l < 0 || t < 0 || r > 1 || b > 1) return null;
+            return [l, t, r, b];
+        }
+
         function drawOverlay(canvas, p, modelBox, frame, box) {
             const scale = Math.min(1, 480 / Math.max(p.w, p.h));
             canvas.width = Math.round(p.w * scale);
@@ -450,7 +457,8 @@ Answer with JSON only, no prose: {"items":[{"index":1,"slot":"buccal_right","x0"
                 const face = /^(profile|frontal)_/.test(item.slot || '');
                 const frame = modelBox && INTRAORAL.test(item.slot || '') ? intraoralFrame(item, p.w, p.h) : null;
                 lastFrames.push(frame);
-                const box = modelBox ? finalBox(frame ? frame.box : modelBox, face ? faceMarginPct : marginPct, face ? faceRatio : ratio, p.w, p.h) : null;
+                const occ = /^occlussal_/.test(item.slot || "") ? occlusalBox(item) : null;
+                const box = modelBox ? finalBox(frame ? frame.box : (occ || modelBox), face ? faceMarginPct : (occ ? 10 : marginPct), face ? faceRatio : ratio, p.w, p.h) : null;
 
                 const card = document.createElement('div');
                 card.className = 'card';
