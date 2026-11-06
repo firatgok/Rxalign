@@ -1,6 +1,6 @@
 {
-  "version": "0.33.5",
-  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.33.5.zip",
-  "notes": "0.33.5: Ham kare yönü EXIF'ten bağımsız okunuyor (yan duran bukkal/oklüzal düzeldi). Yan karelerde ön diş tarafı daha geniş. Oklüzallerde aynanın dışından doğrudan görünen karşı dişler kesiliyor, ark ekseni dik olacak şekilde birkaç derece döndürülüyor, ön diş payı küçüldü. Oklüzal ölçümü üç bağımsız okumayla. Değiştir yüklemeleri örtüşüyor: düzeltme süresi kısaldı.",
-  "at": "2026-11-06T08:29:20.211Z"
+  "version": "0.33.6",
+  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.33.6.zip",
+  "notes": "0.33.6: Hızlandırma. Chrome arkada kalınca beklemeler yavaşlamıyor (Değiştir sırası 4 sn yerine 1 sn); yön okumaları IDS yükleme sürerken başlıyor ve çift okumalar aynı anda; kırpma kutuları paralel, kırpmalar ikişer; kırpılmış kare en çok 3000 px. Düzeltme adımı ortalama ~99 sn'den ~23 sn'ye indi.",
+  "at": "2026-11-06T18:25:30.219Z"
 }
