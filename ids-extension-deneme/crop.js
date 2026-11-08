@@ -770,10 +770,21 @@
             const r0 = three ? three[2] : null;
             if (r0 && r2 && same(r0, r2)) return fin(pick(r2, r0));
             rec.arb = true;
-            const r3 = await read('opus', SETTINGS.poseArbiterEffort, false);
-            if (same(r3, r1)) return fin(pick(r3, r1));
-            if (same(r3, r2)) return fin(pick(r3, r2));
-            return fin(null);
+            const settle = function (r3) {
+                if (same(r3, r1)) return fin(pick(r3, r1));
+                if (same(r3, r2)) return fin(pick(r3, r2));
+                return fin(null);
+            };
+            // Hakem (Opus, 6-11 sn) planlamayı bekletmesin (Balaban: A/B dik 15 sn, 8 Kasım 2026): geçici sonuç düz okumaların
+            // çoğunluğu (r1; r0 onunla uyuşuyor), kesin sonuç 'final' sözünde. Planlama yerleşimde geçiciyi kullanır; onFix'in yön
+            // oylaması ve kutu tahminleri kesin sonucu bekler (settleVote).
+            if (speedOn() && (r1 || r2)) {
+                const final = read('opus', SETTINGS.poseArbiterEffort, false).then(settle);
+                final.catch(function () {});
+                const prov = Object.assign({}, r1 || r2, { provisional: true, final: final });
+                return prov;
+            }
+            return settle(await read('opus', SETTINGS.poseArbiterEffort, false));
         });
     }
 
@@ -1251,7 +1262,12 @@
         return cropOne(item.file, [0, 0, 1, 1], 0, null, orient);
     }
 
-    window.idsfyCrop = { speedOn: speedOn, pickFaces: pickFaces, readArchPair: readArchPair, readArchSet: readArchSet, readBiteSet: readBiteSet, readBuccalSet: readBuccalSet, sigDistance: sigDistance, ruleOrient: ruleOrient, readRawUpright: readRawUpright, centerThumb: centerThumb, matchRanked: matchRanked, uprightThumb: uprightThumb, readPose: readPose, poseValid: poseValid, prepare: prepare, classify: classify, readBoxes: readBoxes, frameFor: frameFor, cropFor: cropFor, fullFor: fullFor,
+    // Geçici (hakem bekleyen) dik okumayı kesin sonuca çevirir; kesin okuma zaten kesinse olduğu gibi döner.
+    async function settleVote(v) {
+        if (!v || !v.provisional || !v.final) return v;
+        try { return await v.final; } catch (error) { return null; }
+    }
+    window.idsfyCrop = { speedOn: speedOn, settleVote: settleVote, pickFaces: pickFaces, readArchPair: readArchPair, readArchSet: readArchSet, readBiteSet: readBiteSet, readBuccalSet: readBuccalSet, sigDistance: sigDistance, ruleOrient: ruleOrient, readRawUpright: readRawUpright, centerThumb: centerThumb, matchRanked: matchRanked, uprightThumb: uprightThumb, readPose: readPose, poseValid: poseValid, prepare: prepare, classify: classify, readBoxes: readBoxes, frameFor: frameFor, cropFor: cropFor, fullFor: fullFor,
         cropOne: cropOne, matchGroup: matchGroup, matchOriginal: matchOriginal, buccalSide: buccalSide, qualityScore: qualityScore,
         relaxBox: relaxBox, finalBox: finalBox, intraoralFrame: intraoralFrame, intraoralFrameAny: intraoralFrameAny, occlusalBox: occlusalBox,
         SETTINGS: SETTINGS, upTimes: upTimes, stats: function () { return send({ type: 'ids-stats' }).then(function (r) { return r.stats || []; }); } };
