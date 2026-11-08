@@ -1,6 +1,6 @@
 {
-  "version": "0.33.6",
-  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.33.6.zip",
-  "notes": "0.33.6: Hızlandırma. Chrome arkada kalınca beklemeler yavaşlamıyor (Değiştir sırası 4 sn yerine 1 sn); yön okumaları IDS yükleme sürerken başlıyor ve çift okumalar aynı anda; kırpma kutuları paralel, kırpmalar ikişer; kırpılmış kare en çok 3000 px. Düzeltme adımı ortalama ~99 sn'den ~23 sn'ye indi.",
-  "at": "2026-11-06T18:25:30.219Z"
+  "version": "0.34.0",
+  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.34.0.zip",
+  "notes": "0.34.0: Rxalign hesabıyla giriş (ayarlar sayfası > Rxalign hesabı); kayıtlı formlar giriş yapılmış hesapla okunur. Bulut kuralları kapatılmadan önce her bilgisayarda bir kez giriş yapılmalı; Bağlantıyı sına ile kontrol edin.",
+  "at": "2026-11-08T17:59:34.983Z"
 }
