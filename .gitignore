@@ -29,3 +29,7 @@ build/
 # IDS Yardımcısı imza anahtarı (gizli)
 ids-extension-key.pem
 ids-extension-key.pub.b64
+
+# IDS Yardımcısı kurulum dosyası çıktıları
+tools/ids-installer/build_out/
+tools/ids-installer/installer_img/
