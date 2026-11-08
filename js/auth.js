@@ -34,7 +34,8 @@
         'auth/too-many-requests': 'Çok fazla deneme yapıldı; birkaç dakika sonra yeniden deneyin.',
         'auth/network-request-failed': 'Sunucuya ulaşılamadı; internet bağlantısını kontrol edin.',
         'auth/missing-password': 'Şifre boş.',
-        'auth/operation-not-allowed': 'E-posta/şifre girişi Firebase konsolunda açılmamış.'
+        'auth/operation-not-allowed': 'E-posta/şifre girişi Firebase konsolunda açılmamış.',
+        'auth/configuration-not-found': 'Firebase Authentication bu projede henüz açılmamış (konsol > Authentication > Get started).'
     };
     function describe(error) {
         return (error && MESSAGES[error.code]) || (error && error.message) || 'Giriş yapılamadı.';
