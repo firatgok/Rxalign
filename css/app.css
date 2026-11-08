@@ -1204,6 +1204,9 @@ body.pdf-mode .appbar, body.pdf-mode .stepper { display: none; }
 /* Renkli eylemler: görüntüle (mavi), düzenle (mercan), iptal (kehribar), sil (kırmızı) */
 .btn-view { background: var(--info-tint); color: var(--info); border-color: transparent; font-weight: 700; }
 .btn-view:hover { background: var(--info-tint-2); }
+.btn-ids { background: var(--ink); color: var(--on-ink); border-color: transparent; font-weight: 700; }
+.btn-ids:hover { filter: brightness(1.12); color: var(--on-ink); }
+.btn-ids[disabled] { opacity: 0.6; }
 .menu-btn { width: 36px; height: 36px; border: 1.5px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; }
 .menu-btn:hover { background: var(--ground); color: var(--ink); border-color: var(--line-strong); }
 .row-menu { position: absolute; z-index: 80; min-width: 220px; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-btn); box-shadow: 0 16px 40px -16px rgba(23, 26, 33, 0.35); display: flex; flex-direction: column; gap: 4px; }

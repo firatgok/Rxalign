@@ -157,7 +157,74 @@
     }
 
     function signOut() {
-        return auth.signOut().then(function () { location.reload(); });
+        var tellExtension = extensionSend({ type: 'rx-auth-clear' }).catch(function () { /* eklenti yok */ });
+        return tellExtension.then(function () { return auth.signOut(); }).then(function () { location.reload(); });
+    }
+
+    // ---- IDS Yardımcısı köprüsü ----
+    // Eklenti (manifest externally_connectable) bu siteden ileti kabul eder. Giriş yapılmış oturumun yenileme
+    // anahtarı eklentiye aktarılır; böylece eklentiye ayrıca giriş gerekmez. Arşivdeki "IDS'te aç" düğmesi de
+    // bu kanaldan geçer. Eklenti yoksa window.chrome.runtime tanımsızdır; sessizce geçilir.
+    var EXTENSION_ID = 'bgepiaaakgecaoehcgjakjcoaejcoiip';
+    var NO_EXTENSION = 'IDS Yardımcısı bu tarayıcıda bulunamadı. Eklentinin kurulu olduğu Chrome\'da deneyin.';
+
+    function extensionSend(message) {
+        return new Promise(function (resolve, reject) {
+            var rt = window.chrome && window.chrome.runtime;
+            if (!rt || typeof rt.sendMessage !== 'function') return reject(new Error(NO_EXTENSION));
+            try {
+                rt.sendMessage(EXTENSION_ID, message, function (reply) {
+                    var err = rt.lastError;
+                    if (err) {
+                        var text = String(err.message || '');
+                        return reject(new Error(/Receiving end|Could not establish|Invalid extension/i.test(text)
+                            ? 'IDS Yardımcısı yanıt vermedi; eklentinin kurulu ve en az 0.35.0 sürümünde olması gerekir.'
+                            : text));
+                    }
+                    if (!reply || !reply.ok) return reject(new Error(reply && reply.error ? reply.error : 'IDS Yardımcısı yanıt vermedi.'));
+                    resolve(reply);
+                });
+            } catch (e) {
+                reject(new Error(NO_EXTENSION));
+            }
+        });
+    }
+
+    var extensionSynced = false;
+    function syncExtension(user) {
+        if (extensionSynced || !user || !user.refreshToken) return;
+        extensionSynced = true;
+        user.getIdToken().then(function (idToken) {
+            return extensionSend({
+                type: 'rx-auth-set',
+                email: user.email || '',
+                uid: user.uid,
+                refreshToken: user.refreshToken,
+                idToken: idToken,
+                expiresAt: Date.now() + 50 * 60 * 1000
+            });
+        }).then(function () {
+            console.log('Rxalign oturumu IDS Yardımcısı\'na aktarıldı.');
+        }).catch(function (e) {
+            if (e && e.message !== NO_EXTENSION) console.warn('IDS Yardımcısı oturum aktarımı:', e.message);
+        });
+    }
+
+    // Arşivdeki "IDS'te aç": yeni hasta kaydı IDS Yeni hasta sayfasını, refinement kaydı hastanın dosyasını
+    // (IDS numarası biliniyorsa) ya da hasta listesini açar. Çözülen değer: 'new' | 'file' | 'list'.
+    function openInIds(form) {
+        var kind = form && form.form_turu === 'refinement' ? 'refinement' : 'new';
+        return extensionSend({
+            type: 'rx-open',
+            kind: kind,
+            record: {
+                id: form.id,
+                hasta_adi: form.hasta_adi || '',
+                hasta_soyadi: form.hasta_soyadi || '',
+                hasta_mi: form.hasta_mi || '',
+                form_turu: form.form_turu || ''
+            }
+        }).then(function (reply) { return reply.opened; });
     }
 
     auth.onAuthStateChanged(function (user) {
@@ -166,6 +233,7 @@
             hideGate();
             fillAccount(user);
             resolveReady(user);
+            syncExtension(user);
         } else {
             sawSignedOut = true;
             showGate();
@@ -178,6 +246,8 @@
     window.RxAuth = {
         ready: function () { return ready; },
         user: function () { return auth.currentUser; },
-        signOut: signOut
+        signOut: signOut,
+        openInIds: openInIds,
+        extensionSend: extensionSend
     };
 })();
