@@ -1082,6 +1082,50 @@
         element.blur();
     }
 
+    // ---------- Rxalign "IDS'te aç" ----------
+    // Arşivdeki düğme arka plana rx-open iletisi gönderir; arka plan rxalignOpen'a { kind, record, at } yazıp
+    // Yeni hasta sayfasını (yeni kayıt) ya da hasta dosyasını / hasta listesini (refinement) açar. 10 dakika geçerli.
+    const OPEN_KEY = 'rxalignOpen';
+    const OPEN_TTL = 10 * 60 * 1000;
+
+    async function rxalignOpen(kind) {
+        const o = await getStored(OPEN_KEY);
+        if (!o || !o.record || o.applied || Date.now() - (o.at || 0) > OPEN_TTL) return null;
+        return !kind || o.kind === kind ? o : null;
+    }
+
+    function markOpenApplied(o) {
+        return setStored(OPEN_KEY, Object.assign({}, o, { applied: true }));
+    }
+
+    function openName(o) {
+        return (o.record.hasta_soyadi || '') + ' ' + (o.record.hasta_adi || '');
+    }
+
+    // Hasta listesi: refinement için gelen hasta panelde yazılır; arama kutusu bulunursa adı yazılır.
+    async function showPatientListHint() {
+        const o = await rxalignOpen('refinement');
+        if (!o) return;
+        const ui = statusPanel('Rxalign: "' + openName(o).trim() + '" için refinement. Hastayı listeden açın; dosyada "Ek Hizalayıcıları başlat" görünecek.');
+        await markOpenApplied(o);
+        const deadline = Date.now() + 20000;
+        const tryFill = function () {
+            const box = Array.from(document.querySelectorAll('input[type="text"], input[type="search"], input:not([type])')).find(function (i) {
+                const hint = (i.placeholder || '') + ' ' + (i.getAttribute('aria-label') || '') + ' ' + (i.name || '') + ' ' + (i.id || '');
+                return /ara|search|hasta|patient|name|isim/i.test(hint) && i.offsetParent !== null;
+            });
+            if (box) {
+                setText(box, withoutTurkish(openName(o).trim()));
+                box.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
+                ui.say('Arama kutusuna "' + openName(o).trim() + '" yazıldı; hastayı açın.');
+                return true;
+            }
+            if (Date.now() < deadline) setTimeout(tryFill, 700);
+            return false;
+        };
+        tryFill();
+    }
+
     // ---------- Dentsoft köprüsü ----------
     // dentsoft.js hasta kartından aldığı bilgileri chrome.storage.local'a yazar; burada Yeni hasta
     // formuna aktarılır. Bilgi 3 saat geçerlidir.
@@ -1175,6 +1219,8 @@
     async function showNewPatient(message) {
         const p = await dentsoftPatient();
         const fromDentsoft = openedFromDentsoft(p);
+        const fromRxalign = !fromDentsoft && await rxalignOpen('new');
+        if (fromRxalign) return showNewPatientFromRxalign(fromRxalign, message);
         let dentsoftStatus = null;
         if (fromDentsoft && nameFieldsEmpty()) {
             const problems = fillFromDentsoft(p);
@@ -1220,6 +1266,39 @@
         }).then(function (result) {
             if (fromDentsoft) addDentsoftBlock(dentsoftStatus);
             return result;
+        });
+    }
+
+    // Rxalign arşivindeki "IDS'te aç" ile açılan Yeni hasta sayfası: gelen kayıt işaretli gelir ve
+    // kendiliğinden seçilir; ad, soyad ve MI doldurulur. Kimlik bilgilerini asistan girer.
+    async function showNewPatientFromRxalign(o, message) {
+        await markOpenApplied(o);
+        return showPicker({
+            intro: 'Yeni hasta: Rxalign\'dan gelen kayıt "' + openName(o).trim() + '" işaretli. Onaylayın ya da başka kayıt seçin.',
+            message: message,
+            query: openName(o).trim(),
+            action: 'Adı ve soyadı doldur',
+            score: searchScore,
+            exactScore: 1,
+            usable: function () { return true; },
+            preferId: o.record.id,
+            autoSelect: true,
+            preferFirst: true,
+            preferNew: true,
+            onPick: async function (record) {
+                if (!record) return;
+                Object.keys(NAME_FIELDS).forEach(function (key) {
+                    const field = document.getElementById(NAME_FIELDS[key]);
+                    if (field) setText(field, withoutTurkish(record[key]));
+                });
+                await savePick(record);
+                const body = ensurePanel();
+                body.textContent = '';
+                body.appendChild(el('div', 'idsfy-info', describeRecord(record)));
+                body.appendChild(el('div', 'idsfy-status', 'Ad ve soyad dolduruldu. Cinsiyet, doğum tarihi ve T.C. kimlik numarasını girip "İleri"ye basın. ' +
+                    'Reçete adımlarında bu kayıt kendiliğinden seçilecek.'));
+                body.appendChild(button('Başka kayıt seç', function () { showNewPatient(); }));
+            }
         });
     }
 
@@ -2415,6 +2494,8 @@
             else statusPanel('Bu reçete türü desteklenmiyor (yalnızca Ek Hizalayıcılar doldurulur).');
         } else if (/\/patient\/patientFile\.action$/.test(path)) {
             startPrescription(params.get('patientId'));
+        } else if (/\/patients\.action$/.test(path)) {
+            showPatientListHint();
         } else if (/\/patient\/editPatient\.action$/.test(path)) {
             if (params.get('patientId') && params.get('currentStep') === 'NOTES') {
                 skipClinicalConditions(params.get('patientId'));

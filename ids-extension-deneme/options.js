@@ -40,7 +40,8 @@ function rxSend(message) {
 
 function showAccount(auth) {
     if (auth) {
-        rxAccount.textContent = auth.email + ' olarak giriş yapıldı (' + new Date(auth.signedInAt).toLocaleDateString('tr-TR') + ')';
+        rxAccount.textContent = auth.email + ' olarak giriş yapıldı (' + new Date(auth.signedInAt).toLocaleDateString('tr-TR') +
+            (auth.source === 'site' ? ', oturum Rxalign sitesinden alındı' : '') + ')';
         rxAccount.className = 'ok';
         rxForm.style.display = 'none';
         rxSignOutButton.style.display = '';

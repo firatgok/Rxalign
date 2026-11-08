@@ -17783,7 +17783,7 @@ async function setAuthState(state) {
   return state;
 }
 function publicAuth(state) {
-  return state ? { email: state.email, uid: state.uid, signedInAt: state.signedInAt } : null;
+  return state ? { email: state.email, uid: state.uid, signedInAt: state.signedInAt, source: state.source || "manual" } : null;
 }
 async function rxSignIn(email, password) {
   if (!email || !password) throw new Error("E-posta ve \u015Fifre gerekli.");
@@ -18165,6 +18165,102 @@ chrome.runtime.onStartup.addListener(() => {
   });
 });
 ensureUpdateAlarm().catch(() => {
+});
+var IDS_NEW_PATIENT_URL = "https://vip.invisalign.com/v3/auth/patient/editPatient.action";
+var IDS_PATIENT_FILE_URL = "https://vip.invisalign.com/v3/auth/patient/patientFile.action?patientId=";
+var IDS_PATIENTS_URL = "https://vip.invisalign.com/v3/auth/patients.action";
+var OPEN_KEY = "rxalignOpen";
+var PICK_KEY = "idsRxPick";
+var PATIENTS_KEY = "idsRxPatients";
+function fromRxalign(sender) {
+  let origin = "";
+  try {
+    origin = new URL(sender.origin || sender.url || "").origin;
+  } catch (e) {
+    return false;
+  }
+  if (origin === "https://rxalign.fgoapps.com") return true;
+  return /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+}
+function nameTokens(text) {
+  return String(text || "").toLocaleLowerCase("tr").replace(/ç/g, "c").replace(/ğ/g, "g").replace(/ı/g, "i").replace(/ö/g, "o").replace(/ş/g, "s").replace(/ü/g, "u").normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(/[^a-z0-9]+/).filter(Boolean).sort().join(" ");
+}
+async function knownPatientId(record) {
+  const map = (await chrome.storage.local.get(PATIENTS_KEY))[PATIENTS_KEY] || {};
+  const entries = Object.entries(map);
+  if (!entries.length) return null;
+  const direct = entries.find(([, recId]) => recId === record.id);
+  if (direct) return direct[0];
+  const wanted = nameTokens(record.hasta_adi + " " + record.hasta_soyadi);
+  if (!wanted) return null;
+  const records = await listForms();
+  const sameName = new Set(records.filter((r) => nameTokens(r.hasta_adi + " " + r.hasta_soyadi) === wanted).map((r) => r.id));
+  const hit = entries.find(([, recId]) => sameName.has(recId));
+  return hit ? hit[0] : null;
+}
+var EXTERNAL_HANDLERS = {
+  "rx-ping": async () => ({ version: chrome.runtime.getManifest().version, auth: publicAuth(await authState()) }),
+  // Sitedeki Firebase oturumu: yenileme anahtarı eklentinin kendi girişiyle aynı yere yazılır.
+  "rx-auth-set": async (msg) => {
+    if (!msg.refreshToken || !msg.uid) throw new Error("oturum bilgisi eksik");
+    const current = await authState();
+    const same = current && current.refreshToken === msg.refreshToken;
+    const state = await setAuthState({
+      email: String(msg.email || ""),
+      uid: String(msg.uid),
+      idToken: msg.idToken || null,
+      refreshToken: String(msg.refreshToken),
+      expiresAt: Number(msg.expiresAt) || 0,
+      signedInAt: same ? current.signedInAt : Date.now(),
+      source: "site"
+    });
+    return { auth: publicAuth(state) };
+  },
+  // Siteden çıkış: yalnızca siteden alınmış oturum silinir; elle yapılmış eklenti girişi kalır.
+  "rx-auth-clear": async () => {
+    const current = await authState();
+    if (current && current.source === "site") await setAuthState(null);
+    return {};
+  },
+  "rx-open": async (msg) => {
+    const record = msg.record || {};
+    if (!record.id) throw new Error("kay\u0131t kimli\u011Fi yok");
+    const kind = msg.kind === "refinement" ? "refinement" : "new";
+    await chrome.storage.local.set({
+      [OPEN_KEY]: { kind, record, at: Date.now() },
+      [PICK_KEY]: { id: record.id, at: Date.now() }
+    });
+    let url = IDS_NEW_PATIENT_URL;
+    let opened = "new";
+    if (kind === "refinement") {
+      const patientId = await knownPatientId(record).catch(() => null);
+      if (patientId) {
+        url = IDS_PATIENT_FILE_URL + encodeURIComponent(patientId);
+        opened = "file";
+      } else {
+        url = IDS_PATIENTS_URL;
+        opened = "list";
+      }
+    }
+    await chrome.tabs.create({ url, active: true });
+    return { opened };
+  }
+};
+chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {
+  if (!fromRxalign(sender)) {
+    sendResponse({ ok: false, error: "izin verilmeyen kaynak" });
+    return false;
+  }
+  const handler = EXTERNAL_HANDLERS[msg?.type];
+  if (!handler) {
+    sendResponse({ ok: false, error: "bilinmeyen ileti: " + (msg?.type || "?") });
+    return false;
+  }
+  handler(msg, sender).then(
+    (result) => sendResponse({ ok: true, ...result }),
+    (error) => sendResponse({ ok: false, error: describeError(error) })
+  );
+  return true;
 });
 var HANDLERS = {
   "ids-orient": async (msg) => ({ items: await orient(msg.images) }),
