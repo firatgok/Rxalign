@@ -1215,7 +1215,7 @@
                     if (!p || p.view === 'other') return;
                     target = decide(s.key, { slot: s.key, is_photo: true, upper_jaw_side: p.upper_jaw_side || 'none', incisors_side: p.incisors_side || 'none', arch: p.arch || 'none', occRaw: true, exifRotate: item.exifRotate || 0, note: '' });
                 } else {
-                    const votes = await Promise.all(['thumb', 'center'].map(function (m) { return (crop.pre['up|' + m + '|' + item.name] || Promise.resolve(null)).then(window.idsfyCrop.settleVote).catch(function () { return null; }); }));
+                    const votes = await Promise.all(['thumb', 'center'].map(function (m) { return (crop.pre['up|' + m + '|' + item.name] || Promise.resolve(null)).catch(function () { return null; }); }));
                     const v = votes.filter(function (x) { return x; });
                     const faces = v.filter(function (x) { return x.byFace; });
                     const faceSide = faces.length && faces.every(function (x) { return x.side === faces[0].side; }) ? faces[0].side : null;
@@ -1674,8 +1674,7 @@
                     // karşılaştırması (ham ↔ 180°) kullanılır.
                     // İki ölçekte okuma (orta kesit + tam küçük kare); oylar aşağıda birleştirilir.
                     // Tam kare (yüz ipucu: burun/çene) + orta kesit (diş ipucu). Oy: yüz ipuçlu okuma 3, diş 1 (ön yuvada ×2).
-                    // Hakem bekleyen (geçici) okumalar burada kesinleşir (planlama geçiciyle yerleştirdi).
-                    const votes = await Promise.all([take('up|thumb|' + item0.name, function () { return window.idsfyCrop.readRawUpright(item0, 'thumb'); }), take('up|center|' + item0.name, function () { return window.idsfyCrop.readRawUpright(item0, 'center'); })].map(function (p) { return Promise.resolve(p).then(window.idsfyCrop.settleVote); }));
+                    const votes = await Promise.all([take('up|thumb|' + item0.name, function () { return window.idsfyCrop.readRawUpright(item0, 'thumb'); }), take('up|center|' + item0.name, function () { return window.idsfyCrop.readRawUpright(item0, 'center'); })]);
                     it.rawVotes = votes.filter(function (v) { return v; });
                     it.rawUpper = it.rawVotes.length ? (it.rawVotes.length === 2 && votes[0].side !== votes[1].side ? (votes[0].byFace ? votes[0].side : votes[1].byFace ? votes[1].side : null) : it.rawVotes[0].side) : null;
                     // Dik karede kesicilerin yanı (bukkal): okumalar çelişmiyorsa.
