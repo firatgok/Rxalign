@@ -31,10 +31,12 @@
         archModel: 'sonnet',  // opus | sonnet (Sonnet 2-4 sn, kutu kalitesi aynı)
         poseModel: 'sonnet',  // yön okuması: bağımsız tek fotoğraflık çağrılar; iki okuma uyuşmazsa Opus hakem
         poseEffort: 'medium',
-        poseArbiterEffort: 'high',
-        poseParallel: 12,     // aynı anda yürüyen yön okuması işi (8 yuvalık sette hepsi birden; 6 iken 2 iş sıra bekliyordu)
+        poseArbiterEffort: 'medium', // hakem (Opus) çabası; 'high' 8-11 sn sürüyordu, orta 3 sn (7 Kasım 2026)
+        poseParallel: 48,     // aynı anda yürüyen yön okuması işi (planlama dalgasında 30+ iş var: 9 aday × 2 ölçek, 14 yön okuması,
+                              // kapanış ve oklüzal kümeleri; 24 iken bir bölümü sıra bekliyordu, 7 Kasım 2026)
         uprightFrac: 0.5,     // 180° denetimi için ham karenin orta kesiti (kenar oranı)
-        hedgeMs: 20000,       // >0: bu kadar ms içinde yanıtlanmayan model çağrısına ikinci istek açılır (0 = kapalı)
+        hedgeMs: 10000,       // >0: bu kadar ms içinde yanıtlanmayan model çağrısına ikinci istek açılır (0 = kapalı). Sonnet çağrıları
+                              // 3-8 sn sürüyor; 20 sn'de takılan çağrı dalgayı uzatıyordu (7 Kasım 2026)
         minTilt: 0.3,         // bunun altındaki oklüzal düzlem eğimi düzeltilmez (derece)
         maxTilt: 20,          // oklüzal düzlem düzeltmesi en çok bu kadar derece
         maxOccTilt: 12,       // oklüzal simetri ekseni düzeltmesi en çok bu kadar derece (fazlası ölçüm hatası sayılır)
@@ -68,6 +70,8 @@
     // (aynı iş bazen 9 sn, bazen 50 sn sürüyor; kuyruk gecikmesini keser, yalnız yavaş çağrılarda ek maliyet).
     function sendHedged(message) {
         if (!(SETTINGS.hedgeMs > 0)) return send(message);
+        // Modele göre süre (8 Kasım 2026): Sonnet çağrıları ortanca 2,5 sn, en uzun 4; Opus kümeleri 7-18 sn (ikizlemek pahalı).
+        const hedgeMs = message.model === 'sonnet' ? Math.min(SETTINGS.hedgeMs, 6000) : message.model === 'opus' ? Math.max(SETTINGS.hedgeMs, 12000) : SETTINGS.hedgeMs;
         return new Promise(function (resolve, reject) {
             let done = false, failures = 0, started = 1;
             const finish = function (ok, value) {
@@ -77,7 +81,7 @@
                 if (failures >= started) { done = true; clearTimeout(timer); reject(value); }
             };
             const run = function () { send(message).then(function (r) { finish(true, r); }, function (e) { finish(false, e); }); };
-            const timer = setTimeout(function () { if (!done) { started++; run(); } }, SETTINGS.hedgeMs);
+            const timer = setTimeout(function () { if (!done) { started++; run(); } }, hedgeMs);
             run();
         });
     }
@@ -192,7 +196,8 @@
     }
 
     // Klasördeki orijinalleri modele ve eşleştirmeye hazırlar: {name, file, w, h, thumb, sig, bright, sharp, score}. Dosyalar değişmez.
-    async function prepare(files, progress) {
+    // onItem(item): her kare hazır olunca çağrılır (doğrudan yerleştirmede sınıflandırma hazırlık bitmeden, 6'lık gruplarla başlar).
+    async function prepare(files, progress, onItem) {
         const say = progress || function () {};
         const limit = limiter(SETTINGS.prepareParallel);
         let done = 0;
@@ -201,9 +206,11 @@
                 const info = await thumbnail(file);
                 done++;
                 say('Fotoğraflar hazırlanıyor… (' + done + '/' + files.length + ')');
-                return { name: file.name, file: file, w: info.w, h: info.h, rw: info.rw, rh: info.rh, thumb: info.data, raw: info.raw,
+                const item = { name: file.name, file: file, w: info.w, h: info.h, rw: info.rw, rh: info.rh, thumb: info.data, raw: info.raw,
                     exifRotate: info.exifRotate, seq: window.idsfyExif ? window.idsfyExif.seqOf(file.name) : null, sig: info.sig,
                     bright: info.bright, sharp: info.sharp, score: qualityScore(info) };
+                if (onItem) { try { onItem(item); } catch (error) { /* sınıflandırma onFix'te yapılır */ } }
+                return item;
             });
         }));
     }
@@ -708,9 +715,15 @@
     }
 
     // mode: 'center' (orta kesit) | 'thumb' (tam ham küçük kare). arbiter: yalnız Opus (yüksek) ile iki okuma (A/B sırası ters), uyuşursa sonuç.
+    const upTimes = [];
     function readRawUpright(item, mode, arbiter) {
+        const tq = Date.now();
         return poseLimit(async function () {
             const center = mode !== 'thumb';
+            const tStart = Date.now();
+            const rec = { name: item.name.replace(/^2Y6A/, ''), mode: mode, queue: tStart - tq, prep: 0, total: 0, arb: false };
+            upTimes.push(rec);
+            const fin = function (v) { rec.total = Date.now() - tStart; return v; };
             let raw, flipped;
             if (center && speedOn()) {
                 const pair = await centerThumb(item, SETTINGS.uprightFrac, 0, true);
@@ -719,6 +732,7 @@
                 raw = center ? await centerThumb(item, SETTINGS.uprightFrac, 0) : (item.raw || item.thumb);
                 flipped = center ? await centerThumb(item, SETTINGS.uprightFrac, 180) : (await uprightThumb(item, { rotate: 180, mirror: false, raw: true })).data;
             }
+            rec.prep = Date.now() - tStart;
             // swapped: A = döndürülmüş, B = ham. Dönüş: { side: 'top'|'bottom' (ham dik ise 'top'), byFace, detail } | null.
             // Yüz ipucu (burun/çene; face_cue) verilmişse o kullanılır, yoksa modelin son yanıtı (diş ipucu).
             const detail = [];
@@ -726,34 +740,40 @@
                 return sendHedged({ type: 'ids-upright', model: model, effort: effort, a: swapped ? flipped : raw, b: swapped ? raw : flipped })
                     .then(function (reply) {
                         const r = reply.result || {};
-                        detail.push({ model: model, swapped: swapped, face: r.face_cue, teeth: r.teeth_cue, upright: r.upright, incisors: r.incisors_side_upright, reason: r.reason });
+                        detail.push({ model: model, swapped: swapped, face: r.face_cue, teeth: r.teeth_cue, upright: r.upright, incisors: r.incisors_side_upright, bite: r.bite, reason: r.reason });
                         const byFace = r.face_cue === 'A' || r.face_cue === 'B';
                         const u = byFace ? r.face_cue : r.upright;
                         if (u !== 'A' && u !== 'B') return null;
                         // incisors: dik sürümde kesicilerin yanı (A/B sırasından bağımsız).
                         const inc = r.incisors_side_upright === 'left' || r.incisors_side_upright === 'right' ? r.incisors_side_upright : null;
-                        return { side: (u === 'A') !== swapped ? 'top' : 'bottom', byFace: byFace, incisors: inc };
+                        // bite: kapanış ('closed' dişler temasta, 'open' çeneler aralık); ön yuva seçimi kapanıştaki kareyi yeğler.
+                        return { side: (u === 'A') !== swapped ? 'top' : 'bottom', byFace: byFace, incisors: inc, bite: r.bite === 'closed' || r.bite === 'open' ? r.bite : null };
                     })
                     .catch(function () { return null; });
             };
             const same = function (x, y) { return !!(x && y && x.side === y.side); };
-            const pick = function (x, y) { return { side: x.side, byFace: !!(x.byFace || (y && y.byFace)), incisors: x.incisors && y && y.incisors && x.incisors !== y.incisors ? null : (x.incisors || (y && y.incisors) || null), detail: detail }; };
+            const pick = function (x, y) { return { side: x.side, byFace: !!(x.byFace || (y && y.byFace)), incisors: x.incisors && y && y.incisors && x.incisors !== y.incisors ? null : (x.incisors || (y && y.incisors) || null), bite: x.bite && y && y.bite && x.bite !== y.bite ? null : (x.bite || (y && y.bite) || null), detail: detail }; };
             if (arbiter) {
                 const pairA = speedOn() ? await Promise.all([read('opus', 'high', false), read('opus', 'high', true)]) : null;
                 const a1 = pairA ? pairA[0] : await read('opus', 'high', false);
                 const a2 = pairA ? pairA[1] : await read('opus', 'high', true);
-                return same(a1, a2) ? pick(a1, a2) : null;
+                return fin(same(a1, a2) ? pick(a1, a2) : null);
             }
-            const both = speedOn()
-                ? await Promise.all([read(SETTINGS.poseModel, SETTINGS.poseEffort, false), read(SETTINGS.poseModel, SETTINGS.poseEffort, true)])
+            // Üç Sonnet okuması aynı anda (düz, ters, düz): düz ile ters uyuşursa sonuç. Yalnız iki düz okuma ters okumaya karşı çıkarsa
+            // (konum yanlılığı olabilir) Opus hakem. Hakem 6-11 sn sürüyor ve işlerin dörtte birinde devreye giriyordu (7 Kasım 2026).
+            const three = speedOn()
+                ? await Promise.all([read(SETTINGS.poseModel, SETTINGS.poseEffort, false), read(SETTINGS.poseModel, SETTINGS.poseEffort, true), read(SETTINGS.poseModel, SETTINGS.poseEffort, false)])
                 : null;
-            const r1 = both ? both[0] : await read(SETTINGS.poseModel, SETTINGS.poseEffort, false);
-            const r2 = both ? both[1] : await read(SETTINGS.poseModel, SETTINGS.poseEffort, true);
-            if (same(r1, r2)) return pick(r1, r2);
+            const r1 = three ? three[0] : await read(SETTINGS.poseModel, SETTINGS.poseEffort, false);
+            const r2 = three ? three[1] : await read(SETTINGS.poseModel, SETTINGS.poseEffort, true);
+            if (same(r1, r2)) return fin(pick(r1, r2));
+            const r0 = three ? three[2] : null;
+            if (r0 && r2 && same(r0, r2)) return fin(pick(r2, r0));
+            rec.arb = true;
             const r3 = await read('opus', SETTINGS.poseArbiterEffort, false);
-            if (same(r3, r1)) return pick(r3, r1);
-            if (same(r3, r2)) return pick(r3, r2);
-            return null;
+            if (same(r3, r1)) return fin(pick(r3, r1));
+            if (same(r3, r2)) return fin(pick(r3, r2));
+            return fin(null);
         });
     }
 
@@ -941,30 +961,137 @@
     }
 
     // Yuvası bilinmeyen kareleri etiketler (IDS'in boş bıraktığı yuvaları doldurmak için): { ad: yuva } (düşük güven → 'other').
+    // İki geçiş: EXIF uygulanmış küçük kare (yüzler dik) ve ham küçük kare (ağız içi kareler dik; kliniğin kamerası ağız içinde EXIF'i
+    // yanlış yazıyor, EXIF'li karede yan duran bukkaller "other"/"labial" etiketleniyordu: Emine Girgin, Kumru, 6 Kasım 2026). Aynı kare
+    // için güvenirliği yüksek etiket kazanır; "other" 0,7 katsayıyla yarışır. Ham kare EXIF'siz kareyle aynıysa ikinci geçişe girmez.
     async function classify(items, progress) {
         const say = progress || function () {};
         const labels = {};
+        const conf = {};
+        const rawItems = items.filter(function (it) { return it.raw && it.exifRotate; });
+        const passes = [{ items: items, raw: false }].concat(rawItems.length ? [{ items: rawItems, raw: true }] : []);
         const groups = [];
-        for (let i = 0; i < items.length; i += SETTINGS.groupSize) groups.push(items.slice(i, i + SETTINGS.groupSize));
+        passes.forEach(function (p) {
+            for (let i = 0; i < p.items.length; i += SETTINGS.groupSize) groups.push({ list: p.items.slice(i, i + SETTINGS.groupSize), raw: p.raw });
+        });
         let answered = 0;
         await Promise.all(groups.map(async function (group) {
             try {
                 const reply = await sendHedged({
                     type: 'ids-crop', effort: SETTINGS.cropEffort, classify: true,
-                    images: group.map(function (it, k) { return { index: k + 1, data: it.thumb }; })
+                    images: group.list.map(function (it, k) { return { index: k + 1, data: group.raw ? it.raw : it.thumb }; })
                 });
                 (reply.items || []).forEach(function (r) {
-                    const it = group[Number(r.index) - 1];
+                    const it = group.list[Number(r.index) - 1];
                     if (!it) return;
-                    labels[it.name] = Number(r.confidence) >= SETTINGS.minConfidence ? r.slot : 'other';
+                    const c = Number(r.confidence) || 0;
+                    const label = c >= SETTINGS.minConfidence ? r.slot : 'other';
+                    // Ham geçişte yüzler yan durur; yüz etiketleri yalnız EXIF'li geçişten alınır.
+                    if (group.raw && /^(profile|frontal)_/.test(label)) return;
+                    const score = label === 'other' ? c * 0.7 : c;
+                    if (!(it.name in labels) || score > conf[it.name]) { labels[it.name] = label; conf[it.name] = score; }
                 });
             } catch (error) {
-                group.forEach(function (it) { labels[it.name] = 'other'; });
+                group.list.forEach(function (it) { if (!(it.name in labels)) { labels[it.name] = 'other'; conf[it.name] = 0; } });
             }
             answered++;
             say('Yerleşmeyen fotoğraflar sınıflandırılıyor… (' + answered + '/' + groups.length + ')');
         }));
         return labels;
+    }
+
+    // İki oklüzal kareden hangisi üst çene: iki okuma (A/B sırası ters), uyuşmazsa Opus hakem; dönüş 'A' | 'B' | null (A = ilk kare).
+    function readArchPair(itemA, itemB) {
+        return poseLimit(async function () {
+            const a = itemA.raw || itemA.thumb, b = itemB.raw || itemB.thumb;
+            const read = function (model, swapped) {
+                return sendHedged({ type: 'ids-arch-pair', model: model, effort: SETTINGS.poseEffort, a: swapped ? b : a, b: swapped ? a : b })
+                    .then(function (reply) {
+                        const u = (reply.result || {}).upper;
+                        if (u !== 'A' && u !== 'B') return null;
+                        return (u === 'A') !== swapped ? 'A' : 'B';
+                    })
+                    .catch(function () { return null; });
+            };
+            const both = await Promise.all([read(SETTINGS.poseModel, false), read(SETTINGS.poseModel, true)]);
+            if (both[0] && both[0] === both[1]) return both[0];
+            const r3 = await read('opus', false);
+            if (r3 && (r3 === both[0] || r3 === both[1])) return r3;
+            return null;
+        });
+    }
+
+    // Oklüzal kümesi: kareler iki sırayla (düz, ters) sorulur; iki okumada da aynı çene denen kareler döner: { ad: 'upper'|'lower' }.
+    // Ön kümesi: kareler iki sırayla (düz, ters) sorulur; iki okumada da aynı denen kareler döner: { ad: 'closed'|'open' }.
+    function readBiteSet(items) {
+        return poseLimit(async function () {
+            const read = function (list) {
+                return sendHedged({ type: 'ids-bite-set', model: SETTINGS.poseModel, effort: SETTINGS.poseEffort, images: list.map(function (it, k) { return { index: k + 1, data: it.raw || it.thumb }; }) })
+                    .then(function (reply) {
+                        const out = {};
+                        (reply.items || []).forEach(function (r) { const it = list[Number(r.index) - 1]; if (it && (r.bite === 'closed' || r.bite === 'open')) out[it.name] = r.bite; });
+                        return out;
+                    })
+                    .catch(function () { return {}; });
+            };
+            const both = await Promise.all([read(items), read(items.slice().reverse())]);
+            const agreed = {};
+            items.forEach(function (it) { if (both[0][it.name] && both[0][it.name] === both[1][it.name]) agreed[it.name] = both[0][it.name]; });
+            return agreed;
+        });
+    }
+
+    // Bukkal kümesi (Opus orta): kareler iki sırayla sorulur; iki okumada da aynı denen kareler döner: { ad: { side, upsideDown } }.
+    function readBuccalSet(items) {
+        return poseLimit(async function () {
+            const read = function (list) {
+                return sendHedged({ type: 'ids-buccal-set', model: 'opus', effort: 'medium', images: list.map(function (it, k) { return { index: k + 1, data: it.raw || it.thumb }; }) })
+                    .then(function (reply) {
+                        const out = {};
+                        (reply.items || []).forEach(function (r) { const it = list[Number(r.index) - 1]; if (it && (r.side === 'right' || r.side === 'left')) out[it.name] = { side: r.side, upsideDown: !!r.upside_down }; });
+                        return out;
+                    })
+                    .catch(function () { return {}; });
+            };
+            const both = await Promise.all([read(items), read(items.slice().reverse())]);
+            const agreed = {};
+            items.forEach(function (it) { const a = both[0][it.name], b = both[1][it.name]; if (a && b && a.side === b.side && a.upsideDown === b.upsideDown) agreed[it.name] = a; });
+            return agreed;
+        });
+    }
+
+    function readArchSet(items) {
+        return poseLimit(async function () {
+            const read = function (list) {
+                return sendHedged({ type: 'ids-arch-set', model: 'opus', effort: 'medium', images: list.map(function (it, k) { return { index: k + 1, data: it.raw || it.thumb }; }) })
+                    .then(function (reply) {
+                        const out = {};
+                        (reply.items || []).forEach(function (r) { const it = list[Number(r.index) - 1]; if (it && (r.arch === 'upper' || r.arch === 'lower')) out[it.name] = r.arch; });
+                        return out;
+                    })
+                    .catch(function () { return {}; });
+            };
+            const both = await Promise.all([read(items), read(items.slice().reverse())]);
+            const agreed = {};
+            items.forEach(function (it) { if (both[0][it.name] && both[0][it.name] === both[1][it.name]) agreed[it.name] = both[0][it.name]; });
+            return agreed;
+        });
+    }
+
+    // İki hazırlanmış karenin imza uzaklığı (ikizler ≤ 10).
+    function sigDistance(a, b) { return a && b && a.sig && b.sig ? bestDistance(a.sig, b.sig) : Infinity; }
+
+    // Yüz yuvaları için seçim (doğrudan yerleştirme): adaylar birlikte gösterilir; dönüş { yuva: item | null }.
+    async function pickFaces(items) {
+        const reply = await sendHedged({ type: 'ids-face-pick', effort: SETTINGS.cropEffort, images: items.map(function (it, k) { return { index: k + 1, data: it.thumb }; }) });
+        const r = reply.result || {};
+        const out = {};
+        ['profile_repose', 'frontal_repose', 'frontal_smiling'].forEach(function (key) {
+            const i = Number(r[key]) || 0;
+            out[key] = i >= 1 && i <= items.length ? items[i - 1] : null;
+        });
+        out.reason = r.reason || '';
+        return out;
     }
 
     // Kutu merkezi (pivot, kesir) etrafında -tilt derece döndürme: to = noktanın döndürülmüş karedeki yeri, inside = döndürülmüş
@@ -1124,8 +1251,8 @@
         return cropOne(item.file, [0, 0, 1, 1], 0, null, orient);
     }
 
-    window.idsfyCrop = { speedOn: speedOn, ruleOrient: ruleOrient, readRawUpright: readRawUpright, centerThumb: centerThumb, matchRanked: matchRanked, uprightThumb: uprightThumb, readPose: readPose, poseValid: poseValid, prepare: prepare, classify: classify, readBoxes: readBoxes, frameFor: frameFor, cropFor: cropFor, fullFor: fullFor,
+    window.idsfyCrop = { speedOn: speedOn, pickFaces: pickFaces, readArchPair: readArchPair, readArchSet: readArchSet, readBiteSet: readBiteSet, readBuccalSet: readBuccalSet, sigDistance: sigDistance, ruleOrient: ruleOrient, readRawUpright: readRawUpright, centerThumb: centerThumb, matchRanked: matchRanked, uprightThumb: uprightThumb, readPose: readPose, poseValid: poseValid, prepare: prepare, classify: classify, readBoxes: readBoxes, frameFor: frameFor, cropFor: cropFor, fullFor: fullFor,
         cropOne: cropOne, matchGroup: matchGroup, matchOriginal: matchOriginal, buccalSide: buccalSide, qualityScore: qualityScore,
         relaxBox: relaxBox, finalBox: finalBox, intraoralFrame: intraoralFrame, intraoralFrameAny: intraoralFrameAny, occlusalBox: occlusalBox,
-        SETTINGS: SETTINGS };
+        SETTINGS: SETTINGS, upTimes: upTimes, stats: function () { return send({ type: 'ids-stats' }).then(function (r) { return r.stats || []; }); } };
 })();

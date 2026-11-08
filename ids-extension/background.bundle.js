@@ -17309,20 +17309,46 @@ var PORTRAIT_SYSTEM = `You are given the upright photos from one orthodontic pat
 Choose the extraoral photo that shows the whole face from the front with the patient smiling. If several qualify, prefer the one that is sharp, well framed, and has open eyes. If no frontal photo shows a smile, choose the frontal face photo at rest instead and set smiling to false. Profile and three-quarter views do not qualify.
 
 Return the index printed before the chosen image. If there is no frontal face photo at all, return index -1 and smiling false.`;
-async function askClaude({ system, content, schema, effort, model }) {
+var STATS = [];
+function pushStat(s) {
+  STATS.push(s);
+  if (STATS.length > 500) STATS.splice(0, STATS.length - 500);
+}
+async function askClaude({ system, content, schema, effort, model, tag }) {
   const { anthropicApiKey } = await chrome.storage.local.get("anthropicApiKey");
   if (!anthropicApiKey) {
     throw new Error("API anahtar\u0131 girilmemi\u015F. Eklenti simgesine t\u0131klay\u0131p ayarlardan ekleyin.");
   }
   const client = new Anthropic({ apiKey: anthropicApiKey, dangerouslyAllowBrowser: true });
-  const response = await client.beta.messages.create({
+  const t0 = Date.now();
+  const kind = tag || String(system || "").split(" ").slice(0, 5).join(" ");
+  let response, rawResponse;
+  try {
+    const got = await client.beta.messages.create({
+      model: model || MODEL,
+      max_tokens: 16e3,
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      system,
+      output_config: { effort, format: { type: "json_schema", schema } },
+      messages: [{ role: "user", content }]
+    }).withResponse();
+    response = got.data;
+    rawResponse = got.response;
+  } catch (error) {
+    pushStat({ kind, model: model || MODEL, ms: Date.now() - t0, err: String(error && error.message || error).slice(0, 80) });
+    throw error;
+  }
+  const h = rawResponse && rawResponse.headers;
+  pushStat({
+    kind,
     model: model || MODEL,
-    max_tokens: 16e3,
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
-    system,
-    output_config: { effort, format: { type: "json_schema", schema } },
-    messages: [{ role: "user", content }]
+    ms: Date.now() - t0,
+    inTok: response.usage && response.usage.input_tokens,
+    outTok: response.usage && response.usage.output_tokens,
+    reqLeft: h && h.get("anthropic-ratelimit-requests-remaining"),
+    tokLeft: h && h.get("anthropic-ratelimit-input-tokens-remaining"),
+    outLeft: h && h.get("anthropic-ratelimit-output-tokens-remaining")
   });
   if (response.stop_reason === "refusal") {
     throw new Error("Model bu foto\u011Fraflara bakmay\u0131 reddetti.");
@@ -17399,6 +17425,139 @@ molar_mid_x, molar_mid_y: the midpoint between the last visible molar on the lef
 arch: "upper" when the picture shows the upper (maxillary) arch (palate, rugae behind the front teeth), "lower" for the lower (mandibular) arch (tongue, floor of the mouth), "none" if you cannot tell.
 
 incisors_side: the side of the picture - top, bottom, left or right - where the front teeth (incisors) are, i.e. the closed front end of the arch as opposed to the molars. Use "none" only if you cannot tell.`;
+var ARCH_PAIR_SCHEMA = {
+  type: "object",
+  properties: {
+    reason: { type: "string", description: "One short sentence naming the clues (palate ridges, tongue, floor of mouth, incisor width)" },
+    upper: { type: "string", enum: ["A", "B", "unsure"], description: "Which photo shows the UPPER (maxillary) arch" }
+  },
+  required: ["reason", "upper"],
+  additionalProperties: false
+};
+var ARCH_PAIR_SYSTEM = `You see two occlusal photographs (biting surfaces, usually taken in a mirror) of the SAME orthodontic patient, A and B. One shows the UPPER arch and the other the LOWER arch. They may be rotated or upside down; ignore any strip of opposing teeth along an edge.
+
+UPPER (maxillary) arch: behind the teeth lies the hard palate, a dome with transverse ridges (rugae) near the front teeth and a midline raphe; no tongue; the central incisors are the widest front teeth.
+LOWER (mandibular) arch: behind the teeth lies the tongue or the floor of the mouth (smooth, glossy, with the lingual frenum and sometimes the mirror pressing the tongue flat so it looks smooth and pink); the lower front teeth are narrow and small; the arch is usually smaller and more U-shaped.
+
+Strong clues:
+- The strip of OPPOSING teeth seen directly along one edge belongs to the other arch. Compare the central incisors in the mirror with the central incisors in that direct strip: the arch whose central incisors are clearly WIDER is the upper arch. So if the mirror arch has small narrow front teeth and the direct strip shows wide front teeth (often with the upper lip), the mirror shows the LOWER arch.
+- A midline vertical fold (lingual frenum) joining the tongue to a wet, glossy, dark red floor means LOWER, even when the mirror presses the tongue flat and the floor looks smooth. A matte, lighter pink dome with transverse ridges just behind the front teeth means UPPER.
+- The lower arch is smaller and narrower; the upper arch is wider with larger molars.
+Compare the pictures against each other rather than judging each alone. Answer which photo (A or B) is the upper arch; "unsure" only if they look like the same arch.`;
+var ARCH_SET_SCHEMA = {
+  type: "object",
+  properties: {
+    reason: { type: "string", description: "One short sentence on the clues that separate the two arches in this set" },
+    items: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          index: { type: "integer" },
+          arch: { type: "string", enum: ["upper", "lower", "unsure"] }
+        },
+        required: ["index", "arch"],
+        additionalProperties: false
+      }
+    }
+  },
+  required: ["reason", "items"],
+  additionalProperties: false
+};
+var BITE_SET_SCHEMA = {
+  type: "object",
+  properties: {
+    reason: { type: "string", description: "One short sentence on the clues that separate the closed and the open photos in this set" },
+    items: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          index: { type: "integer" },
+          bite: { type: "string", enum: ["closed", "open", "unsure"] }
+        },
+        required: ["index", "bite"],
+        additionalProperties: false
+      }
+    }
+  },
+  required: ["reason", "items"],
+  additionalProperties: false
+};
+var BITE_SET_SYSTEM = `You see several frontal intraoral photographs of the SAME orthodontic patient, taken with cheek retractors, each with an index. They may be upside down or sideways; that does not matter.
+
+CLOSED bite (teeth together, in occlusion): the upper and the lower tooth rows touch each other; the upper incisors overlap the lower incisors and hide part of them (or, with an anterior open bite, at least the back teeth on both sides are in contact); the cusps of the premolars and molars interlock; there is NO continuous dark space running between the upper and the lower teeth.
+OPEN (jaws apart): a dark gap separates the upper tooth row from the lower one along its whole length, from one side to the other, however narrow that gap is; the biting edges of both the upper and the lower incisors are fully visible with the gap between them; the mouth cavity shows between the rows.
+
+Compare the photos with each other: in the same patient the closed photos show the rows touching and the open photos show the gap. Even a gap of only a millimetre or two means open. Judge every photo; "unsure" only if the teeth cannot be seen.`;
+async function readBiteSet(images, effort, modelName) {
+  const content = [];
+  for (const img of images) {
+    content.push({ type: "text", text: `Photo ${img.index}:` });
+    content.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: img.data } });
+  }
+  content.push({ type: "text", text: `For each of these ${images.length} photos say whether the bite is closed (teeth together) or open (jaws apart).` });
+  const result = await askClaude({ system: BITE_SET_SYSTEM, content, schema: BITE_SET_SCHEMA, effort: pickEffort(effort, "medium"), model: modelName === "opus" ? MODEL : CROP_MODEL });
+  return result.items || [];
+}
+var BUCCAL_SET_SCHEMA = {
+  type: "object",
+  properties: {
+    reason: { type: "string", description: "One short sentence on the clues (upper jaw position, gingiva, tooth size, facial hair) that separate the photos" },
+    items: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          index: { type: "integer" },
+          upside_down: { type: "boolean", description: "true when the UPPER jaw is at the BOTTOM of the picture as shown" },
+          side: { type: "string", enum: ["right", "left", "unsure"], description: "The patient's side this photo shows, after correcting for an upside-down photo" }
+        },
+        required: ["index", "upside_down", "side"],
+        additionalProperties: false
+      }
+    }
+  },
+  required: ["reason", "items"],
+  additionalProperties: false
+};
+var BUCCAL_SET_SYSTEM = `You see several buccal (side) intraoral photographs of the SAME orthodontic patient, taken with cheek retractors, each with an index. The clinic photographs one side with the camera held normally and the other side with the camera turned by 180 degrees, so some photos may be upside down. Decide for every photo whether it is upside down and which side of the patient it shows.
+
+Step 1, is the photo upside down? Find the UPPER jaw: its teeth are larger (the upper canine is the long pointed tooth, the upper central incisors are the widest), the upper teeth overlap the lower ones from the outside and hide their biting edges, and above the upper teeth lies the upper vestibule and gingiva, the upper lip and sometimes nostrils or a moustache. The LOWER teeth are smaller and narrower, and below them lie the lower lip, chin and sometimes a beard. In an upright photo the upper jaw is at the TOP; if the upper jaw is at the BOTTOM the photo is upside down. Compare the photos with each other: they are of the same mouth, so the row of larger teeth with the longer canine is the same upper jaw in all of them; photos that look like one another but have that row at opposite edges differ by a 180-degree turn.
+
+Step 2, which side? Imagine the photo upright (turn an upside-down photo by 180 degrees in your mind, which also swaps left and right). In an upright photo of the patient's RIGHT side the front teeth (incisors) are on the RIGHT edge of the picture and the molars on the left; on the patient's LEFT side the incisors are on the LEFT and the molars on the right. So in a photo as shown with the incisors on the right: upright means the right side, upside down means the LEFT side.
+
+Give for every photo upside_down and side; "unsure" only if the teeth cannot be seen.`;
+async function readBuccalSet(images, effort, modelName) {
+  const content = [];
+  for (const img of images) {
+    content.push({ type: "text", text: `Photo ${img.index}:` });
+    content.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: img.data } });
+  }
+  content.push({ type: "text", text: `For each of these ${images.length} photos say whether it is upside down and which side of the patient it shows.` });
+  const result = await askClaude({ system: BUCCAL_SET_SYSTEM, content, schema: BUCCAL_SET_SCHEMA, effort: pickEffort(effort, "medium"), model: modelName === "opus" ? MODEL : CROP_MODEL });
+  return result.items || [];
+}
+async function readArchSet(images, effort, modelName) {
+  const content = [];
+  for (const img of images) {
+    content.push({ type: "text", text: `Photo ${img.index}:` });
+    content.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: img.data } });
+  }
+  content.push({ type: "text", text: `These ${images.length} occlusal photos are of the same patient; usually both arches are present and each arch may be repeated. Compare them with each other and say for every photo whether it shows the upper or the lower arch.` });
+  const result = await askClaude({ system: ARCH_PAIR_SYSTEM, content, schema: ARCH_SET_SCHEMA, effort: pickEffort(effort, "medium"), model: modelName === "opus" ? MODEL : CROP_MODEL });
+  return result.items || [];
+}
+async function readArchPair(a, b, effort, modelName) {
+  const content = [
+    { type: "text", text: "Photo A:" },
+    { type: "image", source: { type: "base64", media_type: "image/jpeg", data: a } },
+    { type: "text", text: "Photo B:" },
+    { type: "image", source: { type: "base64", media_type: "image/jpeg", data: b } },
+    { type: "text", text: "Which photo shows the upper arch?" }
+  ];
+  return askClaude({ system: ARCH_PAIR_SYSTEM, content, schema: ARCH_PAIR_SCHEMA, effort: pickEffort(effort, "medium"), model: modelName === "opus" ? MODEL : CROP_MODEL });
+}
 async function readArch(images, effort, modelName) {
   const content = [];
   for (const img of images) {
@@ -17423,9 +17582,10 @@ var POSE_SCHEMA = {
           incisors_side: { type: "string", enum: SIDES },
           molars_side: { type: "string", enum: SIDES },
           arch: { type: "string", enum: ["upper", "lower", "none"] },
-          behind_teeth: { type: "string", enum: ["palate", "tongue", "unclear", "none"] }
+          behind_teeth: { type: "string", enum: ["palate", "tongue", "unclear", "none"] },
+          complete_arch: { type: "boolean", description: "Occlusal view: the whole arch (incisors and the last molars on both sides) is in the picture; true for other views" }
         },
-        required: ["index", "view", "upper_jaw_side", "incisors_side", "molars_side", "arch", "behind_teeth"],
+        required: ["index", "view", "upper_jaw_side", "incisors_side", "molars_side", "arch", "behind_teeth", "complete_arch"],
         additionalProperties: false
       }
     }
@@ -17448,6 +17608,7 @@ OCCLUSAL VIEWS: the arch of interest is the one whose biting (chewing) surfaces 
 molars_side (buccal and occlusal views, otherwise "none"): the side of the picture where the last molars are. Buccal: the end of the tooth row with the big molars. Occlusal: the side toward which the U-shaped arch opens, where the molars continue backwards. Decide this separately from incisors_side.
 
 behind_teeth (occlusal view only, otherwise "none"): what fills the middle of the U-shaped arch of interest: "palate" (the hard palate, pinkish with transverse ridges), "tongue" (the tongue or floor of the mouth), or "unclear". Answer from what you see, independently of arch.
+complete_arch (occlusal view only, otherwise true): true when the WHOLE arch of interest is in the picture, the incisors at the front and the last molars on BOTH sides, so the full U shape is visible; false when only part of the arch is shown (one side or one quadrant, a close-up of a few teeth) or when the arch is cut off by the edge of the picture.
 
 arch (occlusal view only, otherwise "none"): "upper" for the upper (maxillary) arch of interest (palate behind its teeth), "lower" for the lower (mandibular) arch of interest (tongue or floor of the mouth behind its teeth). Use "none" only if you cannot tell.`;
 var UPRIGHT_SCHEMA = {
@@ -17457,9 +17618,10 @@ var UPRIGHT_SCHEMA = {
     face_cue: { type: "string", enum: ["A", "B", "none"], description: "Which version is upright judging ONLY from face anatomy (nose/nostrils, chin, neck, lips); none if no such anatomy is visible" },
     teeth_cue: { type: "string", enum: ["A", "B", "unsure"], description: "Which version is upright judging ONLY from the teeth" },
     upright: { type: "string", enum: ["A", "B", "unsure"], description: "Final answer; face anatomy wins over teeth when both are visible" },
-    incisors_side_upright: { type: "string", enum: ["left", "right", "none"], description: "Buccal (side) view only: in the UPRIGHT version, which side of the picture the front teeth (incisors) are on; none for a frontal view" }
+    incisors_side_upright: { type: "string", enum: ["left", "right", "none"], description: "Buccal (side) view only: in the UPRIGHT version, which side of the picture the front teeth (incisors) are on; none for a frontal view" },
+    bite: { type: "string", enum: ["closed", "open", "none"], description: "closed when the upper and lower teeth touch each other (teeth together, in occlusion); open when the jaws are apart so there is a visible gap between the upper and the lower teeth; none if it cannot be told" }
   },
-  required: ["reason", "face_cue", "teeth_cue", "upright", "incisors_side_upright"],
+  required: ["reason", "face_cue", "teeth_cue", "upright", "incisors_side_upright", "bite"],
   additionalProperties: false
 };
 var UPRIGHT_SYSTEM = `You compare two versions of the same intraoral orthodontic photograph: a frontal view of both arches together, or a buccal (side) view of the tooth rows, taken with cheek retractors. Version B is version A rotated by 180 degrees. Exactly one of them is upright, meaning the patient's head is the normal way up: the UPPER jaw, nose and upper lip at the TOP, the lower jaw, chin and neck at the BOTTOM. Decide which version is upright.
@@ -17470,7 +17632,37 @@ TEETH (secondary): the upper central incisors are the widest and longest front t
 
 First write one short sentence with the clues you used, then fill face_cue and teeth_cue, then the final answer: face_cue when it is not "none", otherwise teeth_cue. Lips and retractors by themselves are symmetric; the nose and chin are not.
 
-Finally, for a buccal (side) view only: looking at the version you chose as upright, report on which side of the picture the front teeth (incisors, the small flat teeth at one end of the row) are, left or right; the big molars are at the other end. For a frontal view answer "none".`;
+Finally, for a buccal (side) view only: looking at the version you chose as upright, report on which side of the picture the front teeth (incisors, the small flat teeth at one end of the row) are, left or right; the big molars are at the other end. For a frontal view answer "none".
+
+Also report the bite, for both frontal and side views: "closed" when the upper and lower teeth are biting together, touching each other along the tooth rows (in occlusion), even if the front teeth do not meet because of an overbite or an open bite at the front; "open" when the patient's jaws are apart, so that a dark gap separates the upper tooth row from the lower one along its whole length; "none" if you cannot tell.`;
+var FACE_PICK_SCHEMA = {
+  type: "object",
+  properties: {
+    reason: { type: "string", description: "One short sentence on how you chose" },
+    profile_repose: { type: "integer", description: "Index of the best photo for the profile-at-rest slot, 0 if none qualifies" },
+    frontal_repose: { type: "integer", description: "Index of the best photo for the frontal-at-rest slot, 0 if none qualifies" },
+    frontal_smiling: { type: "integer", description: "Index of the best photo for the frontal-smiling slot, 0 if none qualifies" }
+  },
+  required: ["reason", "profile_repose", "frontal_repose", "frontal_smiling"],
+  additionalProperties: false
+};
+var FACE_PICK_SYSTEM = `You choose which extraoral photographs of one orthodontic patient go into three slots of the Invisalign Doctor Site. You receive several photos, each with an index.
+
+Slots:
+- profile_repose: a TRUE side profile (head turned about 90 degrees, only one ear visible, nose pointing sideways), lips closed and at rest, no smile, the whole head and the top of the shoulders in the frame.
+- frontal_repose: the face looking STRAIGHT at the camera (both sides of the face and both ears equally visible, nose pointing at the camera), lips at rest, not smiling, the whole face from above the hair to below the chin in the frame.
+- frontal_smiling: the same straight frontal view but clearly smiling with teeth showing, whole face in the frame.
+
+Never choose: a three-quarter or oblique view (the head turned partly, one ear clearly nearer the camera but the far cheek still visible); a close-up that shows only the mouth, the smile or the lower face without the whole head; a smiling profile for profile_repose; a photo where the eyes are closed or the face is cut off. If a photo is sideways or upside down that is fine, do not reject it for that. Among several valid candidates prefer the sharpest, best exposed, most centred one. Return 0 for a slot that has no valid photo. Do not use the same photo for two slots.`;
+async function pickFaces(images, effort) {
+  const content = [];
+  for (const img of images) {
+    content.push({ type: "text", text: `Photo ${img.index}:` });
+    content.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: img.data } });
+  }
+  content.push({ type: "text", text: `Choose the best photo index for each of the three slots among these ${images.length} photos (0 if none qualifies).` });
+  return askClaude({ system: FACE_PICK_SYSTEM, content, schema: FACE_PICK_SCHEMA, effort: pickEffort(effort, "medium"), model: CROP_MODEL });
+}
 async function readUpright(a, b, effort, modelName) {
   const content = [
     { type: "text", text: "Version A:" },
@@ -17782,7 +17974,7 @@ var CROP_SCHEMA = {
 };
 var CROP_SYSTEM = `You crop orthodontic patient photographs for the Invisalign Doctor Site. You receive several photos from one patient's folder, each labelled with an index. For every photo return its slot and a crop box; for intraoral front and side views also return the measurements described below.
 
-slot: profile_repose (face in a true side profile, about 90 degrees, one ear visible, lips closed and at rest, no smile, no teeth showing), profile_smiling (the same true side profile but smiling or with teeth showing; it does not belong in the profile slot), frontal_repose (face looking straight at the camera, both sides of the face equally visible, lips at rest, not smiling), frontal_smiling (face looking straight at the camera, clearly smiling with teeth showing), occlussal_upper (upper arch seen in a mirror, biting surfaces: ONE arch only, palate behind the teeth, the opposing arch is not visible), occlussal_lower (lower arch in a mirror: tongue behind the teeth), buccal_right (teeth seen from the patient's right cheek side), buccal_left (from the left cheek side), labial_anterior (front view of both arches with cheek retractors; upper and lower teeth meet, so a photo that shows both arches together is never occlusal, even when it is held sideways or upside down), other (anything else: scans, non-clinical, and face photos taken from an oblique or three-quarter angle, which are neither frontal nor profile).
+slot: profile_repose (face in a true side profile, about 90 degrees, one ear visible, lips closed and at rest, no smile, no teeth showing), profile_smiling (the same true side profile but smiling or with teeth showing; it does not belong in the profile slot), frontal_repose (face looking straight at the camera, both sides of the face equally visible, lips at rest, not smiling), frontal_smiling (face looking straight at the camera, clearly smiling with teeth showing), occlussal_upper (upper arch seen in a mirror, biting surfaces: ONE arch only, palate behind the teeth, the opposing arch is not visible), occlussal_lower (lower arch in a mirror: tongue behind the teeth), buccal_right (teeth seen from the patient's right cheek side), buccal_left (from the left cheek side), labial_anterior (front view of both arches with cheek retractors; upper and lower teeth meet, so a photo that shows both arches together is never occlusal, even when it is held sideways or upside down), other (anything else: scans, non-clinical, face photos taken from an oblique or three-quarter angle, which are neither frontal nor profile, and close-ups of only the mouth or smile where the whole face from forehead to chin is not in the frame: those are never frontal_smiling or frontal_repose).
 
 Crop box: x0, y0, x1, y1 as fractions of the image width and height (0..1, x to the right, y downward), the SMALLEST box that still contains everything clinically needed, measured on the image exactly as shown (do not rotate or mirror it, even if it is sideways or upside down):
 - intraoral front and side views (labial_anterior, buccal): sideways, the box starts at the innermost point of the concave inner curve of the C-shaped cheek retractor on each side, so the curved back of the C and the cheek beyond it are outside; in a side view, where the opposite retractor shows beyond the front teeth, that edge moves towards the teeth until the opposite retractor is excluded. Every tooth, including the last molars, always stays inside. Vertically the retractor arms set the frame: the top edge crosses the upper retractor arms at half their thickness and the bottom edge crosses the lower arms at half their thickness, so half of each arm is inside the picture and the lips are outside; if the parts above and below the occlusal plane are very unequal, the longer side ends at the fold where the lip meets the gum instead of at the retractor arm. The gums and the full height of the teeth are always inside. If no retractor is visible, include the teeth and gums up to the edges of the lips.
@@ -17801,20 +17993,40 @@ Measurements, for labial_anterior and buccal views only (0 for every number and 
 - far_left_x, far_right_x: when a retractor intrudes from the left / right edge without its curved back being visible (in a side view, the opposite retractor seen beyond the front teeth), the x of its edge nearest the teeth, so that a frame ending there excludes it; 0 when there is none.
 
 confidence: 0..1 for the box. note: a short remark in Turkish only when the photo is unusable for its slot or the box is uncertain, otherwise an empty string.`;
+var CLASSIFY_SCHEMA = {
+  type: "object",
+  properties: {
+    items: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          index: { type: "integer" },
+          slot: { type: "string", enum: CROP_SLOTS },
+          confidence: { type: "number" }
+        },
+        required: ["index", "slot", "confidence"],
+        additionalProperties: false
+      }
+    }
+  },
+  required: ["items"],
+  additionalProperties: false
+};
 async function readCropBoxes(images, effort, known, classify) {
   const content = [];
   for (const img of images) {
     content.push({ type: "text", text: known && img.slot ? `Photo ${img.index} (slot: ${img.slot}):` : `Photo ${img.index}:` });
     content.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: img.data } });
   }
-  content.push({ type: "text", text: `Return the slot, crop box and measurements for all ${images.length} photos.` });
+  content.push({ type: "text", text: classify ? `Return the slot and your confidence for all ${images.length} photos (no crop box or measurements are needed this time).` : `Return the slot, crop box and measurements for all ${images.length} photos.` });
   if (classify) {
     content.push({ type: "text", text: 'These photos are the ones the Doctor Site did not place in a slot. Several may be repeated shots of the same view; label every photo by the view it shows (repeated shots get the same slot, never "other" just because they repeat). Use "other" only for photos that are not one of the eight views.' });
   }
   if (known) {
     content.push({ type: "text", text: "The slot of every photo is already known and is given in its label; it is final. Return exactly that slot for each photo and give the crop box and measurements for that view, measured on the picture exactly as shown (it may be sideways or upside down)." });
   }
-  const result = await askClaude({ system: CROP_SYSTEM, content, schema: CROP_SCHEMA, effort: pickEffort(effort, "high"), model: CROP_MODEL });
+  const result = await askClaude({ system: CROP_SYSTEM, content, schema: classify ? CLASSIFY_SCHEMA : CROP_SCHEMA, effort: pickEffort(effort, "high"), model: CROP_MODEL, tag: classify ? "s\u0131n\u0131fland\u0131rma" : "k\u0131rpma kutusu" });
   return result.items;
 }
 var UPDATE_URL = "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/latest.json";
@@ -17963,6 +18175,12 @@ var HANDLERS = {
   "ids-arch": async (msg) => ({ items: await readArch(msg.images, msg.effort, msg.model) }),
   "ids-pose": async (msg) => ({ items: await readPose(msg.images, msg.effort, msg.model) }),
   "ids-upright": async (msg) => ({ result: await readUpright(msg.a, msg.b, msg.effort, msg.model) }),
+  "ids-face-pick": async (msg) => ({ result: await pickFaces(msg.images, msg.effort) }),
+  "ids-arch-pair": async (msg) => ({ result: await readArchPair(msg.a, msg.b, msg.effort, msg.model) }),
+  "ids-arch-set": async (msg) => ({ items: await readArchSet(msg.images, msg.effort, msg.model) }),
+  "ids-bite-set": async (msg) => ({ items: await readBiteSet(msg.images, msg.effort, msg.model) }),
+  "ids-buccal-set": async (msg) => ({ items: await readBuccalSet(msg.images, msg.effort, msg.model) }),
+  "ids-stats": async () => ({ stats: STATS.splice(0) }),
   "ids-form-get": async (msg) => ({ data: await getForm(msg.id) }),
   "ids-auth-state": async () => ({ auth: publicAuth(await authState()) }),
   "ids-auth-signin": async (msg) => ({ auth: publicAuth(await rxSignIn(String(msg.email || "").trim(), String(msg.password || ""))) }),

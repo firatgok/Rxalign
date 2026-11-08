@@ -546,8 +546,20 @@
             state.cropReady = (async function () {
                 try {
                     const began = Date.now();
-                    const items = await window.idsfyCrop.prepare(files, setStatus);
-                    state.crop = { originals: files, items: items, notes: [], placed: {}, labelOf: null, pre: {},
+                    // Hızlandırma: hazır olan her 6 kare hemen sınıflandırmaya gider (hepsinin hazırlanması beklenmez; 2-3 sn).
+                    // Doğrudan yerleştirmede IDS orijinalleri yüklemediği için bellek baskısı eski endişe değil.
+                    const runs = [];
+                    let batch = [];
+                    const flush = function () { if (!batch.length) return; const list = batch; batch = []; const run = window.idsfyCrop.classify(list, function () {}); run.catch(function () {}); runs.push(run); };
+                    const early = speedOn() && directOn() && window.idsfyCrop.classify;
+                    // Yön okumaları da etiketleri beklemeden, kare hazır olur olmaz başlar (yüz kareleri de okunur: set başına +10-20
+                    // Sonnet çağrısı; dalga ~2 sn erken biter). planDirect aynı anahtarı ('pose|ad') kullanır.
+                    const pres = {};
+                    let posed = 0;
+                    const startPose = function (it) { if (posed >= 30) return; posed++; const p = window.idsfyCrop.readPose(it, 'occlusal', true); p.catch(function () {}); pres['pose|' + it.name] = p; };
+                    const items = await window.idsfyCrop.prepare(files, setStatus, early ? function (it) { batch.push(it); if (batch.length >= 6) flush(); startPose(it); } : null);
+                    if (early) flush();
+                    state.crop = { originals: files, items: items, notes: [], placed: {}, labelOf: null, pre: pres, labelRuns: runs,
                         timing: { prepare: Math.round((Date.now() - began) / 1000) } };
                     mark('hazırlık bitti');
                 } catch (error) {
@@ -560,6 +572,12 @@
             // Hazırlık bırakmadan önce bitirilir: IDS 20+ tam boy kareyi işlerken aynı anda çözmek sekmeyi bellekten düşürdü
             // (Mutigulina 21 kare, 0,6 GB boş RAM; 6 Kasım 2026). Örtüşmenin kazancı ~2 sn idi.
             await state.cropReady;
+        }
+        if (state.crop && directOn()) {
+            let direct = false;
+            try { direct = await onDirect(explicit); } catch (error) { state.crop.notes.push('Doğrudan yerleştirme hata verdi (' + error.message + ')'); }
+            if (direct) return;
+            setNotes(state.crop.notes);
         }
         const transfer = new DataTransfer();
         files.forEach(function (f) { transfer.items.add(f); });
@@ -697,7 +715,8 @@
         return function (fn) { return new Promise(function (resolve, reject) { queue.push({ fn: fn, resolve: resolve, reject: reject }); next(); }); };
     }
     // Tam boyutlu kare çözme bellek ister: kırpmalar en çok ikişer (tek tek iken 8 yuvada ~10 sn sıra bekleniyordu; 6 Kasım 2026).
-    const cropLock = speedOn() ? limited(2) : serial();
+    // Cihaz belleği 8 GB ve üstüyse üçer (8 Kasım 2026; her tam çözüm ~120 MB).
+    const cropLock = speedOn() ? limited((navigator.deviceMemory || 0) >= 8 ? 3 : 2) : serial();
 
     // Dolu yuvadaki fotoğrafı kalem menüsündeki "Değiştir" girişiyle yenisiyle değiştirir (silmeden). Menü adımı kilit altında;
     // IDS'in yüklemesi kilit dışında beklenir, böylece başka yuvaların değişimi örtüşebilir (6 Kasım 2026: yüz yuvalarında IDS
@@ -772,6 +791,13 @@
         if (!crop.labelOf) crop.labelOf = {};
         // Erken okumada başlamış sınıflandırma sürüyorsa önce o beklenir (aynı kareler iki kez sorulmaz).
         while (crop.labelWait) { const w = crop.labelWait; await w.catch(function () {}); if (crop.labelWait === w) crop.labelWait = null; }
+        // Hazırlıkla örtüşen erken sınıflandırmalar.
+        if (crop.labelRuns && crop.labelRuns.length) {
+            const runs = crop.labelRuns;
+            crop.labelRuns = [];
+            const results = await Promise.all(runs.map(function (r) { return r.catch(function () { return {}; }); }));
+            results.forEach(function (l) { Object.keys(l || {}).forEach(function (name) { if (!(name in crop.labelOf)) crop.labelOf[name] = l[name]; }); });
+        }
         const missing = items.filter(function (it) { return !(it.name in crop.labelOf); });
         if (missing.length) {
             const run = window.idsfyCrop.classify(missing, quiet ? function () {} : setStatus);
@@ -779,6 +805,320 @@
             try { Object.assign(crop.labelOf, await run); } finally { if (crop.labelWait === run) crop.labelWait = null; }
         }
         return crop.labelOf;
+    }
+
+    // ---------- Doğrudan yerleştirme (0.33.7 deneme) ----------
+    // Orijinaller IDS'e bırakılmaz: kareler eklentinin sınıflandırmasıyla seçilir, kırpılıp düzeltilir ve boş yuvaların dosya girişine
+    // doğrudan yüklenir. IDS'in 17-22 orijinali sınıflandırıp yüklemesi (12-39 sn) ve ikinci yükleme ("Değiştir") atlanır. Sağ/sol ve
+    // üst/alt, eskisi gibi yön okumalarıyla doğrulanır (sanal takas). Kapatmak: sayfada localStorage.idsfyDirect = '0'.
+    function directOn() { try { return localStorage.getItem('idsfyDirect') !== '0'; } catch (error) { return true; } }
+
+    // Etiketlerden yuva planı: { yuva: { item, shown, group, ours } }; hiç kare seçilemezse null.
+    async function planDirect(crop) {
+        const labels = await ensureLabels(crop.items, true);
+        mark('etiketler hazır');
+        const byLabel = {};
+        crop.items.forEach(function (it) { const l = labels[it.name] || 'other'; (byLabel[l] = byLabel[l] || []).push(it); });
+        const used = {};
+        const placed = {};
+        const wrap = function (it) { return { item: it, shown: it, group: [it], ours: true }; };
+        const pick = function (list) { return bestOf((list || []).filter(function (it) { return !used[it.name]; })); };
+        const put = function (key, it) { if (!it) return false; used[it.name] = true; placed[key] = wrap(it); return true; };
+        const notes = crop.notes;
+        const byScore = function (a, b) { return (Number(b.score) || 0) - (Number(a.score) || 0); };
+        // Etiket yalnız aday havuzunu belirler; yuva kararı okumalardan: yüzler için seçici çağrısı, bukkal/ön için A/B dik okumasındaki
+        // kesici yanı (sağda = sağ bukkal, yok = ön), oklüzal için çene okuması (damak/dil). Okumalar onFix'te yeniden kullanılır (crop.pre).
+        const faceCands = crop.items.filter(function (it) { return /^(profile|frontal)_/.test(labels[it.name] || ''); }).sort(byScore).slice(0, 12);
+        // Her etiketten en net 3 aday okunur (Salar: 8 oklüzal + 6 bukkal adayı 21 sn sürmüştü).
+        const topOf = function (re, n) { const out = []; Object.keys(byLabel).filter(function (l) { return re.test(l); }).forEach(function (l) { byLabel[l].slice().sort(byScore).slice(0, n).forEach(function (it) { out.push(it); }); }); return out; };
+        // Ön adaylar 4 (klinikte kapanış ve ağız açık ön kareler birlikte çekiliyor; en net 3'ü hep açık kareler olabiliyordu).
+        // 'other' etiketli kareler dik okumaya girmez (röntgen/0195 gibi kareler hakeme düşüp dalgayı 8 sn uzatıyordu, 7 Kasım 2026);
+        // bukkal yuvası boş kalırsa yedek aşama yön okuması 'bukkal' diyenleri okur.
+        const intraCands = topOf(/^labial_/, 4).concat(topOf(/^buccal_/, 3));
+        const occCands = topOf(/^occlussal_/, 3);
+        // Yön okuması baştan yüz olmayan tüm karelere (en çok 14), hepsi aynı anda: yedek bukkal/oklüzal havuzları ardışık 10-15 sn
+        // sürüyordu (Salar, Balaban, 7 Kasım 2026). Oklüzal adaylar her durumda okunur.
+        const poseAll = crop.items.filter(function (it) { return !/^(profile|frontal)_/.test(labels[it.name] || ''); }).sort(byScore).slice(0, 18);
+        occCands.forEach(function (it) { if (poseAll.indexOf(it) < 0) poseAll.push(it); });
+        // Opus oklüzal kümesi tahminle hemen başlar (oklüzal etiketli en net 6): bugüne dek yön okumalarını bekliyordu (~7 sn).
+        const specOcc = topOf(/^occlussal_/, 6).sort(byScore).slice(0, 6);
+        const specWork = specOcc.length >= 2 ? window.idsfyCrop.readArchSet(specOcc).catch(function () { return null; }) : Promise.resolve(null);
+        // Bukkal kümesi de tahminle dalgayla birlikte (bukkal etiketli en net 4): tek kare okuması baş aşağı çekilmiş bukkalde yanılıyor
+        // (Demirtaş 0545/0546/0547 üçü de "kesiciler sağda" okundu, sağ yuvaya sol bukkal kondu, 7 Kasım 2026); küme sağ ve sol bulursa
+        // yan kararı kümeden.
+        const specBucc = topOf(/^buccal_/, 4).sort(byScore).slice(0, 4);
+        const specBuccWork = specBucc.length >= 2 ? window.idsfyCrop.readBuccalSet(specBucc).catch(function () { return null; }) : Promise.resolve(null);
+        crop.buccSetWork = specBuccWork; crop.specBucc = specBucc;
+        if (!crop.pre) crop.pre = {};
+        const pre = function (key, fn) { if (!crop.pre[key]) { const p = fn(); p.catch(function () {}); crop.pre[key] = p; } return crop.pre[key]; };
+        const faceWork = faceCands.length ? window.idsfyCrop.pickFaces(faceCands).catch(function () { return null; }) : Promise.resolve(null);
+        const upWork = Promise.all(intraCands.map(function (it) { return pre('up|thumb|' + it.name, function () { return window.idsfyCrop.readRawUpright(it, 'thumb'); }).catch(function () { return null; }); }));
+        // Orta kesit okumaları da şimdi başlar (onFix bunları da kullanır; yön adımı sıfıra yakın iner).
+        intraCands.forEach(function (it) { pre('up|center|' + it.name, function () { return window.idsfyCrop.readRawUpright(it, 'center'); }); });
+        // Bukkal kümesindeki 4. kare (ilk 3 adayda olmayan) de şimdi okunur: küme onu seçerse düzeltme adımı 3-9 sn bekliyordu (Salar, Ferit).
+        specBucc.forEach(function (it) { if (intraCands.indexOf(it) < 0) { pre('up|thumb|' + it.name, function () { return window.idsfyCrop.readRawUpright(it, 'thumb'); }); pre('up|center|' + it.name, function () { return window.idsfyCrop.readRawUpright(it, 'center'); }); } });
+        const occWork = Promise.all(occCands.map(function (it) { return pre('pose|' + it.name, function () { return window.idsfyCrop.readPose(it, 'occlusal', true); }).catch(function () { return null; }); }));
+        const poseWork = Promise.all(poseAll.map(function (it) { return pre('pose|' + it.name, function () { return window.idsfyCrop.readPose(it, 'occlusal', true); }).catch(function () { return null; }); }));
+        // Ön adaylar birlikte: hangisi kapanışta (tek kare okuması dar aralığı kaçırıyordu).
+        const labialCands = intraCands.filter(function (it) { return /^labial_/.test(labels[it.name] || ''); });
+        const biteWork = labialCands.length >= 2 ? window.idsfyCrop.readBiteSet(labialCands).catch(function () { return {}; }) : Promise.resolve({});
+        // Alt dalgaların bitiş anları (hızlandırma ölçümü).
+        const timed = function (name, p) { return p.then(function (v) { mark(name); return v; }); };
+        const all = await Promise.all([timed('yüz seçici', faceWork), timed('A/B dik', upWork), occWork, timed('kapanış kümesi', biteWork), timed('yön okumaları', poseWork), timed('oklüzal kümesi (tahmin)', specWork)]);
+        const faces = all[0], ups = all[1], occs = all[2], biteSet = all[3] || {}, poses = all[4], specAns = all[5];
+        const poseOf = {}, poseView = {};
+        poseAll.forEach(function (it, i) { poseOf[it.name] = poses[i] || null; poseView[it.name] = poses[i] ? poses[i].view : null; });
+        mark('yerleşim okumaları bitti');
+        // Yüzler: seçici; karar yoksa etiket.
+        FACE_KEYS.forEach(function (key) {
+            const it = faces && faces[key];
+            if (it && !used[it.name] && put(key, it)) return;
+            if (put(key, pick(byLabel[key]))) { if (faces) notes.push(labelOfKey(key) + ': seçici uygun kare görmedi, etikete göre ' + placed[key].item.name + ' kondu; kontrol edin'); return; }
+            if (key === 'profile_repose' && put(key, pick(byLabel.profile_smiling))) notes.push(placed[key].item.name + ': dinlenme profili yok, gülen profil kondu');
+        });
+        if (faces && faces.reason) notes.push('Yüz seçimi: ' + faces.reason);
+        // Yüz kutuları da şimdi okunur (onFix başında okunuyordu; yüz kırpmaları ~3 sn erken başlar, kırpma sırası erken boşalır).
+        const faceEntries = FACE_KEYS.filter(function (k) { return placed[k]; }).map(function (k) { return { item: placed[k].item, slot: k }; });
+        if (faceEntries.length) pre(faceBoxKey(faceEntries), function () { return window.idsfyCrop.readBoxes(faceEntries, function () {}); });
+        // (1) Yüz kareleri planlama sürerken kırpılıp yuvaya yüklenir (düzeltme adımındaki 8 kırpmanın 3'ü; kuyruk erken boşalır).
+        // onFix'teki placeCropped hazır sonucu kullanır; yükleme olmazsa yeniden kırpar.
+        if (speedOn()) {
+            crop.faceEarly = crop.faceEarly || {};
+            const fbKey = faceBoxKey(faceEntries);
+            faceEntries.forEach(function (e) {
+                const key = e.slot;
+                if (tileOf(key) || !document.querySelector('input[type="file"][id$="-' + key + '-uploader-input"]')) return;
+                const p = (async function () {
+                    const t0 = Date.now();
+                    const b = await crop.pre[fbKey];
+                    const model = b && b.byName ? (b.byName[e.item.name] || null) : null;
+                    const out = await cropLock(function () { return window.idsfyCrop.cropFor(e.item, key, model, { rotate: 0, mirror: false, warning: '' }, false); });
+                    const t1 = Date.now();
+                    await uploadDirect(key, out.file);
+                    return { out: out, crop: (t1 - t0) / 1000, upload: (Date.now() - t1) / 1000 };
+                })();
+                p.catch(function () {});
+                crop.faceEarly[key] = p;
+            });
+        }
+        // Bukkal ve ön: dik karede kesiciler sağda → sağ bukkal, solda → sol bukkal, yok → ön.
+        const sideOf = {};
+        const biteOf = {};
+        intraCands.forEach(function (it, i) { const r = ups[i]; sideOf[it.name] = r ? (r.incisors || 'frontal') : null; biteOf[it.name] = biteSet[it.name] || (r ? r.bite : null); });
+        // Etiket ön/bukkal dese de yön okuması (iki uyuşan okuma) 'oklüzal' diyen kare ön/bukkal adayı değildir (Ferit 0212/0213 bukkal
+        // etiketlenip dik okumaya girmiş, oklüzal havuzundan düşünce alt yuvaya üst oklüzal konmuştu, 7 Kasım 2026).
+        intraCands.forEach(function (it) { if (poseView[it.name] === 'occlusal') { sideOf[it.name] = null; notes.push(it.name + ': etiketi ' + labelOfKey(labels[it.name] || 'other') + ', yön okuması oklüzal dedi; ön/bukkal adayı sayılmadı'); } });
+        const biteName = function (it) { return biteOf[it.name] === 'closed' ? ' kapanış' : biteOf[it.name] === 'open' ? ' ağız açık' : ''; };
+        const bestWhere = function (list, test) { return bestOf(list.filter(function (it) { return !used[it.name] && test(it); })); };
+        notes.push('Bukkal/ön adayları: ' + intraCands.map(function (it) { return it.name.replace(/^2Y6A/, '') + ' ' + labelOfKey(labels[it.name]) + ' → ' + (sideOf[it.name] === 'frontal' ? 'ön' : sideOf[it.name] ? 'kesiciler ' + (sideOf[it.name] === 'right' ? 'sağda' : 'solda') : 'okunamadı') + biteName(it); }).join(', '));
+        // Kapanıştaki kare yeğlenir (Ferit, Demirtaş, Çakır, Salar, Balaban, Satoğlu'nda ağız açık ön kare seçilmişti, 7 Kasım 2026);
+        // kapanış okunamayan kare ikinci, ağız açık kare son sırada ve notla.
+        const closedFirst = function (test) { return bestWhere(intraCands, function (it) { return test(it) && biteOf[it.name] === 'closed'; }) || bestWhere(intraCands, function (it) { return test(it) && biteOf[it.name] !== 'open'; }) || bestWhere(intraCands, test); };
+        // (2) Ön/bukkal kutu okumaları bukkal kümesi beklenmeden, tek kare okumalarına göre olası karelerle başlar; küme karşı yanı
+        // derse anahtar tutmaz, onFix yeniden okur.
+        if (speedOn()) {
+            const guess = {};
+            const gL = closedFirst(function (it) { return labels[it.name] === 'labial_anterior' && sideOf[it.name] !== 'left' && sideOf[it.name] !== 'right'; });
+            const gR = closedFirst(function (it) { return sideOf[it.name] === 'right'; });
+            const gLf = closedFirst(function (it) { return sideOf[it.name] === 'left'; });
+            if (gL) guess.labial_anterior = wrap(gL);
+            if (gR) guess.buccal_right = wrap(gR);
+            if (gLf) guess.buccal_left = wrap(gLf);
+            // Oklüzaller: yön okuması oklüzal diyen karelerde küme yanıtı (varsa) ya da çene okuması; tam ark yeğlenir. Tahmin tutmazsa
+            // anahtar tutmaz, onFix yeniden okur.
+            const occG = poseAll.filter(function (it) { return !used[it.name] && poseView[it.name] === 'occlusal'; });
+            const archG = function (it) { return specAns && specAns[it.name] ? specAns[it.name] : (poseOf[it.name] ? poseOf[it.name].arch : null); };
+            const fullFirst = function (test) { return bestWhere(occG, function (it) { return test(it) && !(poseOf[it.name] && poseOf[it.name].complete_arch === false); }) || bestWhere(occG, test); };
+            const gU = fullFirst(function (it) { return archG(it) === 'upper'; });
+            const gLo = fullFirst(function (it) { return archG(it) === 'lower'; });
+            if (gU) guess.occlussal_upper = wrap(gU);
+            if (gLo && gLo !== gU) guess.occlussal_lower = wrap(gLo);
+            prefetchBoxes(guess);
+        }
+        // Bukkal kümesi en çok 1 sn beklenir (Opus 7-18 sn sürebiliyor); gelmezse tek kare okumaları, yuva boş kalırsa yedek aşama aynı
+        // okumayı bekler (7 Kasım: 3 sn idi).
+        let buccSetLate = false;
+        const specBuccAns = (await Promise.race([specBuccWork, new Promise(function (resolve) { setTimeout(function () { buccSetLate = true; resolve(null); }, 1000); })])) || {};
+        mark(buccSetLate ? 'bukkal kümesi beklenmedi' : 'bukkal kümesi (tahmin)');
+        // Küme hem sağ hem sol bulduysa (yön okuması oklüzal demeyen karelerde) yan kararı kümeden; kapanış yeğlenir.
+        const bSide = function (it) { return specBuccAns[it.name] && poseView[it.name] !== 'occlusal' ? specBuccAns[it.name].side : null; };
+        const closedFirstIn = function (list, test) { return bestWhere(list, function (it) { return test(it) && biteOf[it.name] === 'closed'; }) || bestWhere(list, function (it) { return test(it) && biteOf[it.name] !== 'open'; }) || bestWhere(list, test); };
+        if (specBucc.some(function (it) { return bSide(it) === 'right'; }) && specBucc.some(function (it) { return bSide(it) === 'left'; })) {
+            crop.setOrient = crop.setOrient || {}; crop.setSide = crop.setSide || {};
+            specBucc.forEach(function (it) { const a = specBuccAns[it.name]; if (a) { crop.setOrient[it.name] = a.upsideDown ? 'bottom' : 'top'; crop.setSide[it.name] = a.side; } });
+            notes.push('Bukkal küme okuması: ' + specBucc.map(function (it) { const a = specBuccAns[it.name]; return it.name.replace(/^2Y6A/, '') + ' ' + (a ? (a.side === 'right' ? 'sağ' : 'sol') + (a.upsideDown ? ' (baş aşağı çekilmiş)' : '') : '?'); }).join(', '));
+            ['buccal_right', 'buccal_left'].forEach(function (key) {
+                const want = key === 'buccal_right' ? 'right' : 'left';
+                if (put(key, closedFirstIn(specBucc, function (it) { return bSide(it) === want; })) && sideOf[placed[key].item.name] && sideOf[placed[key].item.name] !== want) notes.push(placed[key].item.name + ': küme okuması ' + (want === 'right' ? 'sağ' : 'sol') + ' dedi (tek kare okuması ' + (sideOf[placed[key].item.name] === 'right' ? 'sağ' : sideOf[placed[key].item.name] === 'left' ? 'sol' : 'ön') + ' demişti), ' + labelOfKey(key) + ' yuvasına kondu');
+            });
+            if (placed.buccal_right && placed.buccal_left) { placed.buccal_right.pairDecided = true; placed.buccal_left.pairDecided = true; }
+        }
+        // Küme yerleştirdiyse üzerine yazılmaz (put boş yuva denetimi yapmaz; Demirtaş 8 Kasım: kümenin koyduğu 0547 tek kare okumasıyla 0546 ile ezilmişti).
+        if (!placed.buccal_right) put('buccal_right', closedFirst(function (it) { return sideOf[it.name] === 'right'; }));
+        if (!placed.buccal_left) put('buccal_left', closedFirst(function (it) { return sideOf[it.name] === 'left'; }));
+        if (!placed.labial_anterior) put('labial_anterior', closedFirst(function (it) { return labels[it.name] === 'labial_anterior' && sideOf[it.name] !== 'left' && sideOf[it.name] !== 'right'; }));
+        ['labial_anterior', 'buccal_right', 'buccal_left'].forEach(function (key) { if (placed[key] && biteOf[placed[key].item.name] === 'open') notes.push(labelOfKey(key) + ': kapanışta kare bulunamadı, ağız açık kare ' + placed[key].item.name + ' kondu; kontrol edin'); });
+        ['buccal_right', 'buccal_left'].forEach(function (key) {
+            if (!placed[key] && put(key, pick(byLabel[key]))) notes.push(labelOfKey(key) + ': yön okuması yanı belirleyemedi, etikete göre ' + placed[key].item.name + ' kondu');
+        });
+        // Bukkal yuvası boş kaldıysa: etiketi bukkal olmayan kalan ağız içi/other karelerde (en net 4) yön okuması 'buccal' diyorsa ve
+        // dik okuma yanı veriyorsa oraya konur (Ensar Budak: karanlık bukkaller etiketlenemedi, 6 Kasım 2026).
+        if (!placed.buccal_right || !placed.buccal_left) {
+            // Oklüzal etiketli ama yön okuması 'buccal' diyen ya da hiç okunmamış (ilk 3'e girmeyen) kareler de aday (Ezgisu Genç: bukkaller
+            // 'alt oklüzal' etiketlendi; Enes Salar 7 Kasım: sol bukkal oklüzal etiketlenip ilk 3'e girmeyince yuva boş kaldı).
+            // Oklüzal etiketi olmayanlar önce (Salar: okunmamış üst oklüzaller havuzu doldurup 1546'yı dışarıda bırakmıştı), en çok 12.
+            const viewOf = Object.assign({}, poseView);
+            const rest = crop.items.filter(function (it) { return !used[it.name] && !/^(profile|frontal)_/.test(labels[it.name] || '') && sideOf[it.name] === undefined && (!/^occlussal_/.test(labels[it.name] || '') || viewOf[it.name] !== 'occlusal'); }).sort(function (x, y) { const ox = /^occlussal_/.test(labels[x.name] || '') ? 1 : 0, oy = /^occlussal_/.test(labels[y.name] || '') ? 1 : 0; return ox - oy || byScore(x, y); }).slice(0, 12);
+            if (rest.length) {
+                const views = await Promise.all(rest.map(function (it) { return pre('pose|' + it.name, function () { return window.idsfyCrop.readPose(it, 'buccal', true); }).catch(function () { return null; }); }));
+                const bucc = rest.filter(function (it, i) { return views[i] && views[i].view === 'buccal'; });
+                const sides = await Promise.all(bucc.map(function (it) { return pre('up|thumb|' + it.name, function () { return window.idsfyCrop.readRawUpright(it, 'thumb'); }).catch(function () { return null; }); }));
+                bucc.forEach(function (it, i) { sideOf[it.name] = sides[i] ? (sides[i].incisors || 'frontal') : null; });
+                notes.push('Yedek bukkal adayları: ' + rest.map(function (it, i) { const v = views[i]; return it.name.replace(/^2Y6A/, '') + ' ' + labelOfKey(labels[it.name] || 'other') + ' → ' + (v ? v.view : 'okunamadı') + (sideOf[it.name] ? ', kesiciler ' + (sideOf[it.name] === 'right' ? 'sağda' : sideOf[it.name] === 'left' ? 'solda' : 'yok') : ''); }).join(', '));
+                ['buccal_right', 'buccal_left'].forEach(function (key) {
+                    if (placed[key]) return;
+                    const want = key === 'buccal_right' ? 'right' : 'left';
+                    if (put(key, bestWhere(bucc, function (it) { return sideOf[it.name] === want; }))) {
+                        notes.push(placed[key].item.name + ': etiketi ' + labelOfKey(labels[placed[key].item.name] || 'other') + ' idi; yön okuması bukkal, kesiciler ' + (want === 'right' ? 'sağda' : 'solda') + ' dedi, ' + labelOfKey(key) + ' yuvasına kondu');
+                        // Orta kesit okuması da şimdi başlasın (onFix bekliyordu: Salar'da yön adımı 15 sn sürdü).
+                        const it0 = placed[key].item;
+                        pre('up|center|' + it0.name, function () { return window.idsfyCrop.readRawUpright(it0, 'center'); });
+                    }
+                });
+            }
+        }
+        // Bukkal yuvası hâlâ boşsa ve bukkal görünümlü en az iki kare varsa: kareler birlikte okunur (hangisi baş aşağı çekilmiş, hangi
+        // yan). Tek kare okuması Salar'ın üç bukkalini de "kesiciler sağda" demişti; 1546 baş aşağı çekilmiş soldu (7 Kasım 2026).
+        // Küme kararı onFix'te yön (0°/180°) ve yan için de esastır (crop.setOrient / crop.setSide).
+        if (!placed.buccal_right || !placed.buccal_left) {
+            const buccAll = crop.items.filter(function (it) { return sideOf[it.name] === 'right' || sideOf[it.name] === 'left'; }).sort(byScore).slice(0, 6);
+            if (buccAll.length >= 2) {
+                let setAns = {};
+                // Tahmini küme aynı kareleri kapsıyorsa süren okuma beklenir; yoksa yeni okuma.
+                const covered = buccAll.every(function (it) { return specBucc.indexOf(it) >= 0; });
+                try { setAns = covered ? ((await specBuccWork) || {}) : await window.idsfyCrop.readBuccalSet(buccAll); } catch (error) { setAns = {}; }
+                crop.setOrient = crop.setOrient || {}; crop.setSide = crop.setSide || {};
+                Object.keys(setAns).forEach(function (name) { crop.setOrient[name] = setAns[name].upsideDown ? 'bottom' : 'top'; crop.setSide[name] = setAns[name].side; });
+                notes.push('Bukkal küme okuması (yedek): ' + buccAll.map(function (it) { const a = setAns[it.name]; return it.name.replace(/^2Y6A/, '') + ' ' + (a ? (a.side === 'right' ? 'sağ' : 'sol') + (a.upsideDown ? ' (baş aşağı çekilmiş)' : '') : '?'); }).join(', '));
+                ['buccal_right', 'buccal_left'].forEach(function (key) {
+                    const p = placed[key];
+                    const want = key === 'buccal_right' ? 'right' : 'left';
+                    if (p && setAns[p.item.name] && setAns[p.item.name].side !== want && buccAll.some(function (it) { return !used[it.name] && setAns[it.name] && setAns[it.name].side === want; })) {
+                        delete used[p.item.name]; delete placed[key];
+                        notes.push(p.item.name + ': küme okuması karşı yanı gördü, ' + labelOfKey(key) + ' yuvası kümeye göre yeniden dolduruldu');
+                    }
+                });
+                let decided = false;
+                ['buccal_right', 'buccal_left'].forEach(function (key) {
+                    if (placed[key]) return;
+                    const want = key === 'buccal_right' ? 'right' : 'left';
+                    if (put(key, bestWhere(buccAll, function (it) { return setAns[it.name] && setAns[it.name].side === want; }))) { decided = true; notes.push(placed[key].item.name + ': küme okuması ' + (want === 'right' ? 'sağ' : 'sol') + ' dedi (tek kare okuması ' + (sideOf[placed[key].item.name] === 'right' ? 'sağ' : 'sol') + ' demişti), ' + labelOfKey(key) + ' yuvasına kondu'); }
+                });
+                if (decided && placed.buccal_right && placed.buccal_left) { placed.buccal_right.pairDecided = true; placed.buccal_left.pairDecided = true; }
+            }
+        }
+        intraCands.forEach(function (it) { if (labels[it.name] !== 'labial_anterior' || sideOf[it.name] === 'left' || sideOf[it.name] === 'right') { if (/^buccal_/.test(labels[it.name]) !== (sideOf[it.name] === 'left' || sideOf[it.name] === 'right') && sideOf[it.name]) notes.push(it.name + ': etiketi ' + labelOfKey(labels[it.name]) + ', dik okuma ' + (sideOf[it.name] === 'frontal' ? 'ön' : 'kesiciler ' + (sideOf[it.name] === 'right' ? 'sağda' : 'solda')) + ' dedi; okuma esas alındı'); } });
+        // Oklüzal: çene okuması; yoksa etiket.
+        const archOf = {};
+        // Tam ark (kesiciler + iki yanın son azıları) yeğlenir: netlik puanı yüksek yarım kadraj (Balaban 1504: tek çeyrek) tam arkın
+        // (1505) önüne geçmişti (7 Kasım 2026). Okuma 'tam değil' demedikçe tam sayılır.
+        const completeOf = {};
+        poseAll.forEach(function (it) { const p = poseOf[it.name]; archOf[it.name] = p && p.view === 'occlusal' ? p.arch : null; if (p) completeOf[it.name] = p.complete_arch !== false; });
+        const bestOcc = function (list, test) { return bestWhere(list, function (it) { return test(it) && completeOf[it.name] !== false; }) || bestWhere(list, test); };
+        const occNoted = poseAll.filter(function (it) { return /^occlussal_/.test(labels[it.name] || '') || poseView[it.name] === 'occlusal'; });
+        notes.push('Oklüzal adayları: ' + occNoted.map(function (it) { const p = poseOf[it.name]; return it.name.replace(/^2Y6A/, '') + ' ' + labelOfKey(labels[it.name] || 'other') + ' → ' + (p ? (p.view === 'occlusal' ? (p.arch === 'upper' ? 'üst' : p.arch === 'lower' ? 'alt' : 'çene yok') + (p.behind_teeth ? ' (' + p.behind_teeth + ')' : '') + (p.complete_arch === false ? ' (ark tam değil)' : '') : p.view) : 'okunamadı'); }).join(', '));
+        notes.push('Yön okumaları: ' + poseAll.map(function (it) { const v = poseView[it.name]; return it.name.replace(/^2Y6A/, '') + ' ' + (v === 'occlusal' ? 'oklüzal' : v === 'buccal' ? 'bukkal' : v === 'frontal' ? 'ön' : v || '?'); }).join(', '));
+        // Önce çift karşılaştırması: oklüzal etiketli kareler ikiz gruplarına ayrılır (imza uzaklığı ≤ 10), en net iki grubun en net
+        // kareleri birlikte gösterilip hangisi üst çene sorulur. Karar verilirse çene okuması ve çift denetimi atlanır.
+        // Yalnız yön okuması 'oklüzal' diyen adaylar (etiket bir bukkali oklüzal sayabiliyor: Ulusoy 0165).
+        const occAll = poseAll.filter(function (it) { return !used[it.name] && poseView[it.name] === 'occlusal'; }).sort(byScore);
+        if (occAll.length >= 2) {
+            let setAns = {};
+            // Tahmini küme (oklüzal etiketli en net 6) yön okumalarıyla aynı çıktıysa hazır yanıt; değilse yeniden okunur.
+            const want = occAll.slice(0, 6);
+            const specHit = !!specAns && want.length === specOcc.length && want.every(function (it) { return specOcc.indexOf(it) >= 0; });
+            if (specHit) setAns = specAns;
+            else { try { setAns = await window.idsfyCrop.readArchSet(want); } catch (error) { setAns = {}; } notes.push('Oklüzal kümesi tahmini tutmadı (' + specOcc.map(function (it) { return it.name.replace(/^2Y6A/, ''); }).join(', ') + '); yeniden okundu'); }
+            const up = bestOcc(occAll, function (it) { return setAns[it.name] === 'upper'; });
+            const low = bestOcc(occAll, function (it) { return setAns[it.name] === 'lower'; });
+            notes.push('Oklüzal küme karşılaştırması: ' + occAll.slice(0, 6).map(function (it) { return it.name.replace(/^2Y6A/, '') + ' ' + (setAns[it.name] === 'upper' ? 'üst' : setAns[it.name] === 'lower' ? 'alt' : '?'); }).join(', '));
+            if (up && low) {
+                put('occlussal_upper', up); put('occlussal_lower', low);
+                placed.occlussal_upper.pairDecided = true; placed.occlussal_lower.pairDecided = true;
+            }
+        }
+        if (!placed.occlussal_upper) put('occlussal_upper', bestOcc(occAll, function (it) { return archOf[it.name] === 'upper'; }));
+        if (!placed.occlussal_lower) put('occlussal_lower', bestOcc(occAll, function (it) { return archOf[it.name] === 'lower'; }));
+        // Yedek oklüzal havuzu: bir oklüzal yuva boşsa, yüz ve bukkal olmayan, henüz yön okuması yapılmamış kalan kareler (en çok 10)
+        // okunur; 'oklüzal' görünenler çene okuması ve kümeyle yerleştirilir (Balaban 7 Kasım 2026: üst oklüzaller 'other' etiketlenip
+        // ilk 3 dışında kaldı, bukkal etiketli 1503 etikete göre üst yuvaya konmuştu).
+        const viewOf2 = Object.assign({}, poseView);
+        if (!placed.occlussal_upper || !placed.occlussal_lower) {
+            const pool = crop.items.filter(function (it) { return !used[it.name] && !/^(profile|frontal)_/.test(labels[it.name] || '') && sideOf[it.name] !== 'right' && sideOf[it.name] !== 'left' && !(it.name in viewOf2); }).sort(byScore).slice(0, 10);
+            const poses = await Promise.all(pool.map(function (it) { return pre('pose|' + it.name, function () { return window.idsfyCrop.readPose(it, 'occlusal', true); }).catch(function () { return null; }); }));
+            pool.forEach(function (it, i) { const p = poses[i]; viewOf2[it.name] = p ? p.view : null; if (p && p.view === 'occlusal') { archOf[it.name] = p.arch; completeOf[it.name] = p.complete_arch !== false; } });
+            if (pool.length) notes.push('Yedek oklüzal adayları: ' + pool.map(function (it, i) { const p = poses[i]; return it.name.replace(/^2Y6A/, '') + ' ' + labelOfKey(labels[it.name] || 'other') + ' → ' + (p ? (p.view === 'occlusal' ? (p.arch === 'upper' ? 'üst' : p.arch === 'lower' ? 'alt' : 'çene yok') + (p.complete_arch === false ? ' (ark tam değil)' : '') : p.view) : 'okunamadı'); }).join(', '));
+            const occAll2 = crop.items.filter(function (it) { return !used[it.name] && viewOf2[it.name] === 'occlusal'; }).sort(byScore);
+            if (!placed.occlussal_upper && !placed.occlussal_lower && occAll2.length >= 2) {
+                let ans2 = {};
+                try { ans2 = await window.idsfyCrop.readArchSet(occAll2.slice(0, 6)); } catch (error) { ans2 = {}; }
+                notes.push('Oklüzal küme karşılaştırması (yedek): ' + occAll2.slice(0, 6).map(function (it) { return it.name.replace(/^2Y6A/, '') + ' ' + (ans2[it.name] === 'upper' ? 'üst' : ans2[it.name] === 'lower' ? 'alt' : '?'); }).join(', '));
+                const up2 = bestOcc(occAll2, function (it) { return ans2[it.name] === 'upper'; });
+                const low2 = bestOcc(occAll2, function (it) { return ans2[it.name] === 'lower'; });
+                if (up2 && low2) { put('occlussal_upper', up2); put('occlussal_lower', low2); placed.occlussal_upper.pairDecided = true; placed.occlussal_lower.pairDecided = true; }
+            }
+            ['occlussal_upper', 'occlussal_lower'].forEach(function (key) {
+                const want = key === 'occlussal_upper' ? 'upper' : 'lower';
+                if (!placed[key] && put(key, bestOcc(occAll2, function (it) { return archOf[it.name] === want; }))) notes.push(placed[key].item.name + ': etiketi ' + labelOfKey(labels[placed[key].item.name] || 'other') + ' idi; yön okuması oklüzal, çene ' + (want === 'upper' ? 'üst' : 'alt') + ' dedi, ' + labelOfKey(key) + ' yuvasına kondu');
+            });
+        }
+        // Etiket yedeği: yön okuması bukkal/ön diyen ya da yanı okunan kareler oklüzal yuvaya konmaz.
+        const notOcc = function (it) { return viewOf2[it.name] === 'buccal' || viewOf2[it.name] === 'frontal' || sideOf[it.name] === 'right' || sideOf[it.name] === 'left'; };
+        ['occlussal_upper', 'occlussal_lower'].forEach(function (key) {
+            if (!placed[key] && put(key, pick((byLabel[key] || []).filter(function (it) { return !notOcc(it); })))) notes.push(labelOfKey(key) + ': çene okuması belirleyemedi, etikete göre ' + placed[key].item.name + ' kondu; kontrol edin');
+        });
+        // Hâlâ boşsa oklüzal havuzundaki en net kalan kare (etiket üst/alt karışabiliyor; çene okuması çelişirse uyarı kalır).
+        ['occlussal_upper', 'occlussal_lower'].forEach(function (key) {
+            if (!placed[key] && put(key, pick(occCands.concat(byLabel.occlussal_upper || [], byLabel.occlussal_lower || []).filter(function (it) { return !notOcc(it); })))) notes.push(labelOfKey(key) + ': bu çene için kare bulunamadı, oklüzal havuzundan ' + placed[key].item.name + ' kondu; kontrol edin');
+        });
+        const keys = Object.keys(placed);
+        if (!keys.length) return null;
+        mark('plan bitti');
+        if (speedOn()) prefetchBoxes(placed);
+        ALL_KEYS.filter(function (k) { return !placed[k]; }).forEach(function (k) { crop.notes.push(labelOfKey(k) + ' için uygun kare bulunamadı; yuva boş bırakıldı'); });
+        return placed;
+    }
+
+    // Dönüş: true = doğrudan yerleştirme yapıldı (eski akışa gerek yok); false = eski akışa (IDS'e bırakma) dönülsün.
+    async function onDirect(explicit) {
+        const crop = state.crop;
+        if (!crop || !crop.items || !window.idsfyCrop) return false;
+        setStatus('Fotoğraflar sınıflandırılıyor (IDS\'e bırakılmadan)…');
+        let placed = null;
+        try { placed = await planDirect(crop); } catch (error) { crop.notes.push('Doğrudan yerleştirme yapılamadı (' + error.message + '); IDS\'e bırakılıyor'); return false; }
+        if (!placed) { crop.notes.push('Sınıflandırma hiçbir kareyi yuvalara ayıramadı; IDS\'e bırakılıyor'); return false; }
+        const keys = Object.keys(placed);
+        mark('sınıflandırma bitti, ' + keys.length + ' yuva planlandı');
+        // Planlamada erken yüklenen yüz yuvaları (crop.faceEarly) dolu sayılmaz (8 Kasım 2026: yüzler dolu görülüp IDS'e bırakma yoluna düşülmüştü).
+        const blocked = keys.filter(function (k) { return !(crop.faceEarly && crop.faceEarly[k]) && (tileOf(k) || !document.querySelector('input[type="file"][id$="-' + k + '-uploader-input"]')); });
+        if (blocked.length) { crop.notes.push(blocked.map(labelOfKey).join(', ') + ' yuvası dolu ya da girişi yok; IDS\'e bırakılıyor'); return false; }
+        crop.direct = true;
+        const clean = await onFix(!explicit, { placed: placed });
+        askCrop(clean);
+        return true;
+    }
+
+    // Kırpılmış kareyi boş yuvaya yükler; süre kaydı replaceTimes'a.
+    async function uploadDirect(key, file) {
+        const t0 = Date.now();
+        // Yükleme 60 sn'de bitmezse (Esma Ulusoy üst oklüzal, 6 Kasım 2026) yuva hâlâ boşsa bir kez daha denenir.
+        try { await uploadToEmptySlot(key, file); } catch (error) {
+            if (tileOf(key) || !/tamamlanmadı/.test(error.message)) throw error;
+            await sleep(1000);
+            await uploadToEmptySlot(key, file);
+            replaceTimes[key] = 'ikinci deneme ';
+        }
+        replaceTimes[key] = 'yükleme ' + ((Date.now() - t0) / 1000).toFixed(1);
     }
 
     // ---------- Hızlandırma: erken okuma ----------
@@ -856,6 +1196,49 @@
     }
 
     // placed: { yuva: orijinal }. Yuvası bilinen karelerin yön okumalarını ve yüz kutularını başlatır (henüz başlamamışsa).
+    function boxKey(slot, name, target) { return 'box|' + slot + '|' + name + '|' + ((target && target.rotate) || 0) + '|' + (target && target.mirror ? 1 : 0); }
+
+    // Erken kutu okuması (7 Kasım 2026): yuvalar ve yön planlama sonunda bellidir (ön/bukkal: karenin kendi A/B okuması ya da bukkal
+    // kümesi; oklüzal: yön okuması). Kutular onFix'in set oylamasını ve çift denetimini beklemeden okunur (5-9 sn). onFix aynı anahtarı
+    // (yuva, kare, dönüş, ayna) take() ile alır; son yön farklı çıkarsa (set oylaması, çift düzeltmesi) yeniden okur.
+    function prefetchBoxes(placed) {
+        const crop = state.crop;
+        if (!crop || !crop.pre || !window.idsfyCrop) return;
+        SLOTS.forEach(function (s) {
+            const r = placed[s.key];
+            if (!r) return;
+            const item = r.item;
+            (async function () {
+                let target = null;
+                if (/^occlussal_/.test(s.key)) {
+                    const p = await (crop.pre['pose|' + item.name] || Promise.resolve(null)).catch(function () { return null; });
+                    if (!p || p.view === 'other') return;
+                    target = decide(s.key, { slot: s.key, is_photo: true, upper_jaw_side: p.upper_jaw_side || 'none', incisors_side: p.incisors_side || 'none', arch: p.arch || 'none', occRaw: true, exifRotate: item.exifRotate || 0, note: '' });
+                } else {
+                    const votes = await Promise.all(['thumb', 'center'].map(function (m) { return (crop.pre['up|' + m + '|' + item.name] || Promise.resolve(null)).catch(function () { return null; }); }));
+                    const v = votes.filter(function (x) { return x; });
+                    const faces = v.filter(function (x) { return x.byFace; });
+                    const faceSide = faces.length && faces.every(function (x) { return x.side === faces[0].side; }) ? faces[0].side : null;
+                    const teethSide = !faceSide && v.length === 2 && v[0].side === v[1].side ? v[0].side : null;
+                    const setO = crop.setOrient ? crop.setOrient[item.name] : null;
+                    const side = setO || faceSide || teethSide;
+                    if (!side) return;
+                    target = { rotate: side === 'top' ? 0 : 180, mirror: false, raw: true, exifRotate: item.exifRotate || 0, warning: '' };
+                }
+                if (!target || crop.preClosed) return;
+                const key = boxKey(s.key, item.name, target);
+                if (crop.pre[key]) return;
+                const p = (async function () {
+                    const up = await window.idsfyCrop.uprightThumb(item, target);
+                    const res = await window.idsfyCrop.readBoxes([{ item: item, slot: s.key, thumb: up.data, w: up.w, h: up.h }], function () {});
+                    return { res: res, upright: true };
+                })();
+                p.catch(function () {});
+                crop.pre[key] = p;
+            })();
+        });
+    }
+
     function warmReads(placed) {
         const crop = state.crop;
         if (!crop || !window.idsfyCrop || crop.preClosed) return;
@@ -941,14 +1324,16 @@
         let plan = null;
         if (R && L && R.side === B && L.side === A) {
             plan = { type: 'swap' };
-        } else if (R && R.side === B && !L && !tileOf(B)) {
+        } else if (R && R.side === B && !L && (spec.direct ? !spec.placed[B] : !tileOf(B))) {
             plan = { type: 'move', from: A, to: B };
-        } else if (L && L.side === A && !R && !tileOf(A)) {
+        } else if (L && L.side === A && !R && (spec.direct ? !spec.placed[A] : !tileOf(A))) {
             plan = { type: 'move', from: B, to: A };
         } else if (R && L && R.side && L.side && R.side === L.side) {
             plan = { type: 'replace', key: R.side === B ? A : B };
         }
         if (!plan) return false;
+        // Doğrudan yerleştirmede çift karşılaştırmasıyla karar verilmiş yuvalar yeniden sorgulanmaz (mutlak çene okuması yanılıyor).
+        if (spec.direct && spec.placed && spec.placed[A] && spec.placed[B] && spec.placed[A].pairDecided && spec.placed[B].pairDecided) return false;
         const notes = state.crop ? state.crop.notes : [];
         // Sanal takas: kırpma kaydı varsa orijinaller IDS'te yer değiştirmez (2 yükleme, ~15 sn); yalnız yuva→kare eşlemesi değişir,
         // kırpılmış kareler doğru yuvalara konur. Dönüş 'virtual': yuvalar yeniden eşlenmez.
@@ -959,6 +1344,13 @@
             R.item.slot = B;
             L.item.slot = A;
             notes.push(pa.item.name + ' ve ' + spec.placed[A].item.name + ': ' + kind + ' karışmıştı; kırpılmış kareler doğru yuvalara kondu');
+            return 'virtual';
+        }
+        if (plan.type === 'move' && spec.direct && spec.placed) {
+            spec.placed[plan.to] = spec.placed[plan.from];
+            delete spec.placed[plan.from];
+            info[plan.from].item.slot = plan.to;
+            notes.push(spec.placed[plan.to].item.name + ': karşı yuvaya ait olduğundan ' + spec.names[plan.to] + ' yuvasına kondu (' + kind + ')');
             return 'virtual';
         }
         if (plan.type === 'swap') {
@@ -1093,9 +1485,9 @@
     // yerleşmiş ve numaraları farklıysa sıra geçerlidir; değilse eski yol (yön okumasından; kuralla dikleştirilen karede null → dokunulmaz).
     // Sağ/sol bukkal: gerçek yan, DİK karedeki kesicilerin yanından (sağda → sağ bukkal). Çekim sırası kuralı Damla'da bozuldu
     // (0547 küçük numara ama sol bukkal), kullanılmıyor. Okuma yoksa dokunulmaz.
-    function fixBuccalSides(items, placed) {
+    function fixBuccalSides(items, placed, direct) {
         return fixPairSlots(items, {
-            keys: ['buccal_right', 'buccal_left'], kind: 'sağ/sol bukkal', names: { buccal_right: 'sağ bukkal', buccal_left: 'sol bukkal' }, placed: placed,
+            keys: ['buccal_right', 'buccal_left'], kind: 'sağ/sol bukkal', names: { buccal_right: 'sağ bukkal', buccal_left: 'sol bukkal' }, placed: placed, direct: direct,
             truth: function (key, item) {
                 if (item.viaRule) return item.rawIncisors === 'right' ? 'buccal_right' : item.rawIncisors === 'left' ? 'buccal_left' : null;
                 return buccalSideOf(item);
@@ -1107,14 +1499,16 @@
     // Üst/alt oklüzal: gerçek çene, yön okumasındaki arch alanından (damak = üst, dil = alt). Çekim sırası burada kullanılmaz: üst/alt
     // sırası setten sete değişiyor (Damla'da alt önce çekilmiş).
     // Yön okumasının çenesi sınıflandırma etiketiyle çelişirse bilinmez sayılır (tek okuma "iki yuva aynı çene" yanlış alarmı üretiyordu).
-    function fixOcclusalArches(items, placed) {
+    function fixOcclusalArches(items, placed, direct) {
         const labels = state.crop && state.crop.labelOf ? state.crop.labelOf : {};
         return fixPairSlots(items, {
-            keys: ['occlussal_upper', 'occlussal_lower'], kind: 'üst/alt oklüzal', names: { occlussal_upper: 'üst oklüzal', occlussal_lower: 'alt oklüzal' }, placed: placed,
+            keys: ['occlussal_upper', 'occlussal_lower'], kind: 'üst/alt oklüzal', names: { occlussal_upper: 'üst oklüzal', occlussal_lower: 'alt oklüzal' }, placed: placed, direct: direct,
             truth: function (key, item) {
                 const fromArch = item.arch === 'upper' ? 'occlussal_upper' : item.arch === 'lower' ? 'occlussal_lower' : null;
                 const label = item.name ? labels[item.name] : null;
-                if (fromArch && /^occlussal_/.test(label || '') && label !== fromArch) return null;
+                // Doğrudan yerleştirmede etiket yalnız başlangıç dizilimidir; çene okuması (damak/dil, kararlı okuyucu) esastır
+                // (Elif Kır: 1943 alt oklüzal 'üst' etiketlendi, okuma 'alt' dedi; etiket çelişkisi takası engelliyordu).
+                if (!direct && fromArch && /^occlussal_/.test(label || '') && label !== fromArch) return null;
                 return fromArch;
             }
         });
@@ -1125,8 +1519,10 @@
     // düzeltilir; sonra her yuva için kare tuvalde kırpılıp döndürülür (oklüzalde aynalanır) ve "Değiştir" ile yuvaya konur. Kırpma
     // kaydı olmayan yuvalarda (elle yüklenmiş, eşlenemeyen) yön eski yolla, IDS'in menüsüyle düzeltilir.
     // Sonuç: tüm yuvalar uyarısız düzeltildiyse true. auto: kendiliğinden çağrıldı ("Durdur" basılırsa kalan yuvalar bırakılır).
-    async function onFix(auto) {
+    async function onFix(auto, direct) {
         if (state.cropReady) await state.cropReady;
+        // Doğrudan yerleştirmede yuvalar henüz boştur: "yuva var mı" planlanan kareye bakar.
+        const has = function (key) { return direct ? !!direct.placed[key] : !!tileOf(key); };
         let clean = false;
         let halted = false;
         state.busy = true;
@@ -1141,7 +1537,8 @@
         try {
             // 1) Dolu yuvalar hangi orijinal? Benzer çekimler arasından belirgin biçimde (en az %30) daha net olan varsa o kullanılır.
             const placed = {};
-            if (crop) {
+            if (direct) Object.assign(placed, direct.placed);
+            if (crop && !direct) {
                 setStatus('Yuvalardaki fotoğraflar klasördeki orijinallerle eşleştiriliyor…');
                 for (const key of ALL_KEYS) {
                     if (!tileOf(key)) continue;
@@ -1167,7 +1564,7 @@
                 warmReads(warm);
             }
             // 1b) Yüz yuvaları: IDS gülümsemeyi profile koyabiliyor; yerleşen yüz kareleri sınıflandırılır, yanlış yuvalar düzeltilir.
-            if (crop) {
+            if (crop && !direct) {
                 try {
                     if (await fixFaceSlots(placed)) {
                         for (const key of FACE_KEYS) {
@@ -1181,7 +1578,7 @@
             // 2) Yön okuması (orijinal küçük kareden) ve 3) kırpma kutuları (yuva bilinerek), aynı anda.
             const images = [];
             for (const slot of SLOTS) {
-                if (!tileOf(slot.key)) continue;
+                if (!has(slot.key)) continue;
                 const r = placed[slot.key];
                 if (r) { images.push({ slot: slot.key, media_type: 'image/jpeg', data: r.item.thumb, original: r.item.name }); continue; }
                 const image = await previewImage(slot.key);
@@ -1208,11 +1605,18 @@
                 setStatus(label + ' kırpılıyor' + (orient.rotate || orient.mirror ? ' ve döndürülüyor' : '') + '…');
                 try {
                     const c0 = Date.now();
-                    const out = await cropLock(function () { return window.idsfyCrop.cropFor(r.item, key, model, orient, upright); });
+                    // Planlamada kırpılıp yüklenmiş yüz karesi varsa o kullanılır.
+                    let early = null;
+                    if (crop && crop.faceEarly && crop.faceEarly[key]) {
+                        try { early = await crop.faceEarly[key]; } catch (error) { early = null; notes.push(label + ': planlamadaki erken yükleme olmadı (' + error.message + '); yeniden kırpıldı'); }
+                    }
+                    const out = early && early.out ? early.out : await cropLock(function () { return window.idsfyCrop.cropFor(r.item, key, model, orient, upright); });
                     out.notes.forEach(function (n) { notes.push(n); });
                     const c1 = Date.now();
-                    await replaceInSlot(key, out.file);
-                    laps.push(label + ' kırpma ' + ((c1 - c0) / 1000).toFixed(1) + ' + Değiştir ' + ((Date.now() - c1) / 1000).toFixed(1) + ' [' + (replaceTimes[key] || '') + '] (' + (out.file.size / 1048576).toFixed(1) + ' MB, ' + out.width + 'x' + out.height + ')');
+                    if (!(early && early.out)) { if (direct) await uploadDirect(key, out.file); else await replaceInSlot(key, out.file); }
+                    laps.push(early && early.out
+                        ? label + ' planlamada kırpıldı ' + early.crop.toFixed(1) + ' + yüklendi ' + early.upload.toFixed(1) + ' (' + (out.file.size / 1048576).toFixed(1) + ' MB, ' + out.width + 'x' + out.height + ')'
+                        : label + ' kırpma ' + ((c1 - c0) / 1000).toFixed(1) + (direct ? ' + yükleme ' : ' + Değiştir ') + ((Date.now() - c1) / 1000).toFixed(1) + ' [' + (replaceTimes[key] || '') + '] (' + (out.file.size / 1048576).toFixed(1) + ' MB, ' + out.width + 'x' + out.height + ')');
                     const img = previewOf(key);
                     crop.placed[key] = { item: r.item, cropped: out, src: img ? img.src : '', orient: { rotate: orient.rotate, mirror: orient.mirror, raw: !!orient.raw, exifRotate: orient.exifRotate || 0 } };
                     markProcessed(key, true);
@@ -1228,7 +1632,7 @@
                     }
                 } catch (error) {
                     notes.push(r.item.name + ': kırpılmış kare yuvaya konamadı (' + error.message + ')');
-                    if (intra && target) {
+                    if (intra && target && !direct) {
                         try {
                             await applyOrientation(key, target);
                             state.results[key] = { ok: true, text: describe(target) + ' (kırpılamadı)', warning: target.warning };
@@ -1244,7 +1648,7 @@
             const faceWork = (async function () {
                 if (!crop) return;
                 const b = await boxWork;
-                await Promise.all(FACE_KEYS.filter(function (key) { return tileOf(key) && placed[key]; }).map(async function (key) {
+                await Promise.all(FACE_KEYS.filter(function (key) { return has(key) && placed[key]; }).map(async function (key) {
                     await placeCropped(key, placed[key], b.byName[placed[key].item.name] || null, { rotate: 0, mirror: false, warning: '' }, false, false);
                     render();
                 }));
@@ -1256,7 +1660,7 @@
             // sırasından (fixBuccalSides). Oklüzal kareler: ham yön ve üst/alt sırası setten sete değişiyor (Damla'da alt oklüzal önce, ön
             // dişler üstte; Esra'da üst önce) → kararlı okuyucu (EXIF uygulanmış küçük kareden, eski yol). Tek çağrılık model doğrulaması
             // denendi ve kaldırıldı (2 Kasım 2026: dik kareleri "dik değil", çeneyi ters okudu).
-            const poseWork = Promise.all(SLOTS.filter(function (s) { return placed[s.key]; }).map(async function (s) {
+            const poseItemFor = async function (s) {
                 const kind = /^labial_/.test(s.key) ? 'frontal' : /^buccal_/.test(s.key) ? 'buccal' : 'occlusal';
                 const item0 = placed[s.key].item;
                 const it = { slot: s.key, name: item0.name, seq: item0.seq, is_photo: true, upper_jaw_side: 'none', incisors_side: 'none', arch: 'none', note: '' };
@@ -1297,9 +1701,53 @@
                     else it.note = 'kare bu yuvanın türünde görünmüyor (' + p.view + '), yuvayı kontrol edin';
                 }
                 return it;
-            }));
-            const posed = await poseWork;
+            };
+            const poseWork = Promise.all(SLOTS.filter(function (s) { return placed[s.key]; }).map(poseItemFor));
+            let posed = await poseWork;
             lap('yön okumaları bitti');
+            // Bukkal kümesi (Opus) planlamada 1 sn içinde gelmediyse burada en çok 2,5 sn daha beklenir: küme yerleşen bukkali karşı
+            // yana koyuyorsa yuvalar takas edilir ya da kümenin o yan dediği aday konur (Demirtaş 8 Kasım 2026: tek kare okumaları
+            // 0546'yı sağ dedi, küme sol). Küme yönü (crop.setOrient/setSide) aşağıdaki oylamada esastır.
+            if (direct && crop && crop.buccSetWork && !(placed.buccal_right && placed.buccal_left && placed.buccal_right.pairDecided && placed.buccal_left.pairDecided)) {
+                let ans = null;
+                // En çok 8 sn (8 Kasım 2026; 2,5 sn idi): küme yetişmezse yan kararı tek kare okumasında kalıyordu (Demirtaş'ta iki kez yanlıştı).
+                // Yüz yuvaları planlamada yüklendiğinden bekleme yalnız ağız içi yuvaları geciktirir; küme çoğu sette çoktan gelmiştir.
+                const w0 = Date.now();
+                try { ans = await Promise.race([crop.buccSetWork, new Promise(function (resolve) { setTimeout(function () { resolve(null); }, 8000); })]); } catch (error) { ans = null; }
+                if (Date.now() - w0 > 300) lap('bukkal kümesi ' + (ans ? 'beklendi' : 'gelmedi') + ' ' + ((Date.now() - w0) / 1000).toFixed(1) + ' sn');
+                if (ans && Object.keys(ans).length) {
+                    crop.setOrient = crop.setOrient || {}; crop.setSide = crop.setSide || {};
+                    Object.keys(ans).forEach(function (name) { crop.setOrient[name] = ans[name].upsideDown ? 'bottom' : 'top'; crop.setSide[name] = ans[name].side; });
+                    const sideOfSlot = function (key) { const p = placed[key]; return p && ans[p.item.name] ? ans[p.item.name].side : null; };
+                    const usedNames = function () { return Object.keys(placed).map(function (k) { return placed[k].item.name; }); };
+                    const changed = [];
+                    const sR = sideOfSlot('buccal_right'), sL = sideOfSlot('buccal_left');
+                    if (sR === 'left' && sL === 'right') {
+                        const t = placed.buccal_right; placed.buccal_right = placed.buccal_left; placed.buccal_left = t;
+                        changed.push('buccal_right', 'buccal_left');
+                        notes.push('Bukkal küme okuması (geç geldi): ' + placed.buccal_right.item.name + ' sağ, ' + placed.buccal_left.item.name + ' sol; yuvalar takas edildi');
+                    } else {
+                        ['buccal_right', 'buccal_left'].forEach(function (key) {
+                            const want = key === 'buccal_right' ? 'right' : 'left';
+                            const s = sideOfSlot(key);
+                            if (s && s !== want) {
+                                const cand = (crop.specBucc || []).filter(function (it) { return ans[it.name] && ans[it.name].side === want && usedNames().indexOf(it.name) < 0; }).sort(function (a, b) { return (Number(b.score) || 0) - (Number(a.score) || 0); })[0];
+                                if (cand) {
+                                    notes.push('Bukkal küme okuması (geç geldi): ' + placed[key].item.name + ' ' + (s === 'right' ? 'sağ' : 'sol') + ' çıktı; ' + labelOfKey(key) + ' yuvasına kümenin ' + (want === 'right' ? 'sağ' : 'sol') + ' dediği ' + cand.name + ' kondu');
+                                    placed[key] = { item: cand, shown: cand, group: [cand], ours: true };
+                                    changed.push(key);
+                                } else notes.push(labelOfKey(key) + ': bukkal küme okuması karşı yanı gördü, uygun başka kare yok; kontrol edin');
+                            }
+                        });
+                    }
+                    if (changed.length) {
+                        const redo = await Promise.all(SLOTS.filter(function (s) { return changed.indexOf(s.key) >= 0; }).map(poseItemFor));
+                        posed = posed.filter(function (it) { return changed.indexOf(it.slot) < 0; }).concat(redo);
+                        if (placed.buccal_right && placed.buccal_left) { placed.buccal_right.pairDecided = true; placed.buccal_left.pairDecided = true; }
+                        lap('bukkal yuvaları kümeyle düzeltildi');
+                    }
+                }
+            }
             // Ön/yan kareler 0° mi 180° mi: set aynı tutuşla çekilir; kendi okuması yoksa ya da diğer iki kare birlikte aksini söylüyorsa
             // çoğunluk uygulanır. Hiç okuma yoksa ham kare 0° konur ve uyarılır (↻ düğmeleri).
             // Ham karenin yönü setten sete değişiyor (Damla dik; Adem/Altan/Bera baş aşağı): setin ön/yan yuvaları aynı tutuşla
@@ -1333,13 +1781,17 @@
                 if (ownSide && otherFaces.some(function (s) { return s !== ownSide; })) notes.push(labelOfKey(it.slot) + ': kendi okuması (' + (ownSide === 'top' ? 'dik' : 'baş aşağı') + ') setin diğer karelerinden farklı; kendi okuması uygulandı');
                 it.ownSide = ownSide;
                 it.selfConsistent = allVotes.length === 2 && allVotes[0].side === allVotes[1].side;
-                const side = ownSide || setUpright;
+                // Bukkal küme okuması (planDirect) varsa yön ve yan için o esastır.
+                const setO = crop && crop.setOrient ? crop.setOrient[it.name] : null;
+                if (setO && ownSide && setO !== ownSide) notes.push(labelOfKey(it.slot) + ': bukkal küme okuması ' + (setO === 'top' ? 'dik' : 'baş aşağı') + ' dedi, tek kare okuması (' + (ownSide === 'top' ? 'dik' : 'baş aşağı') + ') yerine o uygulandı');
+                const side = setO || ownSide || setUpright;
                 if (side === 'top') it.orient = { rotate: 0, mirror: false, raw: true, warning: '' };
                 // Kesicilerin yanı her okumada o okumanın "dik" saydığı sürüme göredir; son karar o sürümden farklıysa yan ters çevrilir
                 // (1697: okuma yanlış "dik" dedi, set 180° uyguladı → kesiciler aslında karşı yanda).
                 if (side) {
                     const incs = (it.rawVotes || []).map(function (v) { return v.incisors ? (v.side === side ? v.incisors : (v.incisors === 'left' ? 'right' : 'left')) : null; }).filter(function (x) { return x; });
                     it.rawIncisors = incs.length && incs.every(function (x) { return x === incs[0]; }) ? incs[0] : null;
+                    if (setO && crop.setSide && crop.setSide[it.name]) it.rawIncisors = crop.setSide[it.name];
                 }
                 if (!side) it.note = 'ham karenin yönü okunamadı (dik ' + tops + ' / baş aşağı ' + bottoms + ' oy); 180° varsayıldı, kontrol edin';
                 else if (!ownSide) notes.push(labelOfKey(it.slot) + ': kendi okuması yok, set oylaması uygulandı (' + (side === 'top' ? '0°' : '180°') + ')');
@@ -1366,9 +1818,9 @@
             // 4) Sağ/sol bukkal ve üst/alt oklüzal karışıklığı (orijinaller yer değiştirir).
             let pairChanged = false;
             try {
-                const rb = await fixBuccalSides(items, placed);
+                const rb = await fixBuccalSides(items, placed, !!direct);
                 if (rb) { if (rb !== 'virtual') pairChanged = true; setStatus('Sağ/sol bukkal düzeltildi…'); }
-                const ro = await fixOcclusalArches(items, placed);
+                const ro = await fixOcclusalArches(items, placed, !!direct);
                 if (ro) { if (ro !== 'virtual') pairChanged = true; setStatus('Üst/alt oklüzal düzeltildi…'); }
             } catch (error) {
                 notes.push('Yuva denetimi yapılamadı (' + error.message + ')');
@@ -1378,6 +1830,9 @@
             // Ağız içi kutular: yer değiştirmeler bitti, yön biliniyor → kare dikleştirilip modele öyle gösterilir (yan duran karede
             // ölçümler şaşıyordu); çerçeve ve kırpma dikleştirilmiş karede. Yönü bilinmeyen kare ham haliyle ölçülür.
             const uprightOf = {};
+            // Kutular yuva yuva (her kare ayrı çağrı): planlamada erken okunan kutu varsa o alınır; kutusu gelen yuva ötekileri
+            // (özellikle oklüzal şerit okumalarını) beklemeden kırpılıp yüklenir.
+            const boxOf = {};
             if (crop) {
                 if (pairChanged) {
                     for (const slot of SLOTS) {
@@ -1386,34 +1841,37 @@
                     }
                 }
                 setStatus('Ağız içi kırpma kutuları okunuyor…');
-                const entries = [];
                 for (const slot of SLOTS) {
                     const r = placed[slot.key];
                     if (!r) continue;
                     const it = items.find(function (x) { return x.slot === slot.key; });
                     const target = it && it.is_photo ? decide(slot.key, it) : null;
-                    let thumb = null, w = r.item.w, h = r.item.h;
-                    if (target) {
-                        try {
-                            const up = await window.idsfyCrop.uprightThumb(r.item, target);
-                            thumb = up.data; w = up.w; h = up.h;
-                            uprightOf[r.item.name] = true;
-                        } catch (error) { notes.push(r.item.name + ': kare dikleştirilemedi (' + error.message + '), ham haliyle ölçüldü'); }
-                    }
-                    entries.push({ item: r.item, slot: slot.key, thumb: thumb, w: w, h: h });
+                    const key = slot.key, item = r.item;
+                    const preKey = target ? boxKey(key, item.name, target) : 'box|' + key + '|' + item.name + '|ham';
+                    boxOf[key] = take(preKey, async function () {
+                        let thumb = null, w = item.w, h = item.h, upright = false;
+                        if (target) {
+                            try {
+                                const up = await window.idsfyCrop.uprightThumb(item, target);
+                                thumb = up.data; w = up.w; h = up.h; upright = true;
+                            } catch (error) { notes.push(item.name + ': kare dikleştirilemedi (' + error.message + '), ham haliyle ölçüldü'); }
+                        }
+                        const res = await window.idsfyCrop.readBoxes([{ item: item, slot: key, thumb: thumb, w: w, h: h }], function () {}).catch(boxFail);
+                        return { res: res, upright: upright };
+                    }).then(function (b) {
+                        if (b.upright) uprightOf[item.name] = true;
+                        Object.assign(boxes.byName, b.res.byName);
+                        b.res.notes.forEach(function (n) { notes.push(n); });
+                        return b;
+                    }, function (error) { return { res: boxFail(error), upright: false }; });
                 }
-                if (entries.length) {
-                    const intra = await window.idsfyCrop.readBoxes(entries, function () {}).catch(boxFail);
-                    lap('ağız içi kutular okundu');
-                    Object.assign(boxes.byName, intra.byName);
-                    intra.notes.forEach(function (n) { notes.push(n); });
-                }
+                Promise.all(Object.keys(boxOf).map(function (k) { return boxOf[k]; })).then(function () { lap('ağız içi kutular okundu'); });
             }
             // 5) Her yuva: kırp + döndür (+ ayna) + "Değiştir" (yüzler yön okumaları sürerken yapıldı).
             const pending = [];
             for (const key of ALL_KEYS) {
                 if (auto && state.stopped) { halted = true; break; }
-                if (!tileOf(key) || done[key]) continue;
+                if (!has(key) || done[key]) continue;
                 if (crop && FACE_KEYS.indexOf(key) >= 0 && placed[key]) continue;
                 const intra = isIntraoral(key);
                 const item = intra ? items.find(function (it) { return it.slot === key; }) : null;
@@ -1463,7 +1921,8 @@
                     render();
                     continue;
                 }
-                pending.push(placeCropped(key, r, boxes.byName[r.item.name] || null, target, intra, !!uprightOf[r.item.name]).then(render));
+                const boxWait = intra && boxOf[key] ? boxOf[key] : Promise.resolve(null);
+                pending.push(boxWait.then(function () { return placeCropped(key, r, boxes.byName[r.item.name] || null, target, intra, !!uprightOf[r.item.name]); }).then(render));
             }
             await Promise.all(pending);
             lap('ağız içi yuvalar bitti');
@@ -1472,7 +1931,23 @@
             mark('düzeltme bitti');
             if (crop) { crop.preClosed = true; crop.pre = {}; }
             notes.push('Süre dağılımı (sn): ' + laps.join(', '));
-            if (state.marks && state.marks.length) notes.push('Bırakmadan beri (sn): ' + state.marks.join(', ') + (crop && crop.preUsed ? '; erken okumalardan ' + crop.preUsed + ' tanesi kullanıldı' : ''));
+            if (state.marks && state.marks.length) notes.push((direct ? 'Başlangıçtan beri (sn): ' : 'Bırakmadan beri (sn): ') + state.marks.join(', ') + (crop && crop.preUsed ? '; erken okumalardan ' + crop.preUsed + ' tanesi kullanıldı' : ''));
+            // Hızlandırma ölçümü: model çağrıları türe göre (adet, ortanca, en uzun), hız sınırı kalanları; dik okuma işleri.
+            try {
+                const st = await window.idsfyCrop.stats();
+                const by = {};
+                st.forEach(function (s) { const k = s.kind + ' ' + (/opus/.test(s.model) ? 'opus' : 'sonnet'); (by[k] = by[k] || []).push(s); });
+                const q = function (a, f) { const b = a.slice().sort(function (x, y) { return x - y; }); return (b[Math.floor(b.length * f)] / 1000).toFixed(1); };
+                const minOf = function (key) { const v = st.map(function (s) { return Number(s[key]); }).filter(function (x) { return x >= 0 && isFinite(x) && !isNaN(x); }); return v.length ? Math.min.apply(null, v) : '?'; };
+                notes.push('Model çağrıları (' + st.length + '): ' + Object.keys(by).map(function (k) { const a = by[k].map(function (s) { return s.ms; }); return k + ' ×' + a.length + ' ortanca ' + q(a, 0.5) + ' en uzun ' + q(a, 0.999) + ' sn' + (by[k].some(function (s) { return s.err; }) ? ' (HATA: ' + by[k].filter(function (s) { return s.err; }).map(function (s) { return s.err; }).join(' | ') + ')' : ''); }).join('; ') + '; kalan: istek ' + minOf('reqLeft') + ', giriş jetonu ' + minOf('tokLeft') + ', çıkış jetonu ' + minOf('outLeft'));
+                // Jeton toplamı ve liste fiyatıyla yaklaşık maliyet (Sonnet 2/10, Opus 4/20 $ per milyon; önbellek sayılmaz).
+                const tot = { sIn: 0, sOut: 0, oIn: 0, oOut: 0 };
+                st.forEach(function (s) { const o = /opus/.test(s.model); tot[o ? 'oIn' : 'sIn'] += Number(s.inTok) || 0; tot[o ? 'oOut' : 'sOut'] += Number(s.outTok) || 0; });
+                const usd = (tot.sIn * 2 + tot.sOut * 10 + tot.oIn * 4 + tot.oOut * 20) / 1e6;
+                notes.push('Jeton toplamı: Sonnet giriş ' + Math.round(tot.sIn / 1000) + ' bin / çıkış ' + Math.round(tot.sOut / 1000) + ' bin; Opus giriş ' + Math.round(tot.oIn / 1000) + ' bin / çıkış ' + Math.round(tot.oOut / 1000) + ' bin; liste fiyatıyla ~' + usd.toFixed(2) + ' $');
+                const ut = window.idsfyCrop.upTimes.splice(0);
+                if (ut.length) notes.push('Dik okuma işleri (kuyruk/hazırlık/toplam sn): ' + ut.map(function (r) { return r.name + ' ' + r.mode + ' ' + (r.queue / 1000).toFixed(1) + '/' + (r.prep / 1000).toFixed(1) + '/' + (r.total / 1000).toFixed(1) + (r.arb ? ' hakem' : ''); }).join(', '));
+            } catch (error) { notes.push('İstatistik alınamadı (' + error.message + ')'); }
             if (crop) {
                 crop.timing.fix = Math.round((Date.now() - began) / 1000);
                 crop.timing.cropped = croppedCount;
