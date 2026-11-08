@@ -126,7 +126,7 @@ console.log('latest.json: ' + latest.url);
 
 if (push) {
     const run = (cmd) => execSync(cmd, { cwd: root, stdio: 'inherit' });
-    run('git add ids-extension-release');
+    run('git add ids-extension-release ids-extension'); // yayın zip'iyle birlikte kaynak da commit'lenir (8 Kasım 2026'dan beri kaynak izleniyor)
     run('git commit -q -m "IDS Yardımcısı ' + version + ' yayını' + (notes ? ': ' + notes.replace(/"/g, '') : '') + '\n\nCo-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>"');
     run('git push -q origin main');
     console.log('Yayınlandı: ' + latest.url);
