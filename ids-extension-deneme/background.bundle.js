@@ -40,7 +40,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/errors.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/errors.mjs
 function isAbortError(err) {
   return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
   ("name" in err && err.name === "AbortError" || // Expo fetch
@@ -48,7 +48,7 @@ function isAbortError(err) {
 }
 var castToError;
 var init_errors = __esm({
-  "../ids-extension/node_modules/@anthropic-ai/sdk/internal/errors.mjs"() {
+  "../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/errors.mjs"() {
     castToError = (err) => {
       if (err instanceof Error)
         return err;
@@ -77,10 +77,10 @@ var init_errors = __esm({
   }
 });
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/core/error.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/core/error.mjs
 var AnthropicError, APIError, APIUserAbortError, APIConnectionError, APIConnectionTimeoutError, RetryableError, BadRequestError, AuthenticationError, PermissionDeniedError, NotFoundError, ConflictError, UnprocessableEntityError, RateLimitError, InternalServerError;
 var init_error = __esm({
-  "../ids-extension/node_modules/@anthropic-ai/sdk/core/error.mjs"() {
+  "../../../../ids-extension/node_modules/@anthropic-ai/sdk/core/error.mjs"() {
     init_errors();
     AnthropicError = /* @__PURE__ */ (() => {
       class AnthropicError2 extends Error {
@@ -186,7 +186,7 @@ var init_error = __esm({
   }
 });
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/node.browser.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/node.browser.mjs
 var node_browser_exports = {};
 __export(node_browser_exports, {
   child_process: () => child_process,
@@ -208,7 +208,7 @@ function unavailable(module) {
 }
 var child_process, crypto, fs, os, path, stream, util;
 var init_node_browser = __esm({
-  "../ids-extension/node_modules/@anthropic-ai/sdk/internal/node.browser.mjs"() {
+  "../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/node.browser.mjs"() {
     init_error();
     child_process = /* @__PURE__ */ unavailable("child_process");
     crypto = /* @__PURE__ */ unavailable("crypto");
@@ -220,9 +220,9 @@ var init_node_browser = __esm({
   }
 });
 
-// ../ids-extension/node_modules/@stablelib/base64/lib/base64.js
+// ../../../../ids-extension/node_modules/@stablelib/base64/lib/base64.js
 var require_base64 = __commonJS({
-  "../ids-extension/node_modules/@stablelib/base64/lib/base64.js"(exports) {
+  "../../../../ids-extension/node_modules/@stablelib/base64/lib/base64.js"(exports) {
     "use strict";
     var __extends = exports && exports.__extends || /* @__PURE__ */ (function() {
       var extendStatics = function(d, b) {
@@ -433,9 +433,9 @@ var require_base64 = __commonJS({
   }
 });
 
-// ../ids-extension/node_modules/fast-sha256/sha256.js
+// ../../../../ids-extension/node_modules/fast-sha256/sha256.js
 var require_sha256 = __commonJS({
-  "../ids-extension/node_modules/fast-sha256/sha256.js"(exports, module) {
+  "../../../../ids-extension/node_modules/fast-sha256/sha256.js"(exports, module) {
     (function(root, factory) {
       var exports2 = {};
       factory(exports2);
@@ -857,9 +857,9 @@ var require_sha256 = __commonJS({
   }
 });
 
-// ../ids-extension/node_modules/standardwebhooks/dist/timing_safe_equal.js
+// ../../../../ids-extension/node_modules/standardwebhooks/dist/timing_safe_equal.js
 var require_timing_safe_equal = __commonJS({
-  "../ids-extension/node_modules/standardwebhooks/dist/timing_safe_equal.js"(exports) {
+  "../../../../ids-extension/node_modules/standardwebhooks/dist/timing_safe_equal.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.timingSafeEqual = timingSafeEqual;
@@ -891,9 +891,9 @@ var require_timing_safe_equal = __commonJS({
   }
 });
 
-// ../ids-extension/node_modules/standardwebhooks/dist/index.js
+// ../../../../ids-extension/node_modules/standardwebhooks/dist/index.js
 var require_dist = __commonJS({
-  "../ids-extension/node_modules/standardwebhooks/dist/index.js"(exports) {
+  "../../../../ids-extension/node_modules/standardwebhooks/dist/index.js"(exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.Webhook = exports.WebhookVerificationError = void 0;
@@ -1008,7 +1008,7 @@ var require_dist = __commonJS({
   }
 });
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/tools/agent-toolset/sync-interval.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/tools/agent-toolset/sync-interval.mjs
 function checkMemorySyncInterval(ms, option) {
   if (!(ms >= MIN_MEMORY_SYNC_INTERVAL_MS)) {
     throw new AnthropicError(`${option} must be at least ${MIN_MEMORY_SYNC_INTERVAL_MS}ms (got ${ms}); to run without memory sync, pass \`memorySyncIntervalMs: null\` to the worker instead`);
@@ -1016,14 +1016,14 @@ function checkMemorySyncInterval(ms, option) {
 }
 var DEFAULT_MEMORY_SYNC_INTERVAL_MS, MIN_MEMORY_SYNC_INTERVAL_MS;
 var init_sync_interval = __esm({
-  "../ids-extension/node_modules/@anthropic-ai/sdk/tools/agent-toolset/sync-interval.mjs"() {
+  "../../../../ids-extension/node_modules/@anthropic-ai/sdk/tools/agent-toolset/sync-interval.mjs"() {
     init_error();
     DEFAULT_MEMORY_SYNC_INTERVAL_MS = 15e3;
     MIN_MEMORY_SYNC_INTERVAL_MS = 5e3;
   }
 });
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/tools/agent-toolset/node.browser.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/tools/agent-toolset/node.browser.mjs
 var node_browser_exports2 = {};
 __export(node_browser_exports2, {
   BashSession: () => BashSession,
@@ -1080,7 +1080,7 @@ function betaGrepTool(_ctx) {
 }
 var MEMORY_FLUSH_TIMEOUT_MS, MARKER_PATH, SessionMemoryError, SessionMemoryStores, BashTimeoutError, BashSession;
 var init_node_browser2 = __esm({
-  "../ids-extension/node_modules/@anthropic-ai/sdk/tools/agent-toolset/node.browser.mjs"() {
+  "../../../../ids-extension/node_modules/@anthropic-ai/sdk/tools/agent-toolset/node.browser.mjs"() {
     init_error();
     init_sync_interval();
     MEMORY_FLUSH_TIMEOUT_MS = 3e4;
@@ -1147,7 +1147,7 @@ var init_node_browser2 = __esm({
   }
 });
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/tslib.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/tslib.mjs
 function __classPrivateFieldSet(receiver, state, value, kind, f) {
   if (kind === "m")
     throw new TypeError("Private method is not writable");
@@ -1165,7 +1165,7 @@ function __classPrivateFieldGet(receiver, state, kind, f) {
   return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/values.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/values.mjs
 init_error();
 var startsWithSchemeRegexp = /^[a-z][a-z0-9+.-]*:/i;
 var isAbsoluteURL = (url) => {
@@ -1211,7 +1211,7 @@ var safeJSON = (text) => {
 function checkNever(_value) {
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/sleep.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/sleep.mjs
 var sleep = (ms, signal) => new Promise((resolve) => {
   if (signal?.aborted)
     return resolve();
@@ -1226,13 +1226,13 @@ var sleep = (ms, signal) => new Promise((resolve) => {
   signal?.addEventListener("abort", onAbort, { once: true });
 });
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/client.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/client.mjs
 init_errors();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/version.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/version.mjs
 var VERSION = "0.131.0";
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/detect-platform.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/detect-platform.mjs
 var isRunningInBrowser = () => {
   return (
     // @ts-ignore
@@ -1366,7 +1366,7 @@ var getPlatformHeaders = () => {
   return _platformHeaders ?? (_platformHeaders = getPlatformProperties());
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/request-signal.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/request-signal.mjs
 var cleanups = /* @__PURE__ */ new WeakMap();
 var registry = typeof globalThis.FinalizationRegistry === "function" ? new globalThis.FinalizationRegistry((controller) => releaseRequestSignal(controller)) : null;
 function makeCleanup(signal, listener) {
@@ -1388,7 +1388,7 @@ function releaseRequestSignal(controller) {
   }
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/shims.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/shims.mjs
 function getDefaultFetch() {
   if (typeof fetch !== "undefined") {
     return fetch;
@@ -1460,7 +1460,7 @@ async function CancelReadableStream(stream2) {
   await cancelPromise;
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/request-options.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/request-options.mjs
 var FallbackEncoder = ({ headers, body }) => {
   return {
     bodyHeaders: {
@@ -1470,7 +1470,7 @@ var FallbackEncoder = ({ headers, body }) => {
   };
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/qs/formats.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/qs/formats.mjs
 var default_format = "RFC3986";
 var default_formatter = (v) => String(v);
 var formatters = {
@@ -1479,7 +1479,7 @@ var formatters = {
 };
 var RFC1738 = "RFC1738";
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/qs/utils.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/qs/utils.mjs
 var has = (obj, key) => (has = Object.hasOwn ?? Function.prototype.call.bind(Object.prototype.hasOwnProperty), has(obj, key));
 var hex_table = /* @__PURE__ */ (() => {
   const array = [];
@@ -1558,7 +1558,7 @@ function maybe_map(val, fn) {
   return fn(val);
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/qs/stringify.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/qs/stringify.mjs
 var array_prefix_generators = {
   brackets(prefix) {
     return String(prefix) + "[]";
@@ -1836,15 +1836,15 @@ function stringify(object, opts = {}) {
   return joined.length > 0 ? prefix + joined : "";
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/query.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/query.mjs
 function stringifyQuery(query) {
   return stringify(query, { arrayFormat: "brackets" });
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/client.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/client.mjs
 init_error();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/credentials/types.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/credentials/types.mjs
 init_error();
 var GRANT_TYPE_JWT_BEARER = "urn:ietf:params:oauth:grant-type:jwt-bearer";
 var GRANT_TYPE_REFRESH_TOKEN = "refresh_token";
@@ -2009,12 +2009,12 @@ var WorkloadIdentityError = class extends AnthropicError {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/time.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/time.mjs
 function nowAsSeconds() {
   return Math.floor(Date.now() / 1e3);
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/credentials/token-cache.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/credentials/token-cache.mjs
 var TokenCache = class {
   constructor(provider, onAdvisoryRefreshError) {
     this.cached = null;
@@ -2103,7 +2103,7 @@ var TokenCache = class {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/env.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/env.mjs
 var readEnv = (env) => {
   if (typeof globalThis.process !== "undefined") {
     return globalThis.process.env?.[env]?.trim() || void 0;
@@ -2114,10 +2114,10 @@ var readEnv = (env) => {
   return void 0;
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/base64.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/base64.mjs
 init_error();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/bytes.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/bytes.mjs
 function concatBytes(buffers) {
   let length = 0;
   for (const buffer of buffers) {
@@ -2142,7 +2142,7 @@ function decodeUTF8(bytes) {
   return (decodeUTF8_ ?? (decoder = new globalThis.TextDecoder(), decodeUTF8_ = decoder.decode.bind(decoder)))(bytes);
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/base64.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/base64.mjs
 var fromBase64 = (str) => {
   if (typeof globalThis.Buffer !== "undefined") {
     const buf = globalThis.Buffer.from(str, "base64");
@@ -2159,7 +2159,7 @@ var fromBase64 = (str) => {
   throw new AnthropicError("Cannot decode base64 string; Expected `Buffer` or `atob` to be defined");
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/log.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/log.mjs
 var defaultLogLevel = "warn";
 var levelNumbers = {
   off: 0,
@@ -2252,7 +2252,7 @@ var formatRequestDetails = (details) => {
   return details;
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/uuid.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/uuid.mjs
 var uuid4 = function() {
   const { crypto: crypto2 } = globalThis;
   if (crypto2?.randomUUID) {
@@ -2264,7 +2264,7 @@ var uuid4 = function() {
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/core/credentials.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/core/credentials.mjs
 var CREDENTIALS_FILE_VERSION = "1.0";
 var PROFILE_NAME_PATTERN = /^[A-Za-z0-9_.-]+$/;
 function validateProfileName(name) {
@@ -2436,7 +2436,7 @@ var getActiveProfileName = async () => {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/credentials/identity-token.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/credentials/identity-token.mjs
 init_error();
 function identityTokenFromFile(path3) {
   if (!path3) {
@@ -2464,7 +2464,7 @@ function identityTokenFromValue(token) {
   return () => token;
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/credentials/oidc-federation.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/credentials/oidc-federation.mjs
 function oidcFederationProvider(config) {
   return async () => {
     requireSecureTokenEndpoint(config.baseURL);
@@ -2522,7 +2522,7 @@ function oidcFederationProvider(config) {
   };
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/credentials/user-oauth.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/credentials/user-oauth.mjs
 function userOAuthProvider(config) {
   return async (opts) => {
     const { fs: fs2 } = await Promise.resolve().then(() => (init_node_browser(), node_browser_exports));
@@ -2596,7 +2596,7 @@ function userOAuthProvider(config) {
   };
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/credentials/credential-chain.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/credentials/credential-chain.mjs
 function resolveCredentialsFromConfig(config, options) {
   const credentialsPath = config.authentication.credentials_path ?? null;
   const effectiveBaseURL = (config.base_url || options.baseURL).replace(/\/+$/, "");
@@ -2728,13 +2728,13 @@ function cachedExchangeProvider(exchange, credentialsPath, onCacheWriteError, on
   };
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/core/middleware.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/core/middleware.mjs
 init_errors();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/core/streaming.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/core/streaming.mjs
 init_error();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/decoders/line.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/decoders/line.mjs
 var _LineDecoder_buffer;
 var _LineDecoder_carriageReturnIndex;
 var LineDecoder = /* @__PURE__ */ (() => {
@@ -2798,7 +2798,7 @@ function findNewlineIndex(buffer, startIndex) {
   return null;
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/core/streaming.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/core/streaming.mjs
 init_errors();
 init_error();
 var _Stream_client;
@@ -3046,7 +3046,7 @@ function partition(str, delimiter) {
   return [str, "", ""];
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/parse.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/parse.mjs
 async function defaultParseResponse(client, props) {
   const { response, requestLogID, retryOfRequestLogID, startTime } = props;
   const body = await (async () => {
@@ -3097,7 +3097,7 @@ function addResponseIDs(value, response) {
   });
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/core/middleware.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/core/middleware.mjs
 init_error();
 var fetchOriginErrors = /* @__PURE__ */ new WeakSet();
 function isFetchOriginError(err) {
@@ -3194,10 +3194,10 @@ function applyMiddleware(fetchFn, middleware, options, client) {
   return next;
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/core/pagination.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/core/pagination.mjs
 init_error();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/core/api-promise.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/core/api-promise.mjs
 var _APIPromise_client;
 var APIPromise = /* @__PURE__ */ (() => {
   class APIPromise2 extends Promise {
@@ -3268,7 +3268,7 @@ var APIPromise = /* @__PURE__ */ (() => {
   return APIPromise2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/core/pagination.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/core/pagination.mjs
 var _AbstractPage_client;
 var AbstractPage = /* @__PURE__ */ (() => {
   class AbstractPage2 {
@@ -3429,7 +3429,7 @@ var BidirectionalPageCursor = class extends AbstractPage {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/uploads.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/uploads.mjs
 var checkFileSupport = () => {
   if (typeof File === "undefined") {
     const { process: process2 } = globalThis;
@@ -3512,7 +3512,7 @@ var addFormValue = async (form, key, value, stripFilenames) => {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/to-file.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/to-file.mjs
 var isBlobLike = (value) => value != null && typeof value === "object" && typeof value.size === "number" && typeof value.type === "string" && typeof value.text === "function" && typeof value.slice === "function" && typeof value.arrayBuffer === "function";
 var isFileLike = (value) => value != null && typeof value === "object" && typeof value.name === "string" && typeof value.lastModified === "number" && isBlobLike(value);
 var isResponseLike = (value) => value != null && typeof value === "object" && typeof value.url === "string" && typeof value.blob === "function";
@@ -3568,14 +3568,14 @@ function propsForError(value) {
   return `; props: [${props.map((p) => `"${p}"`).join(", ")}]`;
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/core/resource.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/core/resource.mjs
 var APIResource = class {
   constructor(client) {
     this._client = client;
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/headers.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/headers.mjs
 var brand_privateNullableHeaders = /* @__PURE__ */ Symbol.for("brand.privateNullableHeaders");
 function* iterateHeaders(headers) {
   if (!headers)
@@ -3662,7 +3662,7 @@ var buildHeaders = (newHeaders) => {
   return { [brand_privateNullableHeaders]: true, values: targetHeaders, nulls: nullHeaders };
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/path.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/path.mjs
 init_error();
 function encodeURIPath(str) {
   return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
@@ -3718,7 +3718,7 @@ ${underline}`);
 };
 var path2 = /* @__PURE__ */ createPathTagFunction(encodeURIPath);
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/deployment-runs.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/deployment-runs.mjs
 var DeploymentRuns = class extends APIResource {
   /**
    * Get Deployment Run
@@ -3771,7 +3771,7 @@ var DeploymentRuns = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/deployments.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/deployments.mjs
 var Deployments = class extends APIResource {
   /**
    * Create Deployment
@@ -3983,7 +3983,7 @@ var Deployments = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/dreams.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/dreams.mjs
 var Dreams = class extends APIResource {
   /**
    * Start an asynchronous job that uses past sessions to produce a reorganized
@@ -4146,7 +4146,7 @@ var Dreams = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/stainless-helper-header.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/stainless-helper-header.mjs
 var STAINLESS_HELPER_HEADER = "x-stainless-helper";
 var STAINLESS_HELPER_METHOD_HEADER = "x-stainless-helper-method";
 function helperHeader(value) {
@@ -4199,7 +4199,7 @@ function stainlessHelperHeaderFromFile(file) {
   return {};
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/files.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/files.mjs
 var Files = class extends APIResource {
   /**
    * List Files
@@ -4326,7 +4326,7 @@ var Files = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/models.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/models.mjs
 var Models = class extends APIResource {
   /**
    * Get a specific model.
@@ -4384,7 +4384,7 @@ var Models = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/user-profiles.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/user-profiles.mjs
 var UserProfiles = class extends APIResource {
   /**
    * Create User Profile
@@ -4509,7 +4509,7 @@ var UserProfiles = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/webhooks.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/webhooks.mjs
 var import_standardwebhooks = __toESM(require_dist(), 1);
 var Webhooks = class extends APIResource {
   /**
@@ -4537,7 +4537,7 @@ var Webhooks = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/agents/versions.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/agents/versions.mjs
 var Versions = class extends APIResource {
   /**
    * List Agent Versions
@@ -4568,7 +4568,7 @@ var Versions = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/agents/agents.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/agents/agents.mjs
 var Agents = /* @__PURE__ */ (() => {
   class Agents2 extends APIResource {
     constructor() {
@@ -4706,10 +4706,10 @@ var Agents = /* @__PURE__ */ (() => {
   return Agents2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/environments/poller.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/environments/poller.mjs
 init_error();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/abort.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/abort.mjs
 function linkAbort(external, controller) {
   if (!external)
     return () => {
@@ -4724,7 +4724,7 @@ function linkAbort(external, controller) {
   return () => external.removeEventListener("abort", onAbort);
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/backoff.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/backoff.mjs
 init_error();
 function isStatus(e, code) {
   return e instanceof APIError && e.status === code;
@@ -4745,7 +4745,7 @@ function applyJitter(ms) {
   return ms * (1 - Math.random() * 0.25);
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/helper-client.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/helper-client.mjs
 init_error();
 function copyClientForHelper(client, { authToken, helper }) {
   if (!authToken) {
@@ -4772,7 +4772,7 @@ function copyClientForHelper(client, { authToken, helper }) {
   });
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/environments/poller.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/environments/poller.mjs
 var _WorkPoller_runnerClient;
 var _WorkPoller_consumed;
 var _WorkPoller_controller;
@@ -4940,13 +4940,13 @@ function defaultWorkerId() {
   return host ? `${host}-${uuid4()}` : uuid4();
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/environments/worker.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/environments/worker.mjs
 init_error();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/tools/SessionToolRunner.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/tools/SessionToolRunner.mjs
 init_error();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/async-queue.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/async-queue.mjs
 var _AsyncQueue_items;
 var _AsyncQueue_waiters;
 var _AsyncQueue_closed;
@@ -5015,7 +5015,7 @@ var AsyncQueue = /* @__PURE__ */ (() => {
   return AsyncQueue2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/tools/ToolError.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/tools/ToolError.mjs
 var ToolError = /* @__PURE__ */ (() => {
   class ToolError2 extends Error {
     constructor(content) {
@@ -5032,7 +5032,7 @@ var ToolError = /* @__PURE__ */ (() => {
   return ToolError2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/tools/BetaRunnableTool.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/tools/BetaRunnableTool.mjs
 function toolName(tool) {
   return "name" in tool ? tool.name : "mcp_server_name" in tool ? tool.mcp_server_name : tool.type;
 }
@@ -5049,7 +5049,7 @@ async function runRunnableTool(tool, rawInput, context) {
   }
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/tools/SessionToolRunner.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/tools/SessionToolRunner.mjs
 var _IdleClock_maxIdleMs;
 var _IdleClock_onExpire;
 var _IdleClock_blockers;
@@ -5610,7 +5610,7 @@ function toSessionContent(content) {
   return out.length > 0 ? out : [{ type: "text", text: "(no output)" }];
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/environments/worker.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/environments/worker.mjs
 init_sync_interval();
 var _EnvironmentWorker_instances;
 var _EnvironmentWorker_signal;
@@ -6020,7 +6020,7 @@ async function heartbeatLoop(client, work, lease, logger, requestOptions, onLeas
   }
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/environments/work.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/environments/work.mjs
 var Work = /* @__PURE__ */ (() => {
   class Work2 extends APIResource {
     /**
@@ -6278,7 +6278,7 @@ var Work = /* @__PURE__ */ (() => {
   return Work2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/environments/environments.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/environments/environments.mjs
 var Environments = /* @__PURE__ */ (() => {
   class Environments2 extends APIResource {
     constructor() {
@@ -6438,7 +6438,7 @@ var Environments = /* @__PURE__ */ (() => {
   return Environments2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/memory-stores/memories.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/memory-stores/memories.mjs
 var Memories = class extends APIResource {
   /**
    * Create a memory
@@ -6575,7 +6575,7 @@ var Memories = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/memory-stores/memory-versions.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/memory-stores/memory-versions.mjs
 var MemoryVersions = class extends APIResource {
   /**
    * Retrieve a memory version
@@ -6657,7 +6657,7 @@ var MemoryVersions = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/memory-stores/memory-stores.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/memory-stores/memory-stores.mjs
 var MemoryStores = /* @__PURE__ */ (() => {
   class MemoryStores2 extends APIResource {
     constructor() {
@@ -6810,7 +6810,7 @@ var MemoryStores = /* @__PURE__ */ (() => {
   return MemoryStores2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/decoders/jsonl.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/decoders/jsonl.mjs
 init_error();
 var JSONLDecoder = /* @__PURE__ */ (() => {
   class JSONLDecoder2 {
@@ -6846,7 +6846,7 @@ var JSONLDecoder = /* @__PURE__ */ (() => {
   return JSONLDecoder2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/messages/batches.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/messages/batches.mjs
 var Batches = class extends APIResource {
   /**
    * Send a batch of Message creation requests.
@@ -7055,14 +7055,14 @@ var Batches = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/constants.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/constants.mjs
 var MODEL_NONSTREAMING_TOKENS = {
   "claude-opus-4@20250514": 8192,
   "anthropic.claude-opus-4-1-20250805-v1:0": 8192,
   "claude-opus-4-1@20250805": 8192
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/beta-parser.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/beta-parser.mjs
 init_error();
 function getOutputFormat(params) {
   return params?.output_format ?? params?.output_config?.format;
@@ -7136,10 +7136,10 @@ function parseBetaOutputFormat(params, content) {
   }
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/BetaMessageStream.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/BetaMessageStream.mjs
 init_errors();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/_vendor/partial-json-parser/parser.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/_vendor/partial-json-parser/parser.mjs
 var tokenize = (input) => {
   let current = 0;
   let tokens = [];
@@ -7370,7 +7370,7 @@ var generate = (tokens) => {
 };
 var partialParse = (input) => JSON.parse(generate(unstrip(strip(tokenize(input)))));
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/message-stream-utils.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/message-stream-utils.mjs
 var JSON_BUF_PROPERTY = "__json_buf";
 function withLazyInput(prev, jsonBuf) {
   const next = {};
@@ -7395,7 +7395,7 @@ function withLazyInput(prev, jsonBuf) {
   return next;
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/BetaMessageStream.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/BetaMessageStream.mjs
 var _BetaMessageStream_instances;
 var _BetaMessageStream_currentMessageSnapshot;
 var _BetaMessageStream_params;
@@ -8048,10 +8048,10 @@ var BetaMessageStream = /* @__PURE__ */ (() => {
   return BetaMessageStream2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/tools/BetaToolRunner.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/tools/BetaToolRunner.mjs
 init_error();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/api-keys.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/api-keys.mjs
 var APIKeys = class extends APIResource {
   /**
    * Get API Key
@@ -8100,7 +8100,7 @@ var APIKeys = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/artifacts.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/artifacts.mjs
 var Artifacts = class extends APIResource {
   /**
    * Get artifact-creation activity for a given day, broken out by MIME type.
@@ -8125,7 +8125,7 @@ var Artifacts = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/connectors.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/connectors.mjs
 var Connectors = class extends APIResource {
   /**
    * Get per-connector usage for a given day, with cursor-based pagination.
@@ -8151,7 +8151,7 @@ var Connectors = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/cost-report.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/cost-report.mjs
 var CostReport = class extends APIResource {
   /**
    * Get cost in USD over time across a date range.
@@ -8176,7 +8176,7 @@ var CostReport = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/plugins.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/plugins.mjs
 var Plugins = class extends APIResource {
   /**
    * Get per-plugin install + invocation usage for a given day, with pagination.
@@ -8205,7 +8205,7 @@ var Plugins = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/skills.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/skills.mjs
 var Skills = class extends APIResource {
   /**
    * Get per-skill usage for a given day, with cursor-based pagination.
@@ -8229,7 +8229,7 @@ var Skills = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/summaries.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/summaries.mjs
 var Summaries = class extends APIResource {
   /**
    * Get organization-wide activity summaries for a date range.
@@ -8260,7 +8260,7 @@ var Summaries = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/usage-report.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/usage-report.mjs
 var UsageReport = class extends APIResource {
   /**
    * Get token usage over time across a date range.
@@ -8285,7 +8285,7 @@ var UsageReport = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/user-cost-report.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/user-cost-report.mjs
 var UserCostReport = class extends APIResource {
   /**
    * Get per-user cost in USD across a date range.
@@ -8312,7 +8312,7 @@ var UserCostReport = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/user-usage-report.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/user-usage-report.mjs
 var UserUsageReport = class extends APIResource {
   /**
    * Get per-user token usage across a date range.
@@ -8339,7 +8339,7 @@ var UserUsageReport = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/users.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/users.mjs
 var Users = class extends APIResource {
   /**
    * Get per-user activity for a given day, with cursor-based pagination.
@@ -8363,7 +8363,7 @@ var Users = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/apps/chat/projects.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/apps/chat/projects.mjs
 var Projects = class extends APIResource {
   /**
    * Get per-project activity for a given day, with cursor-based pagination.
@@ -8387,7 +8387,7 @@ var Projects = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/apps/chat/chat.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/apps/chat/chat.mjs
 var Chat = /* @__PURE__ */ (() => {
   class Chat2 extends APIResource {
     constructor() {
@@ -8399,7 +8399,7 @@ var Chat = /* @__PURE__ */ (() => {
   return Chat2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/apps/apps.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/apps/apps.mjs
 var Apps = /* @__PURE__ */ (() => {
   class Apps2 extends APIResource {
     constructor() {
@@ -8411,7 +8411,7 @@ var Apps = /* @__PURE__ */ (() => {
   return Apps2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/analytics.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/analytics/analytics.mjs
 var Analytics = /* @__PURE__ */ (() => {
   class Analytics2 extends APIResource {
     constructor() {
@@ -8443,7 +8443,7 @@ var Analytics = /* @__PURE__ */ (() => {
   return Analytics2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/compliance-settings.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/compliance-settings.mjs
 var ComplianceSettings = class extends APIResource {
   /**
    * Retrieve your organization's Compliance Settings.
@@ -8490,7 +8490,7 @@ var ComplianceSettings = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/external-keys.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/external-keys.mjs
 var ExternalKeys = class extends APIResource {
   /**
    * Create an external key config owned by the caller's organization.
@@ -8602,7 +8602,7 @@ var ExternalKeys = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/federation/issuers.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/federation/issuers.mjs
 var Issuers = class extends APIResource {
   /**
    * **Requires an OAuth access token with the `org:admin` scope**, from
@@ -8763,7 +8763,7 @@ var Issuers = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/federation/rules/workspaces.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/federation/rules/workspaces.mjs
 var Workspaces = class extends APIResource {
   /**
    * **Requires an OAuth access token with the `org:admin` scope**, from
@@ -8869,7 +8869,7 @@ var Workspaces = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/federation/rules/rules.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/federation/rules/rules.mjs
 var Rules = /* @__PURE__ */ (() => {
   class Rules3 extends APIResource {
     constructor() {
@@ -9059,7 +9059,7 @@ var Rules = /* @__PURE__ */ (() => {
   return Rules3;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/federation/federation.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/federation/federation.mjs
 var Federation = /* @__PURE__ */ (() => {
   class Federation3 extends APIResource {
     constructor() {
@@ -9073,7 +9073,7 @@ var Federation = /* @__PURE__ */ (() => {
   return Federation3;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/invites.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/invites.mjs
 var Invites = class extends APIResource {
   /**
    * Invite a user to join the organization by email.
@@ -9142,7 +9142,7 @@ var Invites = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/plugin-marketplaces.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/plugin-marketplaces.mjs
 var PluginMarketplaces = class extends APIResource {
   /**
    * Retrieve a plugin marketplace by ID.
@@ -9363,7 +9363,7 @@ var PluginMarketplaces = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/rate-limits.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/rate-limits.mjs
 var RateLimits = class extends APIResource {
   /**
    * List Messages API rate limits for your organization.
@@ -9388,7 +9388,7 @@ var RateLimits = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/users.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/users.mjs
 var Users2 = class extends APIResource {
   /**
    * Retrieve a member of the organization by user ID.
@@ -9448,7 +9448,7 @@ var Users2 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/plugins/installation-settings.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/plugins/installation-settings.mjs
 var InstallationSettings = class extends APIResource {
   /**
    * List an organization-owned Plugin's installation settings, which say which
@@ -9587,7 +9587,7 @@ var InstallationSettings = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/plugins/shares.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/plugins/shares.mjs
 var Shares = class extends APIResource {
   /**
    * List the shares the owner of a member-owned Plugin has given — to every member
@@ -9633,7 +9633,7 @@ var Shares = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/plugins/versions.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/plugins/versions.mjs
 var Versions2 = class extends APIResource {
   /**
    * Add a version to an organization-owned Plugin by uploading the new version's
@@ -9818,7 +9818,7 @@ var Versions2 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/plugins/plugins.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/plugins/plugins.mjs
 var Plugins2 = /* @__PURE__ */ (() => {
   class Plugins3 extends APIResource {
     constructor() {
@@ -10061,7 +10061,7 @@ var Plugins2 = /* @__PURE__ */ (() => {
   return Plugins3;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/rbac-groups/members.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/rbac-groups/members.mjs
 var Members = class extends APIResource {
   /**
    * List members of an RBAC Group.
@@ -10125,7 +10125,7 @@ var Members = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/rbac-groups/rbac-groups.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/rbac-groups/rbac-groups.mjs
 var RBACGroups = /* @__PURE__ */ (() => {
   class RBACGroups2 extends APIResource {
     constructor() {
@@ -10228,7 +10228,7 @@ var RBACGroups = /* @__PURE__ */ (() => {
   return RBACGroups2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/rbac-roles/permissions.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/rbac-roles/permissions.mjs
 var Permissions = class extends APIResource {
   /**
    * List the permissions an RBAC Role grants.
@@ -10250,7 +10250,7 @@ var Permissions = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/rbac-roles/rbac-roles.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/rbac-roles/rbac-roles.mjs
 var RBACRoles = /* @__PURE__ */ (() => {
   class RBACRoles2 extends APIResource {
     constructor() {
@@ -10297,7 +10297,7 @@ var RBACRoles = /* @__PURE__ */ (() => {
   return RBACRoles2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/service-accounts/workspaces.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/service-accounts/workspaces.mjs
 var Workspaces2 = class extends APIResource {
   /**
    * **Requires an OAuth access token with the `org:admin` scope**, from
@@ -10414,7 +10414,7 @@ var Workspaces2 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/service-accounts/service-accounts.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/service-accounts/service-accounts.mjs
 var ServiceAccounts = /* @__PURE__ */ (() => {
   class ServiceAccounts5 extends APIResource {
     constructor() {
@@ -10580,7 +10580,7 @@ var ServiceAccounts = /* @__PURE__ */ (() => {
   return ServiceAccounts5;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/spend-limits/effective.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/spend-limits/effective.mjs
 var Effective = class extends APIResource {
   /**
    * List each member's effective spend limit and period-to-date spend.
@@ -10602,7 +10602,7 @@ var Effective = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/spend-limits/increase-requests.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/spend-limits/increase-requests.mjs
 var IncreaseRequests = class extends APIResource {
   /**
    * Retrieve a spend limit increase request.
@@ -10676,7 +10676,7 @@ var IncreaseRequests = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/spend-limits/spend-limits.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/spend-limits/spend-limits.mjs
 var SpendLimits = /* @__PURE__ */ (() => {
   class SpendLimits2 extends APIResource {
     constructor() {
@@ -10776,7 +10776,7 @@ var SpendLimits = /* @__PURE__ */ (() => {
   return SpendLimits2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/workspaces/members.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/workspaces/members.mjs
 var Members2 = class extends APIResource {
   /**
    * Get Workspace Member
@@ -10871,7 +10871,7 @@ var Members2 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/workspaces/rate-limits.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/workspaces/rate-limits.mjs
 var RateLimits2 = class extends APIResource {
   /**
    * List a workspace's rate limits.
@@ -10900,7 +10900,7 @@ var RateLimits2 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/workspaces/service-accounts.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/workspaces/service-accounts.mjs
 var ServiceAccounts2 = class extends APIResource {
   /**
    * **Requires an OAuth access token with the `org:admin` scope**, from
@@ -11081,7 +11081,7 @@ var ServiceAccounts2 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/workspaces/workspaces.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/workspaces/workspaces.mjs
 var Workspaces3 = /* @__PURE__ */ (() => {
   class Workspaces7 extends APIResource {
     constructor() {
@@ -11181,7 +11181,7 @@ var Workspaces3 = /* @__PURE__ */ (() => {
   return Workspaces7;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/organization.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/organization/organization.mjs
 var Organization = /* @__PURE__ */ (() => {
   class Organization3 extends APIResource {
     constructor() {
@@ -11234,7 +11234,7 @@ var Organization = /* @__PURE__ */ (() => {
   return Organization3;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/sessions/events.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/sessions/events.mjs
 var Events = /* @__PURE__ */ (() => {
   class Events3 extends APIResource {
     /**
@@ -11355,7 +11355,7 @@ var Events = /* @__PURE__ */ (() => {
   return Events3;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/sessions/resources.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/sessions/resources.mjs
 var Resources = class extends APIResource {
   /**
    * Get Session Resource
@@ -11494,7 +11494,7 @@ var Resources = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/sessions/threads/events.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/sessions/threads/events.mjs
 var Events2 = class extends APIResource {
   /**
    * List Session Thread Events
@@ -11553,7 +11553,7 @@ var Events2 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/sessions/threads/threads.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/sessions/threads/threads.mjs
 var Threads = /* @__PURE__ */ (() => {
   class Threads2 extends APIResource {
     constructor() {
@@ -11642,7 +11642,7 @@ var Threads = /* @__PURE__ */ (() => {
   return Threads2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/sessions/sessions.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/sessions/sessions.mjs
 var Sessions = /* @__PURE__ */ (() => {
   class Sessions2 extends APIResource {
     constructor() {
@@ -11806,7 +11806,7 @@ var Sessions = /* @__PURE__ */ (() => {
   return Sessions2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/skills/versions.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/skills/versions.mjs
 var Versions3 = class extends APIResource {
   /**
    * Create Skill Version
@@ -11939,7 +11939,7 @@ var Versions3 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/skills/skills.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/skills/skills.mjs
 var Skills2 = /* @__PURE__ */ (() => {
   class Skills4 extends APIResource {
     constructor() {
@@ -12046,7 +12046,7 @@ var Skills2 = /* @__PURE__ */ (() => {
   return Skills4;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/tunnels/certificates.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/tunnels/certificates.mjs
 var Certificates = class extends APIResource {
   /**
    * The Tunnels API is in research preview. It requires the
@@ -12179,7 +12179,7 @@ var Certificates = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/tunnels/tunnels.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/tunnels/tunnels.mjs
 var Tunnels = /* @__PURE__ */ (() => {
   class Tunnels2 extends APIResource {
     constructor() {
@@ -12370,7 +12370,7 @@ var Tunnels = /* @__PURE__ */ (() => {
   return Tunnels2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/vaults/credentials.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/vaults/credentials.mjs
 var Credentials = class extends APIResource {
   /**
    * Create Credential
@@ -12560,7 +12560,7 @@ var Credentials = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/vaults/vaults.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/vaults/vaults.mjs
 var Vaults = /* @__PURE__ */ (() => {
   class Vaults2 extends APIResource {
     constructor() {
@@ -12719,7 +12719,7 @@ var Vaults = /* @__PURE__ */ (() => {
   return Vaults2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/internal/BetaToolRunnerStream.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/internal/BetaToolRunnerStream.mjs
 var _BetaToolRunnerStream_instances;
 var _BetaToolRunnerStream_onToolCall;
 var _BetaToolRunnerStream_emitted;
@@ -12842,7 +12842,7 @@ var BetaToolRunnerStream = /* @__PURE__ */ (() => {
   return BetaToolRunnerStream2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/promise.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/internal/utils/promise.mjs
 function promiseWithResolvers() {
   let resolve;
   let reject;
@@ -12853,7 +12853,7 @@ function promiseWithResolvers() {
   return { promise, resolve, reject };
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/tools/BetaToolRunner.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/tools/BetaToolRunner.mjs
 var _BetaToolRunner_instances;
 var _BetaToolRunner_consumed;
 var _BetaToolRunner_mutated;
@@ -13550,7 +13550,7 @@ function determineNextStepFromStopReason(stopReason) {
   }
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/messages/messages.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/messages/messages.mjs
 var DEPRECATED_MODELS = {
   "claude-sonnet-4-5": "November 30th, 2026",
   "claude-sonnet-4-5-20250929": "November 30th, 2026"
@@ -13704,7 +13704,7 @@ var BETA_CLIENT_TOOL_UNION_KEYS = [
   "max_characters"
 ];
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/beta.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/beta/beta.mjs
 var Beta = /* @__PURE__ */ (() => {
   class Beta2 extends APIResource {
     constructor() {
@@ -13746,7 +13746,7 @@ var Beta = /* @__PURE__ */ (() => {
   return Beta2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/completions.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/completions.mjs
 var Completions = class extends APIResource {
   create(params, options) {
     const { betas, workspace_id, ...body } = params;
@@ -13766,7 +13766,7 @@ var Completions = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/files.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/files.mjs
 var Files2 = class extends APIResource {
   /**
    * List Files
@@ -13877,10 +13877,10 @@ var Files2 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/MessageStream.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/MessageStream.mjs
 init_errors();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/parser.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/parser.mjs
 init_error();
 function getOutputFormat2(params) {
   return params?.output_config?.format;
@@ -13942,7 +13942,7 @@ function parseOutputFormat(params, content) {
   }
 }
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/lib/MessageStream.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/lib/MessageStream.mjs
 var _MessageStream_instances;
 var _MessageStream_currentMessageSnapshot;
 var _MessageStream_params;
@@ -14546,7 +14546,7 @@ var MessageStream = /* @__PURE__ */ (() => {
   return MessageStream2;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/messages/batches.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/messages/batches.mjs
 var Batches2 = class extends APIResource {
   /**
    * Send a batch of Message creation requests.
@@ -14734,7 +14734,7 @@ var Batches2 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/messages/messages.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/messages/messages.mjs
 var Messages2 = /* @__PURE__ */ (() => {
   class Messages3 extends APIResource {
     constructor() {
@@ -14858,7 +14858,7 @@ var DEPRECATED_MODELS2 = {
 };
 var MODELS_TO_WARN_WITH_THINKING_ENABLED2 = ["claude-mythos-preview", "claude-opus-4-6"];
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/models.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/models.mjs
 var Models2 = class extends APIResource {
   /**
    * Get a specific model.
@@ -14914,7 +14914,7 @@ var Models2 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/api-keys.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/api-keys.mjs
 var APIKeys2 = class extends APIResource {
   /**
    * Get API Key
@@ -14958,7 +14958,7 @@ var APIKeys2 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/compliance-settings.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/compliance-settings.mjs
 var ComplianceSettings2 = class extends APIResource {
   /**
    * Retrieve your organization's Compliance Settings.
@@ -15005,7 +15005,7 @@ var ComplianceSettings2 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/external-keys.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/external-keys.mjs
 var ExternalKeys2 = class extends APIResource {
   /**
    * Create an external key config owned by the caller's organization.
@@ -15114,7 +15114,7 @@ var ExternalKeys2 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/invites.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/invites.mjs
 var Invites2 = class extends APIResource {
   /**
    * Invite a user to join the organization by email.
@@ -15180,7 +15180,7 @@ var Invites2 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/rate-limits.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/rate-limits.mjs
 var RateLimits3 = class extends APIResource {
   /**
    * List Messages API rate limits for your organization.
@@ -15208,7 +15208,7 @@ var RateLimits3 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/users.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/users.mjs
 var Users3 = class extends APIResource {
   /**
    * Retrieve a member of the organization by user ID.
@@ -15265,7 +15265,7 @@ var Users3 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/federation/issuers.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/federation/issuers.mjs
 var Issuers2 = class extends APIResource {
   /**
    * **Requires an OAuth access token with the `org:admin` scope**, from
@@ -15394,7 +15394,7 @@ var Issuers2 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/federation/rules/workspaces.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/federation/rules/workspaces.mjs
 var Workspaces4 = class extends APIResource {
   /**
    * **Requires an OAuth access token with the `org:admin` scope**, from
@@ -15481,7 +15481,7 @@ var Workspaces4 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/federation/rules/rules.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/federation/rules/rules.mjs
 var Rules2 = /* @__PURE__ */ (() => {
   class Rules3 extends APIResource {
     constructor() {
@@ -15639,7 +15639,7 @@ var Rules2 = /* @__PURE__ */ (() => {
   return Rules3;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/federation/federation.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/federation/federation.mjs
 var Federation2 = /* @__PURE__ */ (() => {
   class Federation3 extends APIResource {
     constructor() {
@@ -15653,7 +15653,7 @@ var Federation2 = /* @__PURE__ */ (() => {
   return Federation3;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/service-accounts/workspaces.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/service-accounts/workspaces.mjs
 var Workspaces5 = class extends APIResource {
   /**
    * **Requires an OAuth access token with the `org:admin` scope**, from
@@ -15751,7 +15751,7 @@ var Workspaces5 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/service-accounts/service-accounts.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/service-accounts/service-accounts.mjs
 var ServiceAccounts3 = /* @__PURE__ */ (() => {
   class ServiceAccounts5 extends APIResource {
     constructor() {
@@ -15885,7 +15885,7 @@ var ServiceAccounts3 = /* @__PURE__ */ (() => {
   return ServiceAccounts5;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/workspaces/members.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/workspaces/members.mjs
 var Members3 = class extends APIResource {
   /**
    * Get Workspace Member
@@ -15977,7 +15977,7 @@ var Members3 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/workspaces/rate-limits.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/workspaces/rate-limits.mjs
 var RateLimits4 = class extends APIResource {
   /**
    * List a workspace's rate limits.
@@ -16006,7 +16006,7 @@ var RateLimits4 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/workspaces/service-accounts.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/workspaces/service-accounts.mjs
 var ServiceAccounts4 = class extends APIResource {
   /**
    * **Requires an OAuth access token with the `org:admin` scope**, from
@@ -16155,7 +16155,7 @@ var ServiceAccounts4 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/workspaces/workspaces.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/workspaces/workspaces.mjs
 var Workspaces6 = /* @__PURE__ */ (() => {
   class Workspaces7 extends APIResource {
     constructor() {
@@ -16241,7 +16241,7 @@ var Workspaces6 = /* @__PURE__ */ (() => {
   return Workspaces7;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/organization.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/organization/organization.mjs
 var Organization2 = /* @__PURE__ */ (() => {
   class Organization3 extends APIResource {
     constructor() {
@@ -16282,7 +16282,7 @@ var Organization2 = /* @__PURE__ */ (() => {
   return Organization3;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/skills/versions.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/skills/versions.mjs
 var Versions4 = class extends APIResource {
   /**
    * Create Skill Version
@@ -16374,7 +16374,7 @@ var Versions4 = class extends APIResource {
   }
 };
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/resources/skills/skills.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/resources/skills/skills.mjs
 var Skills3 = /* @__PURE__ */ (() => {
   class Skills4 extends APIResource {
     constructor() {
@@ -16465,7 +16465,7 @@ var Skills3 = /* @__PURE__ */ (() => {
   return Skills4;
 })();
 
-// ../ids-extension/node_modules/@anthropic-ai/sdk/client.mjs
+// ../../../../ids-extension/node_modules/@anthropic-ai/sdk/client.mjs
 var _BaseAnthropic_instances;
 var _a;
 var _BaseAnthropic_encoder;
@@ -17754,6 +17754,87 @@ function describeError(error) {
   }
   return error?.message || String(error);
 }
+var AUTH_SIGNIN_URL = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`;
+var AUTH_REFRESH_URL = `https://securetoken.googleapis.com/v1/token?key=${FIREBASE_API_KEY}`;
+var TOKEN_MARGIN_MS = 60 * 1e3;
+var refreshingToken = null;
+var AUTH_ERRORS = {
+  EMAIL_NOT_FOUND: "Bu e-posta ile hesap bulunamad\u0131.",
+  INVALID_PASSWORD: "\u015Eifre hatal\u0131.",
+  INVALID_LOGIN_CREDENTIALS: "E-posta ya da \u015Fifre hatal\u0131.",
+  INVALID_EMAIL: "E-posta adresi ge\xE7ersiz.",
+  MISSING_PASSWORD: "\u015Eifre bo\u015F.",
+  USER_DISABLED: "Bu hesap kapat\u0131lm\u0131\u015F. Klinik y\xF6neticisine ba\u015Fvurun.",
+  TOO_MANY_ATTEMPTS_TRY_LATER: "\xC7ok fazla deneme yap\u0131ld\u0131; birka\xE7 dakika sonra yeniden deneyin.",
+  PASSWORD_LOGIN_DISABLED: "E-posta/\u015Fifre giri\u015Fi Firebase konsolunda a\xE7\u0131lmam\u0131\u015F.",
+  OPERATION_NOT_ALLOWED: "E-posta/\u015Fifre giri\u015Fi Firebase konsolunda a\xE7\u0131lmam\u0131\u015F."
+};
+function describeAuthError(code, status) {
+  const key = String(code || "").split(" ")[0].split(":")[0];
+  return AUTH_ERRORS[key] || `Giri\u015F yap\u0131lamad\u0131 (${key || status || "hata"}).`;
+}
+async function authState() {
+  const data = await chrome.storage.local.get("rxAuth");
+  return data.rxAuth || null;
+}
+async function setAuthState(state) {
+  if (state) await chrome.storage.local.set({ rxAuth: state });
+  else await chrome.storage.local.remove("rxAuth");
+  return state;
+}
+function publicAuth(state) {
+  return state ? { email: state.email, uid: state.uid, signedInAt: state.signedInAt } : null;
+}
+async function rxSignIn(email, password) {
+  if (!email || !password) throw new Error("E-posta ve \u015Fifre gerekli.");
+  const response = await fetch(AUTH_SIGNIN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, returnSecureToken: true })
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(describeAuthError(body?.error?.message, response.status));
+  return setAuthState({
+    email: body.email || email,
+    uid: body.localId || "",
+    idToken: body.idToken,
+    refreshToken: body.refreshToken,
+    expiresAt: Date.now() + Number(body.expiresIn || 3600) * 1e3,
+    signedInAt: Date.now()
+  });
+}
+async function refreshIdToken(state) {
+  const response = await fetch(AUTH_REFRESH_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: "grant_type=refresh_token&refresh_token=" + encodeURIComponent(state.refreshToken)
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const code = body?.error?.message || "";
+    if (/TOKEN_EXPIRED|USER_DISABLED|USER_NOT_FOUND|INVALID_REFRESH_TOKEN|INVALID_GRANT|MISSING_REFRESH_TOKEN/.test(code)) {
+      await setAuthState(null);
+      throw new Error("Rxalign oturumu d\xFC\u015Ft\xFC; eklenti simgesine t\u0131klay\u0131p ayarlardan yeniden giri\u015F yap\u0131n.");
+    }
+    throw new Error("Rxalign oturumu yenilenemedi: " + (code || response.status));
+  }
+  return setAuthState({
+    ...state,
+    idToken: body.id_token,
+    refreshToken: body.refresh_token || state.refreshToken,
+    uid: body.user_id || state.uid,
+    expiresAt: Date.now() + Number(body.expires_in || 3600) * 1e3
+  });
+}
+async function getIdToken(force) {
+  const state = await authState();
+  if (!state || !state.refreshToken) return null;
+  if (!force && state.idToken && state.expiresAt - TOKEN_MARGIN_MS > Date.now()) return state.idToken;
+  if (!refreshingToken) refreshingToken = refreshIdToken(state).finally(() => {
+    refreshingToken = null;
+  });
+  return (await refreshingToken).idToken;
+}
 var FORMS_URL = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/invisalign_forms`;
 var LIST_FIELDS = [
   "hasta_adi",
@@ -17791,9 +17872,23 @@ function decodeFields(fields, prefix = "", out = {}) {
   return out;
 }
 async function firestoreGet(url) {
-  const response = await fetch(url);
+  let token = await getIdToken(false);
+  const withToken = (t) => fetch(url, t ? { headers: { Authorization: `Bearer ${t}` } } : void 0);
+  let response = await withToken(token);
+  if (token && response.status === 401) {
+    token = await getIdToken(true);
+    response = await withToken(token);
+  }
+  if (response.status === 401 || response.status === 403) {
+    throw new Error(token ? "Rxalign hesab\u0131n\u0131n (" + ((await authState())?.email || "?") + ") kay\u0131tlara eri\u015Fim izni yok; hesab\u0131n klinik listesine (rxalign_users) eklenmesi gerekir." : "Kay\u0131tl\u0131 formlar giri\u015F istiyor: eklenti simgesine t\u0131klay\u0131p ayarlardan Rxalign hesab\u0131yla giri\u015F yap\u0131n.");
+  }
   if (!response.ok) throw new Error(`Firestore ${response.status}`);
   return response.json();
+}
+async function testFormsAccess() {
+  const token = await getIdToken(false);
+  const page = await firestoreGet(`${FORMS_URL}?pageSize=1&mask.fieldPaths=checked_in&key=${FIREBASE_API_KEY}`);
+  return { authenticated: !!token, documents: (page.documents || []).length };
 }
 async function listForms() {
   const mask = LIST_FIELDS.map((f) => `mask.fieldPaths=${f}`).join("&");
@@ -18087,6 +18182,13 @@ var HANDLERS = {
   "ids-buccal-set": async (msg) => ({ items: await readBuccalSet(msg.images, msg.effort, msg.model) }),
   "ids-stats": async () => ({ stats: STATS.splice(0) }),
   "ids-form-get": async (msg) => ({ data: await getForm(msg.id) }),
+  "ids-auth-state": async () => ({ auth: publicAuth(await authState()) }),
+  "ids-auth-signin": async (msg) => ({ auth: publicAuth(await rxSignIn(String(msg.email || "").trim(), String(msg.password || ""))) }),
+  "ids-auth-signout": async () => {
+    await setAuthState(null);
+    return {};
+  },
+  "ids-auth-test": async () => ({ result: await testFormsAccess() }),
   "ids-update-state": async () => {
     checkIfStale();
     return { update: await updateState(), version: chrome.runtime.getManifest().version };

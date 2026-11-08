@@ -19,6 +19,91 @@ document.getElementById('save').addEventListener('click', function () {
     });
 });
 
+
+// ---------- Rxalign hesabı (Firestore okumaları için giriş) ----------
+
+const rxAccount = document.getElementById('rxAccount');
+const rxForm = document.getElementById('rxSignInForm');
+const rxEmail = document.getElementById('rxEmail');
+const rxPassword = document.getElementById('rxPassword');
+const rxSignInButton = document.getElementById('rxSignIn');
+const rxSignOutButton = document.getElementById('rxSignOut');
+const rxTestButton = document.getElementById('rxTest');
+const rxStatus = document.getElementById('rxStatus');
+
+function rxSend(message) {
+    return chrome.runtime.sendMessage(message).then(function (reply) {
+        if (!reply || !reply.ok) throw new Error(reply ? reply.error : 'yanıt yok');
+        return reply;
+    });
+}
+
+function showAccount(auth) {
+    if (auth) {
+        rxAccount.textContent = auth.email + ' olarak giriş yapıldı (' + new Date(auth.signedInAt).toLocaleDateString('tr-TR') + ')';
+        rxAccount.className = 'ok';
+        rxForm.style.display = 'none';
+        rxSignOutButton.style.display = '';
+    } else {
+        rxAccount.textContent = 'giriş yapılmadı';
+        rxAccount.className = 'warn';
+        rxForm.style.display = '';
+        rxSignOutButton.style.display = 'none';
+    }
+}
+
+function rxNote(text, ok) {
+    rxStatus.textContent = text;
+    rxStatus.className = ok ? 'ok' : 'warn';
+}
+
+rxSignInButton.addEventListener('click', async function () {
+    rxSignInButton.disabled = true;
+    rxNote('giriş yapılıyor…', true);
+    try {
+        const reply = await rxSend({ type: 'ids-auth-signin', email: rxEmail.value, password: rxPassword.value });
+        rxPassword.value = '';
+        showAccount(reply.auth);
+        rxNote('Giriş yapıldı.', true);
+    } catch (error) {
+        rxNote(error.message, false);
+    }
+    rxSignInButton.disabled = false;
+});
+
+rxPassword.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') rxSignInButton.click();
+});
+
+rxSignOutButton.addEventListener('click', async function () {
+    try {
+        await rxSend({ type: 'ids-auth-signout' });
+        showAccount(null);
+        rxNote('Çıkış yapıldı.', true);
+    } catch (error) {
+        rxNote(error.message, false);
+    }
+});
+
+rxTestButton.addEventListener('click', async function () {
+    rxTestButton.disabled = true;
+    rxNote('deneniyor…', true);
+    try {
+        const reply = await rxSend({ type: 'ids-auth-test' });
+        rxNote(reply.result.authenticated
+            ? 'Kayıtlı formlar giriş yapılmış hesapla okunuyor.'
+            : 'Kayıtlı formlar şu an girişsiz de okunuyor (bulut kuralları henüz kapatılmamış); yine de giriş yapın.', reply.result.authenticated);
+    } catch (error) {
+        rxNote('Okunamadı: ' + error.message, false);
+    }
+    rxTestButton.disabled = false;
+});
+
+rxSend({ type: 'ids-auth-state' }).then(function (reply) { showAccount(reply.auth); }).catch(function (error) {
+    rxAccount.textContent = 'okunamadı: ' + error.message;
+    rxAccount.className = 'warn';
+});
+
 // ---------- Ana klasör (eklenti kökeninde saklanır; siteler bridge.html üzerinden okur) ----------
 
 const rootName = document.getElementById('rootName');

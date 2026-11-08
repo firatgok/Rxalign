@@ -348,6 +348,101 @@ function describeError(error) {
   return error?.message || String(error);
 }
 
+// ---------- Rxalign girişi (Firebase Authentication, e-posta/şifre; REST) ----------
+// Firestore kuralları yalnızca giriş yapmış klinik hesaplarına açık. Oturumun yenileme anahtarı
+// chrome.storage.local "rxAuth" içinde durur; şifre saklanmaz. ID token ~1 saat geçerli, süresi
+// dolmadan securetoken ile yenilenir. Giriş yapılmamışsa okumalar kimliksiz denenir (eski kurallar
+// açıkken çalışır; kurallar kapanınca 403 gelir ve hata iletisi ayarlara yönlendirir).
+
+const AUTH_SIGNIN_URL = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`;
+const AUTH_REFRESH_URL = `https://securetoken.googleapis.com/v1/token?key=${FIREBASE_API_KEY}`;
+const TOKEN_MARGIN_MS = 60 * 1000;
+let refreshingToken = null;
+
+const AUTH_ERRORS = {
+  EMAIL_NOT_FOUND: "Bu e-posta ile hesap bulunamadı.",
+  INVALID_PASSWORD: "Şifre hatalı.",
+  INVALID_LOGIN_CREDENTIALS: "E-posta ya da şifre hatalı.",
+  INVALID_EMAIL: "E-posta adresi geçersiz.",
+  MISSING_PASSWORD: "Şifre boş.",
+  USER_DISABLED: "Bu hesap kapatılmış. Klinik yöneticisine başvurun.",
+  TOO_MANY_ATTEMPTS_TRY_LATER: "Çok fazla deneme yapıldı; birkaç dakika sonra yeniden deneyin.",
+  PASSWORD_LOGIN_DISABLED: "E-posta/şifre girişi Firebase konsolunda açılmamış.",
+  OPERATION_NOT_ALLOWED: "E-posta/şifre girişi Firebase konsolunda açılmamış.",
+};
+
+function describeAuthError(code, status) {
+  const key = String(code || "").split(" ")[0].split(":")[0];
+  return AUTH_ERRORS[key] || `Giriş yapılamadı (${key || status || "hata"}).`;
+}
+
+async function authState() {
+  const data = await chrome.storage.local.get("rxAuth");
+  return data.rxAuth || null;
+}
+
+async function setAuthState(state) {
+  if (state) await chrome.storage.local.set({ rxAuth: state });
+  else await chrome.storage.local.remove("rxAuth");
+  return state;
+}
+
+function publicAuth(state) {
+  return state ? { email: state.email, uid: state.uid, signedInAt: state.signedInAt } : null;
+}
+
+async function rxSignIn(email, password) {
+  if (!email || !password) throw new Error("E-posta ve şifre gerekli.");
+  const response = await fetch(AUTH_SIGNIN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, returnSecureToken: true }),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(describeAuthError(body?.error?.message, response.status));
+  return setAuthState({
+    email: body.email || email,
+    uid: body.localId || "",
+    idToken: body.idToken,
+    refreshToken: body.refreshToken,
+    expiresAt: Date.now() + Number(body.expiresIn || 3600) * 1000,
+    signedInAt: Date.now(),
+  });
+}
+
+async function refreshIdToken(state) {
+  const response = await fetch(AUTH_REFRESH_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: "grant_type=refresh_token&refresh_token=" + encodeURIComponent(state.refreshToken),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const code = body?.error?.message || "";
+    if (/TOKEN_EXPIRED|USER_DISABLED|USER_NOT_FOUND|INVALID_REFRESH_TOKEN|INVALID_GRANT|MISSING_REFRESH_TOKEN/.test(code)) {
+      await setAuthState(null);
+      throw new Error("Rxalign oturumu düştü; eklenti simgesine tıklayıp ayarlardan yeniden giriş yapın.");
+    }
+    throw new Error("Rxalign oturumu yenilenemedi: " + (code || response.status));
+  }
+  return setAuthState({
+    ...state,
+    idToken: body.id_token,
+    refreshToken: body.refresh_token || state.refreshToken,
+    uid: body.user_id || state.uid,
+    expiresAt: Date.now() + Number(body.expires_in || 3600) * 1000,
+  });
+}
+
+// Geçerli ID token; giriş yoksa null. force: süresi dolmamış olsa da yenile (401 sonrası).
+async function getIdToken(force) {
+  const state = await authState();
+  if (!state || !state.refreshToken) return null;
+  if (!force && state.idToken && state.expiresAt - TOKEN_MARGIN_MS > Date.now()) return state.idToken;
+  if (!refreshingToken) refreshingToken = refreshIdToken(state).finally(() => { refreshingToken = null; });
+  return (await refreshingToken).idToken;
+}
+
 // ---------- Kayıtlı formlar (Firestore, yalnızca okuma) ----------
 
 const FORMS_URL =
@@ -395,9 +490,27 @@ function decodeFields(fields, prefix = "", out = {}) {
 }
 
 async function firestoreGet(url) {
-  const response = await fetch(url);
+  let token = await getIdToken(false);
+  const withToken = (t) => fetch(url, t ? { headers: { Authorization: `Bearer ${t}` } } : undefined);
+  let response = await withToken(token);
+  if (token && response.status === 401) {
+    token = await getIdToken(true);
+    response = await withToken(token);
+  }
+  if (response.status === 401 || response.status === 403) {
+    throw new Error(token
+      ? "Rxalign hesabının (" + ((await authState())?.email || "?") + ") kayıtlara erişim izni yok; hesabın klinik listesine (rxalign_users) eklenmesi gerekir."
+      : "Kayıtlı formlar giriş istiyor: eklenti simgesine tıklayıp ayarlardan Rxalign hesabıyla giriş yapın.");
+  }
   if (!response.ok) throw new Error(`Firestore ${response.status}`);
   return response.json();
+}
+
+// Ayarlar sayfasındaki "Bağlantıyı sına": tek belge okur; token'lı mı okunduğunu bildirir.
+async function testFormsAccess() {
+  const token = await getIdToken(false);
+  const page = await firestoreGet(`${FORMS_URL}?pageSize=1&mask.fieldPaths=checked_in&key=${FIREBASE_API_KEY}`);
+  return { authenticated: !!token, documents: (page.documents || []).length };
 }
 
 async function listForms() {
@@ -683,6 +796,10 @@ const HANDLERS = {
   "ids-pose": async (msg) => ({ items: await readPose(msg.images, msg.effort, msg.model) }),
   "ids-upright": async (msg) => ({ result: await readUpright(msg.a, msg.b, msg.effort, msg.model) }),
   "ids-form-get": async (msg) => ({ data: await getForm(msg.id) }),
+  "ids-auth-state": async () => ({ auth: publicAuth(await authState()) }),
+  "ids-auth-signin": async (msg) => ({ auth: publicAuth(await rxSignIn(String(msg.email || "").trim(), String(msg.password || ""))) }),
+  "ids-auth-signout": async () => { await setAuthState(null); return {}; },
+  "ids-auth-test": async () => ({ result: await testFormsAccess() }),
   "ids-update-state": async () => {
     checkIfStale();
     return { update: await updateState(), version: chrome.runtime.getManifest().version };

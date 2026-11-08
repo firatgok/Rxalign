@@ -31,6 +31,22 @@
     <p>Chrome, tarayıcı yeniden açıldığında klasörü okumak için izni yeniden isteyebilir; o zaman IDS sayfasında
         sağ üstte çıkan kutudaki "İzin ver" düğmesine basmak yeter.</p>
 
+    <h2>Rxalign hesabı</h2>
+    <p>Kayıtlı formlar (Form Doldurucu) Rxalign bulutundan okunur ve bulut yalnızca giriş yapmış klinik hesaplarına açıktır.
+        Form sitesinde (rxalign.fgoapps.com) kullandığınız e-posta ve şifreyle bir kez giriş yapın; oturum bu bilgisayarda
+        açık kalır, şifre saklanmaz.</p>
+    <div class="line">Durum: <span id="rxAccount">okunuyor…</span></div>
+    <div id="rxSignInForm">
+        <label for="rxEmail">E-posta</label>
+        <input type="email" id="rxEmail" autocomplete="username" placeholder="klinik@ornek.com">
+        <label for="rxPassword" style="margin-top: 10px">Şifre</label>
+        <input type="password" id="rxPassword" autocomplete="current-password">
+        <button id="rxSignIn">Giriş yap</button>
+    </div>
+    <button id="rxSignOut" style="display: none">Çıkış yap</button>
+    <button id="rxTest">Bağlantıyı sına</button>
+    <span id="rxStatus"></span>
+
     <h2>Anthropic API anahtarı</h2>
     <label for="apiKey">Anahtar</label>
     <input type="password" id="apiKey" autocomplete="off" placeholder="sk-ant-...">

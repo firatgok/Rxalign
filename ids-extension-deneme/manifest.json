@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "IDS Yardımcısı",
   "description": "Invisalign Doctor Site'ta kayıtlı formdan reçeteyi doldurur (yetişkin, ergen, çocuk paketleri ve refinement), hasta fotoğraflarını, röntgeni ve CBCT'yi klasörden yükler, Dentsoft hasta kartından kimlik bilgilerini IDS Yeni hasta formuna taşır.",
-  "version": "0.33.7",
+  "version": "0.34.1",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjtX4MMoG8fv4We9/xyb8zzomyxAScYYtcHopVyidb7iQ/CX2rHbCY8/0OiSM8MFhoVwbUt6CQiJnreY1H5g6xaGv5tgkbb3VsbYC2jKOy4lVud6hAMd50GaUwnhYTZoN4C8J1WQf62FtICncvEj7y7MWacDahFjzi63WpUbvz3nsBr6usKYzvPn49xko8DNABAfeKRQoeh/U8k9jYlH0ld/MuG2yoGaUX8rFjhgI4YgHrM3r4duxLXsSOVc/ml3tQEMmgx6/3fDaE17GM/kx9qoBl7MgZzVjt6LHj/ow3tTxiJyin2r33MGC1u1YwAR0aEy+CZXJQOyXt/ooZSPyiQIDAQAB",
   "permissions": [
     "storage",
@@ -12,7 +12,9 @@
   "host_permissions": [
     "https://api.anthropic.com/*",
     "https://firestore.googleapis.com/*",
-    "https://raw.githubusercontent.com/*"
+    "https://raw.githubusercontent.com/*",
+    "https://identitytoolkit.googleapis.com/*",
+    "https://securetoken.googleapis.com/*"
   ],
   "background": {
     "service_worker": "background.bundle.js",

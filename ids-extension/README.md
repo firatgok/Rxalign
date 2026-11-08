@@ -165,7 +165,9 @@ bildirilebilir.
 - Yön düzeltme için yuvalardaki beş ağız içi fotoğrafın IDS önizlemeleri (yaklaşık 800 piksel) gönderilir.
 - Tam boy dosyalar ve röntgen yalnızca IDS'e gider. Röntgen yapay zekasız tanınır.
 - API anahtarı yalnızca o bilgisayardaki eklenti deposunda durur.
-- Kayıtlı formlar form sitesinin Firestore veritabanından yalnızca okunur.
+- Kayıtlı formlar form sitesinin Firestore veritabanından yalnızca okunur. Bulut yalnızca giriş yapmış klinik hesaplarına açık
+  olduğundan ayar sayfasındaki **Rxalign hesabı** bölümünden (sitedeki e-posta/şifreyle) bir kez giriş yapılır; şifre saklanmaz,
+  yalnız oturumun yenileme anahtarı eklenti deposunda durur. **Bağlantıyı sına** okumanın çalıştığını gösterir.
 
 ## Geliştirme
 
@@ -179,7 +181,7 @@ bildirilebilir.
 | `folder.js` | Ana klasör, hasta klasörünü adından bulma; ayar sayfasında seçilen ortak klasör `bridge.html` çerçevesi üzerinden okunur (klasör tanıtıcıları kökene bağlı olduğundan) |
 | `bridge.html`, `bridge.js` | Eklenti kökeninde çalışan klasör köprüsü: siteye gizli iframe olarak yüklenir, dosyaları postMessage ile verir, gerekirse "İzin ver" düğmesini gösterir |
 | `cbct.js` | CBCT portalı: hasta klasöründeki .dcm klasörünü portala verir, yüklemeyi izler |
-| `options.html`, `options.js` | API anahtarı, ana klasör seçimi, güncelleme durumu ve "Şimdi denetle" |
+| `options.html`, `options.js` | Rxalign hesabı girişi, API anahtarı, ana klasör seçimi, güncelleme durumu ve "Şimdi denetle" |
 | `update.js` | Panellerin başlığının altındaki güncelleme şeridi (kendiliğinden kurulum bildirimi / Şimdi kur / Sonra; sekme etkinliğini ve yeniden başlayan eklentiyi izler) |
 | `updater/updater.ps1`, `updater.bat` | Chrome'un yerel mesajlaşma sunucusu: zip'i indirir, eklenti klasörünün üzerine açar |
 | `Guncelleyiciyi-Kur.bat`, `updater/kur.ps1` | Güncelleyiciyi bu bilgisayara kaydeder (HKCU `NativeMessagingHosts\com.rxalign.idsupdater`) |
