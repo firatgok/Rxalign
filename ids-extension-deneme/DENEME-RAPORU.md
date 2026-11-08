@@ -1,3 +1,20 @@
+# IDS Yardımcısı deneme raporu, ek (8 Kasım 2026, gece): hızlandırma 5 (madde 1) denendi ve GERİ ALINDI
+
+Madde 1 (Opus hakemi planlamanın kritik yolundan çıkarma: dik okuma hakem gerektiğinde geçici sonuç + final sözü, onFix kesin
+sonucu bekler) commit 04adf04 ile uygulandı, üç sette ölçüldü, ee62767 ile geri alındı.
+
+| Set | Hız 4 | Hız 5 | Plan / düzeltme | Not |
+|---|---|---|---|---|
+| Satoğlu | 19 | 20 | 12 / 8 | hakem yok, fark gürültü |
+| Balaban | 26 | 25 | 13 / 12 | planlama 20 → 13 (hakem beklenmedi) ama düzeltme bukkal kümesini 5,6 sn bekledi |
+| Salar | 22 | 29 | 11 / 18 | düzeltmenin yön adımı 11 sn: yerleşen 1546'nın orta kesit hakemi şimdi burada beklendi |
+
+Sonuç: hakem yerleşen bir kare içinse bekleme planlamadan düzeltmeye kayıyor, toplam değişmiyor; yerleşmeyen aday içinse
+küçük kazanç var ama darboğaz hemen Opus bukkal kümesine geçiyor. Geçici yerleşim riski karşılığında kazanç yok → geri alındı.
+Madde 4 (ölçekli JPEG çözme) denenmedi: test klasörlerindeki kareler 2240x3360 (~1 MB), tam çözüm 25-35 ms; kazanılacak bir
+şey yok (klinikteki 30 MP orijinallerde farklı olabilir, ayrıca ölçülmeli).
+Harness: Chrome sekmesi bellek baskısında (boş RAM 0,2-1,4 GB) üç kez dondu/yeniden yüklendi; sekmeyi kapatıp yeniden açmak çözdü.
+
 # IDS Yardımcısı deneme raporu, ek (8 Kasım 2026, akşam): hızlandırma 4 (2, 3, 5, 7 + bukkal güvenlik beklemesi)
 
 Kullanıcı "hız güncellemelerini yapıp öyle test edelim" dedi; 7 maddelik listeden 2, 3, 5, 7 ve bukkal güvenlik düzeltmesi
