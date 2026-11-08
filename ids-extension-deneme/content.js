@@ -1924,6 +1924,11 @@
                 const q = function (a, f) { const b = a.slice().sort(function (x, y) { return x - y; }); return (b[Math.floor(b.length * f)] / 1000).toFixed(1); };
                 const minOf = function (key) { const v = st.map(function (s) { return Number(s[key]); }).filter(function (x) { return x >= 0 && isFinite(x) && !isNaN(x); }); return v.length ? Math.min.apply(null, v) : '?'; };
                 notes.push('Model çağrıları (' + st.length + '): ' + Object.keys(by).map(function (k) { const a = by[k].map(function (s) { return s.ms; }); return k + ' ×' + a.length + ' ortanca ' + q(a, 0.5) + ' en uzun ' + q(a, 0.999) + ' sn' + (by[k].some(function (s) { return s.err; }) ? ' (HATA: ' + by[k].filter(function (s) { return s.err; }).map(function (s) { return s.err; }).join(' | ') + ')' : ''); }).join('; ') + '; kalan: istek ' + minOf('reqLeft') + ', giriş jetonu ' + minOf('tokLeft') + ', çıkış jetonu ' + minOf('outLeft'));
+                // Jeton toplamı ve liste fiyatıyla yaklaşık maliyet (Sonnet 2/10, Opus 4/20 $ per milyon; önbellek sayılmaz).
+                const tot = { sIn: 0, sOut: 0, oIn: 0, oOut: 0 };
+                st.forEach(function (s) { const o = /opus/.test(s.model); tot[o ? 'oIn' : 'sIn'] += Number(s.inTok) || 0; tot[o ? 'oOut' : 'sOut'] += Number(s.outTok) || 0; });
+                const usd = (tot.sIn * 2 + tot.sOut * 10 + tot.oIn * 4 + tot.oOut * 20) / 1e6;
+                notes.push('Jeton toplamı: Sonnet giriş ' + Math.round(tot.sIn / 1000) + ' bin / çıkış ' + Math.round(tot.sOut / 1000) + ' bin; Opus giriş ' + Math.round(tot.oIn / 1000) + ' bin / çıkış ' + Math.round(tot.oOut / 1000) + ' bin; liste fiyatıyla ~' + usd.toFixed(2) + ' $');
                 const ut = window.idsfyCrop.upTimes.splice(0);
                 if (ut.length) notes.push('Dik okuma işleri (kuyruk/hazırlık/toplam sn): ' + ut.map(function (r) { return r.name + ' ' + r.mode + ' ' + (r.queue / 1000).toFixed(1) + '/' + (r.prep / 1000).toFixed(1) + '/' + (r.total / 1000).toFixed(1) + (r.arb ? ' hakem' : ''); }).join(', '));
             } catch (error) { notes.push('İstatistik alınamadı (' + error.message + ')'); }
