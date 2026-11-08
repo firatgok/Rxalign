@@ -1,0 +1,18 @@
+{
+  "name": "ids-extension",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "esbuild src/background.js --bundle --format=esm --target=chrome120 --outfile=background.bundle.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  },
+  "private": true
+}

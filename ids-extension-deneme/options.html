@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>IDS Yardımcısı - Ayarlar</title>
+    <style>
+        body { font-family: "Segoe UI", Arial, sans-serif; max-width: 560px; margin: 40px auto; padding: 0 16px; color: #222; }
+        h1 { font-size: 20px; }
+        h2 { font-size: 16px; margin-top: 32px; border-top: 1px solid #ddd; padding-top: 20px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; }
+        input { width: 100%; padding: 8px; font-size: 14px; box-sizing: border-box; }
+        button { margin-top: 12px; margin-right: 8px; padding: 8px 18px; font-size: 14px; cursor: pointer; }
+        p { font-size: 13px; color: #555; line-height: 1.5; }
+        .ok { font-weight: 600; color: #1a7f37; }
+        .warn { font-weight: 600; color: #b3261e; }
+        #rootName { font-weight: 600; }
+        .line { margin: 6px 0; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <h1>IDS Yardımcısı <small id="version"></small></h1>
+
+    <h2>Hasta klasörleri</h2>
+    <p>Hasta klasörlerinin durduğu <strong>ana klasörü</strong> bir kez seçin (örneğin
+        <code>Belgeler\FGO Hasta Fotoları</code>). Fotoğraflar, portre, röntgen ve CBCT her hastada bu klasörün
+        içinden, hastanın adını taşıyan alt klasörden alınır; IDS ve CBCT portalında ayrıca klasör seçmek gerekmez.</p>
+    <div>Seçili ana klasör: <span id="rootName">okunuyor…</span> <span id="rootPermission"></span></div>
+    <button id="pickRoot">Ana klasörü seç</button>
+    <button id="grantRoot">Okuma iznini yenile</button>
+    <span id="rootStatus"></span>
+    <p>Chrome, tarayıcı yeniden açıldığında klasörü okumak için izni yeniden isteyebilir; o zaman IDS sayfasında
+        sağ üstte çıkan kutudaki "İzin ver" düğmesine basmak yeter.</p>
+
+    <h2>Anthropic API anahtarı</h2>
+    <label for="apiKey">Anahtar</label>
+    <input type="password" id="apiKey" autocomplete="off" placeholder="sk-ant-...">
+    <button id="save">Kaydet</button>
+    <span id="status" class="ok"></span>
+    <p>Anahtar yalnızca bu bilgisayarda, eklentinin kendi deposunda saklanır. Fotoğrafların
+        küçültülmüş kopyaları sınıflandırma için Anthropic'e gönderilir; tam boy dosyalar yalnızca IDS'e yüklenir.</p>
+
+    <h2>Fotoğraflar</h2>
+    <label style="font-weight: 400"><input type="checkbox" id="cropPhotos" style="width: auto"> Fotoğrafları IDS'e
+        yerleştirildikten sonra kendiliğinden kırp</label>
+    <p>Açıkken klasördeki orijinaller olduğu gibi IDS'e bırakılır ve IDS yerleştirir; yükleme bitince ağız içi yuvaların yönü
+        orijinal kareden okunur, her yuvanın karesi yuvası bilinerek kırpılıp döndürülür ve yuvaya "Değiştir" ile konur (ağız içi:
+        ekartör kolları ve diş sınırına göre; oklüzal: diş sırası + %10; yüzler: saçın üstünden yakanın altına, dikey 2:3).
+        Klasördeki dosyalar değişmez. Panel yuvaları kontrol etmenizi bekler; beğenmezseniz "Kırpılmamış hallerine dön" seçilir.</p>
+    <span id="cropStatus" class="ok"></span>
+
+    <h2>Güncelleme</h2>
+    <p>Eklenti yeni sürümü Chrome açılışında, IDS sayfası açılınca (son denetim 5 dakikadan eskiyse) ve 5 dakikada bir GitHub deposu (raw.githubusercontent.com) üzerinden denetler; yeni sürüm varsa
+        indirir ve IDS sayfasındaki panelde "kurulsun mu?" diye sorar. Bunun için eklenti klasöründeki
+        <code>Guncelleyiciyi-Kur.bat</code> bu bilgisayarda bir kez çalıştırılmış olmalı.</p>
+    <label style="font-weight: 400"><input type="checkbox" id="autoInstall" style="width: auto"> İndirilen güncellemeyi
+        kendiliğinden kur</label>
+    <p>Açıkken indirilen sürüm, hiçbir IDS sekmesinde panel 1 dakika boyunca çalışmadığında kurulur ve eklenti yeniden
+        başlar; açık IDS sayfalarında paneli kullanmak için sayfayı F5 ile yenilemek gerekir. Kapalıyken panelde
+        "Kur" düğmesine basılır.</p>
+    <div class="line">Güncelleyici: <span id="updaterStatus">denetleniyor…</span></div>
+    <div class="line">Durum: <span id="updateStatus">okunuyor…</span></div>
+    <button id="checkUpdate">Şimdi denetle</button>
+    <button id="installUpdate" style="display: none">Kur</button>
+
+    <script src="folder.js"></script>
+    <script src="options.js"></script>
+</body>
+</html>

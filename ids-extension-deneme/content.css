@@ -1,0 +1,293 @@
+.idsfy-panel {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    width: 300px;
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid #c8ccd0;
+    border-radius: 8px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+    font: 13px/1.4 "Segoe UI", Arial, sans-serif;
+    color: #222;
+    z-index: 2147483000;
+}
+
+.idsfy-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #2b2b2b;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 8px 8px 0 0;
+}
+
+.idsfy-toggle {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.idsfy-body {
+    padding: 12px;
+    overflow-y: auto;
+}
+
+.idsfy-collapsed .idsfy-body {
+    display: none;
+}
+
+.idsfy-picker {
+    display: none !important;
+}
+
+.idsfy-button {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    border-radius: 4px;
+    background: #009ace;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.idsfy-button:disabled {
+    background: #b5bcc2;
+    cursor: default;
+}
+
+.idsfy-status {
+    margin: 8px 0;
+    color: #444;
+}
+
+.idsfy-status.idsfy-error {
+    color: #b3261e;
+    font-weight: 600;
+}
+
+.idsfy-button + .idsfy-button {
+    margin-top: 6px;
+}
+
+.idsfy-row {
+    display: flex;
+    flex-direction: column;
+    padding: 5px 0;
+    border-top: 1px solid #e3e6e8;
+}
+
+.idsfy-row-error .idsfy-info {
+    color: #b3261e;
+}
+
+.idsfy-label {
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.idsfy-info {
+    font-size: 12px;
+    color: #444;
+}
+
+.idsfy-notebar {
+    margin-top: 6px;
+}
+.idsfy-notes {
+    display: none;
+    max-height: 220px;
+    overflow: auto;
+    margin-top: 4px;
+    padding: 6px;
+    border: 1px solid #e3e6e8;
+    border-radius: 4px;
+    background: #f6f8f9;
+    color: #3d464d;
+    font-size: 11px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+}
+.idsfy-notes.open {
+    display: block;
+}
+.idsfy-fixbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+.idsfy-mini {
+    padding: 3px 7px;
+    border: 1px solid #009ace;
+    border-radius: 4px;
+    background: #fff;
+    color: #006d94;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.idsfy-mini:hover:not(:disabled) {
+    background: #e6f5fb;
+}
+.idsfy-mini:disabled {
+    border-color: #b5bcc2;
+    color: #8a9399;
+    cursor: default;
+}
+.idsfy-warning {
+    font-size: 12px;
+    color: #b35c00;
+}
+
+.idsfy-panel.idsfy-rx {
+    right: auto;
+    left: 16px;
+    width: 340px;
+}
+
+.idsfy-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    margin-bottom: 6px;
+    border: 1px solid #c8ccd0;
+    border-radius: 4px;
+    font: inherit;
+}
+
+.idsfy-row.idsfy-choice {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.idsfy-list + .idsfy-button {
+    margin-top: 8px;
+}
+
+.idsfy-actions .idsfy-button {
+    margin-top: 6px;
+}
+
+/* Tüm fotoları sil: diğer düğmelerden ayrışsın. */
+.idsfy-button.idsfy-danger {
+  background: #b3261e;
+}
+
+.idsfy-button.idsfy-danger:hover:not(:disabled) {
+  background: #8c1d17;
+}
+
+/* Dentsoft köprüsü */
+.idsfy-dentsoft-btn {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 2147483000;
+    padding: 10px 16px;
+    background: #2b2b2b;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font: 600 13px/1.2 "Segoe UI", Arial, sans-serif;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+}
+
+.idsfy-dentsoft-btn:hover {
+    background: #444;
+}
+
+.idsfy-dentsoft-toast {
+    position: fixed;
+    right: 16px;
+    bottom: 64px;
+    z-index: 2147483000;
+    max-width: 360px;
+    padding: 10px 14px;
+    background: #16a34a;
+    color: #fff;
+    border-radius: 8px;
+    font: 13px/1.4 "Segoe UI", Arial, sans-serif;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+}
+
+.idsfy-dentsoft-toast.idsfy-show {
+    opacity: 1;
+}
+
+.idsfy-dentsoft-toast.idsfy-dentsoft-error {
+    background: #dc2626;
+}
+
+/* Boşluk ızgarası: ekran görüntüsü yapıştırma kutusu */
+.idsfy-paste-wrap {
+    margin-top: 8px;
+}
+
+.idsfy-paste {
+    margin-top: 6px;
+    padding: 14px 10px;
+    border: 2px dashed #009ace;
+    border-radius: 6px;
+    background: #f3fbfe;
+    color: #333;
+    font-size: 12px;
+    text-align: center;
+    cursor: text;
+    outline: none;
+    min-height: 20px;
+}
+
+.idsfy-paste:focus {
+    border-style: solid;
+    background: #e6f6fc;
+}
+
+/* Güncelleme şeridi (update.js): panel başlığının hemen altında */
+.idsfy-update {
+    padding: 8px 12px;
+    background: #fff8e1;
+    border-bottom: 1px solid #f0d890;
+    font-size: 12px;
+    color: #5a4300;
+}
+
+.idsfy-update-text {
+    margin-bottom: 6px;
+    word-break: break-word;
+}
+
+.idsfy-update a {
+    color: #0b5cad;
+}
+
+.idsfy-update-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.idsfy-update-actions .idsfy-button {
+    width: auto;
+    margin: 0;
+    padding: 5px 12px;
+}
+
+.idsfy-collapsed .idsfy-update {
+    display: none;
+}
