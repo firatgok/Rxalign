@@ -109,6 +109,17 @@
             </div>
         </section>
 
+        <!-- Hesap -->
+        <section class="settings-section" aria-labelledby="hesapTitle">
+            <h2 id="hesapTitle">Hesap</h2>
+            <p class="lead">Bu cihazda açık olan Rxalign hesabı. Hasta kayıtları yalnızca giriş yapmış klinik hesaplarına açılır; hesaplar klinik yöneticisi tarafından Firebase konsolundan açılır ve kapatılır.</p>
+            <div class="account-row">
+                <span class="account-email" data-rx-account>…</span>
+                <button type="button" class="btn btn-secondary btn-sm" data-rx-signout>Oturumu kapat</button>
+            </div>
+            <p class="settings-note">Oturum kapatılınca bu cihazda formlar ve arşiv yeniden giriş ister. IDS Yardımcısı eklentisi kendi ayar sayfasından ayrıca giriş yapar.</p>
+        </section>
+
         <!-- Form varsayılanları -->
         <section class="settings-section" aria-labelledby="varsayilanTitle">
             <h2 id="varsayilanTitle">Form varsayılanları</h2>
@@ -123,8 +134,10 @@
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="firebase-config.js"></script>
+    <script src="js/auth.js"></script>
     <script src="defaults.js"></script>
     <script src="js/app.js"></script>
     <script>

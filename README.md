@@ -43,20 +43,13 @@ Rxalign: web tabanlı Invisalign tedavi formu uygulaması. Doktorların hızlıc
 
 ### 3. Güvenlik Kurallarını Ayarlayın
 
-"Rules" sekmesine gidin ve aşağıdaki kuralları ekleyin:
+Kurallar depodaki `firestore.rules` dosyasındadır: yalnızca giriş yapmış **ve** `rxalign_users/{uid}` belgesi olan hesaplar
+okur/yazar. "Rules" sekmesine dosyanın içeriğini yapıştırıp **Publish** deyin (ya da `firebase deploy --only firestore:rules`).
+Authentication (e-posta/şifre) açma, hesap ve üyelik belgesi oluşturma adımları ve IDS Yardımcısı ile yayın sıralaması
+`docs/guvenlik-plani.md` içindedir.
 
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /invisalign_forms/{document=**} {
-      allow read, write: if true; // Geliştirme için - Production'da authentication ekleyin!
-    }
-  }
-}
-```
-
-**⚠️ ÖNEMLİ**: Production ortamında mutlaka authentication ekleyin!
+**⚠️ ÖNEMLİ**: Kurallar, IDS Yardımcısı eklentisinin giriş destekli sürümü (0.34.0+) sahadaki bilgisayarlara kurulduktan sonra
+yayınlanmalıdır; eski eklentiler kimliksiz okur.
 
 ### 4. Web App Ekleyin
 

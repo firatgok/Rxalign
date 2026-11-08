@@ -1,0 +1,51 @@
+rules_version = '2';
+
+// Rxalign Firestore kuralları (proje: invisalign-forms).
+// Yayınlama: Firebase konsolu > Firestore Database > Rules > bu dosyanın içeriğini yapıştır > Publish
+// (ya da `firebase deploy --only firestore:rules`; firebase.json bu dosyayı gösterir).
+//
+// İlke: yalnızca giriş yapmış VE rxalign_users/{uid} belgesi olan hesaplar okur/yazar.
+// Yalnız "giriş yapmış" yetmez: e-posta/şifre sağlayıcısı açıkken herkese açık web API anahtarıyla
+// herkes kendine hesap açabilir; üyelik belgesi bunu keser. Belgeleri klinik yöneticisi konsoldan açar.
+//
+// SIRALAMA: Bu kurallar IDS Yardımcısı eklentisinin token'lı sürümü (0.34.0+) sahadaki tüm bilgisayarlara
+// kurulup giriş yapıldıktan SONRA yayınlanır; eski eklentiler (0.33.x) kimliksiz okuduğundan kurallar
+// kapanınca kayıtlı form listesi okunamaz.
+//
+// Çok kiracılı aşamada (docs/guvenlik-plani.md) isMember() yerine sameClinic() koşulu gelecek.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Üyelik belgesi: rxalign_users/<Authentication UID>
+    function isMember() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/rxalign_users/$(request.auth.uid));
+    }
+
+    // Üye yalnızca kendi kaydını okur; yazma yalnız konsoldan (Admin SDK kuralları atlar).
+    match /rxalign_users/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // Hasta formları (site + eklenti). Eklenti yalnız okur; site okur/yazar.
+    match /invisalign_forms/{formId} {
+      allow read, write: if isMember();
+    }
+
+    // Klinik ayarları: form varsayılanları (form_defaults) ve arayüz (ui).
+    match /rxalign_settings/{docId} {
+      allow read, write: if isMember();
+    }
+
+    // Diğer her şey kapalı.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
