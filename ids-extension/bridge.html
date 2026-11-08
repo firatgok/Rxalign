@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>IDS Yardımcısı - klasör köprüsü</title>
+    <style>
+        html, body { margin: 0; background: #fff; font-family: "Segoe UI", Arial, sans-serif; font-size: 13px; color: #222; }
+        .box { border: 1px solid #009ace; border-radius: 6px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; }
+        .box span { flex: 1; line-height: 1.4; }
+        button { padding: 7px 14px; border: 0; border-radius: 4px; background: #009ace; color: #fff; font-weight: 600; cursor: pointer; }
+        button:disabled { background: #b5bcc2; cursor: default; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <span id="text">IDS Yardımcısı: hasta klasörü için okuma izni gerekiyor.</span>
+        <button id="grant" type="button">İzin ver</button>
+    </div>
+    <script src="folder.js"></script>
+    <script src="bridge.js"></script>
+</body>
+</html>
