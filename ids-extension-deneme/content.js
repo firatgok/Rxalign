@@ -715,7 +715,8 @@
         return function (fn) { return new Promise(function (resolve, reject) { queue.push({ fn: fn, resolve: resolve, reject: reject }); next(); }); };
     }
     // Tam boyutlu kare çözme bellek ister: kırpmalar en çok ikişer (tek tek iken 8 yuvada ~10 sn sıra bekleniyordu; 6 Kasım 2026).
-    const cropLock = speedOn() ? limited(2) : serial();
+    // Cihaz belleği 8 GB ve üstüyse üçer (8 Kasım 2026; her tam çözüm ~120 MB).
+    const cropLock = speedOn() ? limited((navigator.deviceMemory || 0) >= 8 ? 3 : 2) : serial();
 
     // Dolu yuvadaki fotoğrafı kalem menüsündeki "Değiştir" girişiyle yenisiyle değiştirir (silmeden). Menü adımı kilit altında;
     // IDS'in yüklemesi kilit dışında beklenir, böylece başka yuvaların değişimi örtüşebilir (6 Kasım 2026: yüz yuvalarında IDS
@@ -854,6 +855,8 @@
         const upWork = Promise.all(intraCands.map(function (it) { return pre('up|thumb|' + it.name, function () { return window.idsfyCrop.readRawUpright(it, 'thumb'); }).catch(function () { return null; }); }));
         // Orta kesit okumaları da şimdi başlar (onFix bunları da kullanır; yön adımı sıfıra yakın iner).
         intraCands.forEach(function (it) { pre('up|center|' + it.name, function () { return window.idsfyCrop.readRawUpright(it, 'center'); }); });
+        // Bukkal kümesindeki 4. kare (ilk 3 adayda olmayan) de şimdi okunur: küme onu seçerse düzeltme adımı 3-9 sn bekliyordu (Salar, Ferit).
+        specBucc.forEach(function (it) { if (intraCands.indexOf(it) < 0) { pre('up|thumb|' + it.name, function () { return window.idsfyCrop.readRawUpright(it, 'thumb'); }); pre('up|center|' + it.name, function () { return window.idsfyCrop.readRawUpright(it, 'center'); }); } });
         const occWork = Promise.all(occCands.map(function (it) { return pre('pose|' + it.name, function () { return window.idsfyCrop.readPose(it, 'occlusal', true); }).catch(function () { return null; }); }));
         const poseWork = Promise.all(poseAll.map(function (it) { return pre('pose|' + it.name, function () { return window.idsfyCrop.readPose(it, 'occlusal', true); }).catch(function () { return null; }); }));
         // Ön adaylar birlikte: hangisi kapanışta (tek kare okuması dar aralığı kaçırıyordu).
@@ -921,6 +924,15 @@
             if (gL) guess.labial_anterior = wrap(gL);
             if (gR) guess.buccal_right = wrap(gR);
             if (gLf) guess.buccal_left = wrap(gLf);
+            // Oklüzaller: yön okuması oklüzal diyen karelerde küme yanıtı (varsa) ya da çene okuması; tam ark yeğlenir. Tahmin tutmazsa
+            // anahtar tutmaz, onFix yeniden okur.
+            const occG = poseAll.filter(function (it) { return !used[it.name] && poseView[it.name] === 'occlusal'; });
+            const archG = function (it) { return specAns && specAns[it.name] ? specAns[it.name] : (poseOf[it.name] ? poseOf[it.name].arch : null); };
+            const fullFirst = function (test) { return bestWhere(occG, function (it) { return test(it) && !(poseOf[it.name] && poseOf[it.name].complete_arch === false); }) || bestWhere(occG, test); };
+            const gU = fullFirst(function (it) { return archG(it) === 'upper'; });
+            const gLo = fullFirst(function (it) { return archG(it) === 'lower'; });
+            if (gU) guess.occlussal_upper = wrap(gU);
+            if (gLo && gLo !== gU) guess.occlussal_lower = wrap(gLo);
             prefetchBoxes(guess);
         }
         // Bukkal kümesi en çok 1 sn beklenir (Opus 7-18 sn sürebiliyor); gelmezse tek kare okumaları, yuva boş kalırsa yedek aşama aynı
@@ -1698,7 +1710,11 @@
             // 0546'yı sağ dedi, küme sol). Küme yönü (crop.setOrient/setSide) aşağıdaki oylamada esastır.
             if (direct && crop && crop.buccSetWork && !(placed.buccal_right && placed.buccal_left && placed.buccal_right.pairDecided && placed.buccal_left.pairDecided)) {
                 let ans = null;
-                try { ans = await Promise.race([crop.buccSetWork, new Promise(function (resolve) { setTimeout(function () { resolve(null); }, 2500); })]); } catch (error) { ans = null; }
+                // En çok 8 sn (8 Kasım 2026; 2,5 sn idi): küme yetişmezse yan kararı tek kare okumasında kalıyordu (Demirtaş'ta iki kez yanlıştı).
+                // Yüz yuvaları planlamada yüklendiğinden bekleme yalnız ağız içi yuvaları geciktirir; küme çoğu sette çoktan gelmiştir.
+                const w0 = Date.now();
+                try { ans = await Promise.race([crop.buccSetWork, new Promise(function (resolve) { setTimeout(function () { resolve(null); }, 8000); })]); } catch (error) { ans = null; }
+                if (Date.now() - w0 > 300) lap('bukkal kümesi ' + (ans ? 'beklendi' : 'gelmedi') + ' ' + ((Date.now() - w0) / 1000).toFixed(1) + ' sn');
                 if (ans && Object.keys(ans).length) {
                     crop.setOrient = crop.setOrient || {}; crop.setSide = crop.setSide || {};
                     Object.keys(ans).forEach(function (name) { crop.setOrient[name] = ans[name].upsideDown ? 'bottom' : 'top'; crop.setSide[name] = ans[name].side; });

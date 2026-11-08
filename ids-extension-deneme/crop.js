@@ -70,6 +70,8 @@
     // (aynı iş bazen 9 sn, bazen 50 sn sürüyor; kuyruk gecikmesini keser, yalnız yavaş çağrılarda ek maliyet).
     function sendHedged(message) {
         if (!(SETTINGS.hedgeMs > 0)) return send(message);
+        // Modele göre süre (8 Kasım 2026): Sonnet çağrıları ortanca 2,5 sn, en uzun 4; Opus kümeleri 7-18 sn (ikizlemek pahalı).
+        const hedgeMs = message.model === 'sonnet' ? Math.min(SETTINGS.hedgeMs, 6000) : message.model === 'opus' ? Math.max(SETTINGS.hedgeMs, 12000) : SETTINGS.hedgeMs;
         return new Promise(function (resolve, reject) {
             let done = false, failures = 0, started = 1;
             const finish = function (ok, value) {
@@ -79,7 +81,7 @@
                 if (failures >= started) { done = true; clearTimeout(timer); reject(value); }
             };
             const run = function () { send(message).then(function (r) { finish(true, r); }, function (e) { finish(false, e); }); };
-            const timer = setTimeout(function () { if (!done) { started++; run(); } }, SETTINGS.hedgeMs);
+            const timer = setTimeout(function () { if (!done) { started++; run(); } }, hedgeMs);
             run();
         });
     }
