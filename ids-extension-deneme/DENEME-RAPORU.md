@@ -1,3 +1,37 @@
+# IDS Yardımcısı deneme raporu, ek (8 Kasım 2026, akşam): hızlandırma 4 (2, 3, 5, 7 + bukkal güvenlik beklemesi)
+
+Kullanıcı "hız güncellemelerini yapıp öyle test edelim" dedi; 7 maddelik listeden 2, 3, 5, 7 ve bukkal güvenlik düzeltmesi
+uygulandı, aynı altı hastayla ölçüldü. 6 (ön okumalarını dalgada beklememe) atlandı: ön yuvaya yanlış etiketli bukkalin
+konmasını engelleyen `sideOf` denetimi zayıflıyordu. 4 (ölçekli JPEG çözme) ve 1 (Opus hakemi kritik yoldan çıkarma) ayrı ölçülecek.
+Yayınlanmadı. Commit 98b0546 (+ c16152d jeton satırı).
+
+Uygulananlar (deneme klasörü):
+2. Bukkal kümesindeki 4. kare (ilk 3 adayda olmayan) için tam kare ve orta kesit dik okumaları planlamada başlar.
+3. Oklüzal kutu okumaları da dalga biter bitmez tahminle başlar (küme yanıtı ya da çene okuması, tam ark yeğlenir).
+5. İkizleme süresi modele göre: Sonnet 6 sn, Opus 12 sn, model belirtilmeyen çağrılarda 10 sn (`sendHedged`).
+7. Kırpma kuyruğu cihaz belleği ≥ 8 GB iken 3 (`navigator.deviceMemory`).
+G. onFix'te bukkal kümesi en çok 8 sn beklenir (2,5 idi): yan kararı kümeye kalsın. Bekleme ölçüldü: Balaban 0,3, Çakır 1,1,
+   Ferit 1,7 sn; diğerlerinde küme zaten gelmişti.
+Ölçüm: onFix notlarına "Jeton toplamı ... liste fiyatıyla ~X $" satırı (background `ids-stats` giriş/çıkış jetonları; önbellek sayılmaz).
+
+Sonuçlar (8/8 ve paftalar gözle doğru; Ferit paftası önceki koşuyla birebir aynı):
+
+| Set | Hız 3 | Hız 4 | Plan / düzeltme | Ölçülen maliyet | Not |
+|---|---|---|---|---|---|
+| Satoğlu (24 kare) | 18 | 19 | 10 / 9 | 1,06 $ | boş RAM 0,6 GB |
+| Balaban (20) | 24 | 26 | 20 / 6 | 1,14 $ | A/B dik hakemler 8 sn, oklüzal kümesi tahmini tutmadı (3 sn) |
+| Salar (23) | 25 | 22 | 12 / 10 | 1,08 $ | sol bukkal 1546 kümeyle |
+| Çakır (19) | 19 | 20 | 12 / 8 | 1,03 $ | küme 1,1 sn beklendi |
+| Demirtaş (16) | 19 | 19 | 12 / 7 | 0,81 $ | bukkal yanları yedek kümeyle |
+| Ferit (34) | 24 | 23 | 11 / 12 | 1,38 $ | orta kesit hakemleri 8-9 sn (düzeltmede yön adımı 5 sn) |
+
+Ortalama 21,5 → 21,5 sn: ölçülebilir kazanç yok. Makine koşu boyunca bellek baskısındaydı (boş RAM 0,2-1,3 GB; Chrome sekmesi
+bir kez dondu, yeniden açıldı); hazırlık 2-4 sn, IDS yükleme yuva başına ~3 sn değişmedi. Güvenlik beklemesi üç sette 0,3-1,7 sn aldı.
+Ölçülen vaka başı maliyet ortalama 1,08 $ (0,81-1,38; tahmin 1,1-1,6 $'dı, çıkış jetonları tahminden az).
+Kalan darboğazlar aynı: Opus hakem (dik/orta kesit okumaları çelişince, 6-9 sn), Opus küme okumaları, yuva başına IDS yüklemesi.
+Harness notu: döküm köprüsünü açmadan önce cfg "dump" moduna alınmalı; alınmazsa köprü dosyaları yeniden yükler ve dolu yuvalarda
+eski akış tetiklenir (Satoğlu ilk koşuda 50 sn'lik ikinci koşu oldu, silinip yeniden koşuldu).
+
 # IDS Yardımcısı 0.33.7 deneme raporu, ek (8 Kasım 2026, gece 2): hızlandırma 3 (1-4)
 
 Kullanıcı "daha da hızlandırırsan ne kadar" sorusuna verilen 1-4 önerisini denemede uygulattı; aynı altı hastayla ölçüldü. Yayınlanmadı.
