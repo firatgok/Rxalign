@@ -5,7 +5,36 @@ adımları `fetch(step=N)` ile çekilip Yetişkin Comprehensive dökümüyle kar
 `rx.js` içindeki `STEPS` eşlemesinde kullanılan kimliklerle aynı biçimdedir. Vivera ve Palatal Genişletici
 bilerek dışarıda bırakıldı (kullanıcı kararı).
 
-## Ürün seçimi akışı (mauiProduct.action)
+## Tedavi seçenekleri ekranı (mauiProduct.action, Kasım 2026'da yenilendi)
+
+Kaynak: test hastası "B, B" taslağı (formId 290655894), 13 Kasım 2026.
+
+- Hasta tipi ve ürün aşamaları kalktı; tek sayfada hasta tipi süzgeci ile paket kartları durur. İçerik
+  `#psp > div` öğesinin AÇIK shadow DOM'unda bir React uygulamasıdır (sayfada `button.cardSelectButton`
+  ya da `button.selectOption` yok).
+- Adres: `mauiProduct.action?patientId=..&productSelectionCategoryType=NONE&valid=true` (taslakta ayrıca
+  `&formId=<formId>&change=true`); `productSelectionCategoryType` ve `valid` olmadan sayfa 404 verir.
+  Süzgeç adres çengelinde tutulur: `#/?filter=ADULT` (TEEN, CHILD).
+- Süzgeç: `label[data-testid="CategoryToggle-root"]` içinde `span.filter-ADULT|TEEN|CHILD` ve
+  `input[type=radio][value=ADULT|TEEN|CHILD]`; seçili olanın girişi `checked`. `label.click()` süzgeci
+  değiştirir. Süzgeç reçetenin hasta tipini belirler (TEEN + Comprehensive → reçetede "Hasta Tipi:
+  Ergenler"); taslak yeniden açılınca süzgeç taslağın hasta tipiyle gelir.
+- Kartlar: `[data-testid="Card-root"]`, kimlik `data-id`, başlık `[data-testid="Card-subHeader"]`,
+  düğme `[data-testid="Card-button"]` ("Seç"; taslağın paketinde "Reçeteyi bitir" ve kart sınıfında
+  `Card-selected`). Arama kutusu `input[name="product-search"]`.
+
+| Süzgeç | Kartlar (`data-id`, hepsi `_INT_2_0` ile biter) |
+|---|---|
+| ADULT | `COMPREHENSIVE_MAUI`, `MODERATE_MAUI`, `LITE_MAUI`, `EXPRESS_MAUI`, `RETAINER_MULTIPACK` |
+| TEEN | ADULT kartları + `PALATAL_EXPANDER` |
+| CHILD | `FIRST_COMPREHENSIVE`, `RETAINER_MULTIPACK`, `PALATAL_EXPANDER` |
+
+- Gülümseme Mimarisi ayrı ürün değil: yetişkin Comprehensive / Moderate / Lite kartlarında
+  `input[data-testid="Toggle-input"][value="SMILE_ARCHITECT"]` anahtarı (ergen ve çocukta yok).
+- "Seç" onay sormadan reçeteyi açar (`/rx/i20/<paket>.action?formId=..`, Flex Rx görünümü); sonrası
+  eskisiyle aynı. Çocuk First uygunluk penceresi yeni ekranda denenmedi.
+
+### Eski ekran (Kasım 2026 öncesi; `rx.js` içinde `chooseProductLegacy` olarak duruyor)
 
 - Hasta tipi kartları: "Yetişkinim", "Ergenler", "Çocuk" (`button.cardSelectButton`).
 - Ürün kartları (`button.selectButton.selectOption`): yetişkin/ergen "Invisalign şeffaf alignerlar";
