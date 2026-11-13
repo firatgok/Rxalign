@@ -167,25 +167,32 @@
     // bu kanaldan geçer. Eklenti yoksa window.chrome.runtime tanımsızdır; sessizce geçilir.
     var EXTENSION_ID = 'bgepiaaakgecaoehcgjakjcoaejcoiip';
     var NO_EXTENSION = 'IDS Yardımcısı bu tarayıcıda bulunamadı. Eklentinin kurulu olduğu Chrome\'da deneyin.';
+    // Eklenti bu tarayıcıda yok (ya da yanıt vermiyor): hata nesnesine noExtension işareti konur; openInIds bu durumda
+    // rxalign-ids:// bağlantısına düşer.
+    function missingError(text) {
+        var e = new Error(text || NO_EXTENSION);
+        e.noExtension = true;
+        return e;
+    }
 
     function extensionSend(message) {
         return new Promise(function (resolve, reject) {
             var rt = window.chrome && window.chrome.runtime;
-            if (!rt || typeof rt.sendMessage !== 'function') return reject(new Error(NO_EXTENSION));
+            if (!rt || typeof rt.sendMessage !== 'function') return reject(missingError());
             try {
                 rt.sendMessage(EXTENSION_ID, message, function (reply) {
                     var err = rt.lastError;
                     if (err) {
                         var text = String(err.message || '');
-                        return reject(new Error(/Receiving end|Could not establish|Invalid extension/i.test(text)
-                            ? 'IDS Yardımcısı yanıt vermedi; eklentinin kurulu ve en az 0.35.0 sürümünde olması gerekir.'
-                            : text));
+                        return reject(/Receiving end|Could not establish|Invalid extension/i.test(text)
+                            ? missingError('IDS Yardımcısı yanıt vermedi; eklentinin kurulu ve en az 0.35.0 sürümünde olması gerekir.')
+                            : new Error(text));
                     }
                     if (!reply || !reply.ok) return reject(new Error(reply && reply.error ? reply.error : 'IDS Yardımcısı yanıt vermedi.'));
                     resolve(reply);
                 });
             } catch (e) {
-                reject(new Error(NO_EXTENSION));
+                reject(missingError());
             }
         });
     }
@@ -206,12 +213,21 @@
         }).then(function () {
             console.log('Rxalign oturumu IDS Yardımcısı\'na aktarıldı.');
         }).catch(function (e) {
-            if (e && e.message !== NO_EXTENSION) console.warn('IDS Yardımcısı oturum aktarımı:', e.message);
+            if (e && !e.noExtension) console.warn('IDS Yardımcısı oturum aktarımı:', e.message);
         });
     }
 
     // Arşivdeki "IDS'te aç": yeni hasta kaydı IDS Yeni hasta sayfasını, refinement kaydı hastanın dosyasını
-    // (IDS numarası biliniyorsa) ya da hasta listesini açar. Çözülen değer: 'new' | 'file' | 'list'.
+    // (IDS numarası biliniyorsa) ya da hasta listesini açar. Çözülen değer: 'new' | 'file' | 'list' | 'other'.
+    // Eklenti bu tarayıcıda yoksa (ör. site Edge'de, eklenti Chrome'da) rxalign-ids:// bağlantısı çağrılır: kurulum
+    // dosyasının ya da güncelleyicinin Windows'a kaydettiği bağlantı türü, eklentinin kurulu olduğu tarayıcıyı ids-ac.html
+    // köprü sayfasıyla açar ve istek oradan eklentiye gider ('other'). Bağlantı türü kayıtlı değilse hiçbir şey olmaz.
+    function idsProtocolUrl(form, kind) {
+        var q = function (v) { return encodeURIComponent(String(v || '').slice(0, 80)); };
+        return 'rxalign-ids://open?k=' + kind + '&id=' + q(form.id) + '&a=' + q(form.hasta_adi) + '&s=' + q(form.hasta_soyadi) +
+            '&m=' + q(form.hasta_mi) + '&t=' + q(form.form_turu);
+    }
+
     function openInIds(form) {
         var kind = form && form.form_turu === 'refinement' ? 'refinement' : 'new';
         return extensionSend({
@@ -224,7 +240,11 @@
                 hasta_mi: form.hasta_mi || '',
                 form_turu: form.form_turu || ''
             }
-        }).then(function (reply) { return reply.opened; });
+        }).then(function (reply) { return reply.opened; }, function (error) {
+            if (!error || !error.noExtension) throw error;
+            window.location.assign(idsProtocolUrl(form, kind));
+            return 'other';
+        });
     }
 
     auth.onAuthStateChanged(function (user) {
@@ -248,6 +268,7 @@
         user: function () { return auth.currentUser; },
         signOut: signOut,
         openInIds: openInIds,
+        idsProtocolUrl: idsProtocolUrl,
         extensionSend: extensionSend
     };
 })();

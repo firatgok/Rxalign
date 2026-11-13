@@ -368,6 +368,12 @@
                 btn.disabled = true;
                 try {
                     const opened = await RxAuth.openInIds(f);
+                    if (opened === 'other') {
+                        // Eklenti bu tarayıcıda yok: rxalign-ids bağlantısı çağrıldı (IDS, eklentinin kurulu olduğu tarayıcıda açılır)
+                        RX.toast('IDS Yardımcısı bu tarayıcıda yok; IDS eklentinin kurulu olduğu tarayıcıda (Chrome) açılıyor. Tarayıcı izin sorarsa "Aç" deyin. Hiçbir şey olmazsa IDS Yardımcısı\'nı kurulum dosyasıyla kurun ya da güncelleyin.', { duration: 9000 });
+                        btn.disabled = false;
+                        return;
+                    }
                     RX.toast(opened === 'new'
                         ? `IDS Yeni hasta sayfası açıldı; "${label}" kaydı seçili gelecek.`
                         : opened === 'file'

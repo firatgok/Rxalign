@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#F6F5F1">
+    <meta name="robots" content="noindex">
+    <title>IDS'te aç - Rxalign</title>
+    <script src="js/theme.js"></script>
+    <link rel="icon" type="image/png" href="images/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/app.css">
+    <style>
+        .bridge-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .bridge-card { width: 100%; max-width: 440px; padding: 28px; background: var(--surface); border-radius: var(--r-panel, 18px);
+            box-shadow: 0 24px 60px -30px rgba(0, 0, 0, 0.35); display: flex; flex-direction: column; gap: 12px; }
+        .bridge-card h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; margin: 0; }
+        .bridge-card p { font-size: 14px; line-height: 1.55; color: var(--muted); margin: 0; }
+        .bridge-card p.error { color: var(--coral-text); font-weight: 600; }
+        .bridge-card p.ok { color: var(--ok); font-weight: 600; }
+    </style>
+</head>
+<body>
+    <!--
+        Köprü sayfası: arşivdeki "IDS'te aç" düğmesine IDS Yardımcısı'nın kurulu OLMADIĞI bir tarayıcıda (ör. Edge) basılınca
+        site rxalign-ids:// bağlantısını çağırır; Windows (kurulum dosyasının ya da güncelleyicinin kaydettiği bağlantı türü)
+        eklentinin kurulu olduğu tarayıcıyı bu sayfayla açar: ids-ac.html#rxalign-ids://open?k=..&id=..&a=..&s=..&m=..&t=..
+        Sayfa isteği eklentiye iletir (rx-open); eklenti IDS'i açar ve bu sekmeyi kapatır. Giriş gerektirmez; hasta adı
+        yalnız adresin # bölümünde taşınır (sunucuya gitmez) ve okunduktan sonra adres çubuğundan silinir.
+    -->
+    <div class="bridge-wrap">
+        <main class="bridge-card" role="status" aria-live="polite">
+            <h1>IDS'te aç</h1>
+            <p id="bridgeStatus">İstek IDS Yardımcısı'na iletiliyor…</p>
+            <p id="bridgeHint" hidden></p>
+        </main>
+    </div>
+    <script>
+        (function () {
+            'use strict';
+            var EXTENSION_ID = 'bgepiaaakgecaoehcgjakjcoaejcoiip';
+            var status = document.getElementById('bridgeStatus');
+            var hint = document.getElementById('bridgeHint');
+
+            function say(text, cls) {
+                status.textContent = text;
+                status.className = cls || '';
+            }
+            function tip(text) {
+                hint.textContent = text;
+                hint.hidden = !text;
+            }
+            function clean(value) {
+                return String(value || '').replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 80);
+            }
+
+            // #rxalign-ids://open?k=new|refinement&id=<kayıt>&a=<ad>&s=<soyad>&m=<mi>&t=<form türü>
+            function parseRequest() {
+                var raw = location.hash.slice(1);
+                try { history.replaceState(null, '', location.pathname); } catch (e) { /* yoksay */ }
+                if (!/^rxalign-ids:/i.test(raw)) return null;
+                var q = raw.indexOf('?');
+                if (q < 0) return null;
+                var params;
+                try { params = new URLSearchParams(raw.slice(q + 1)); } catch (e) { return null; }
+                var id = clean(params.get('id'));
+                if (!/^[A-Za-z0-9_-]{4,64}$/.test(id)) return null;
+                return {
+                    kind: params.get('k') === 'refinement' ? 'refinement' : 'new',
+                    record: {
+                        id: id,
+                        hasta_adi: clean(params.get('a')),
+                        hasta_soyadi: clean(params.get('s')),
+                        hasta_mi: clean(params.get('m')),
+                        form_turu: clean(params.get('t'))
+                    }
+                };
+            }
+
+            function send(message) {
+                return new Promise(function (resolve, reject) {
+                    var rt = window.chrome && window.chrome.runtime;
+                    if (!rt || typeof rt.sendMessage !== 'function') return reject(new Error('yok'));
+                    try {
+                        rt.sendMessage(EXTENSION_ID, message, function (reply) {
+                            if (rt.lastError) return reject(new Error('yok'));
+                            if (!reply || !reply.ok) return reject(new Error(reply && reply.error ? reply.error : 'yanıt yok'));
+                            resolve(reply);
+                        });
+                    } catch (e) {
+                        reject(new Error('yok'));
+                    }
+                });
+            }
+
+            var request = parseRequest();
+            if (!request) {
+                say('Bu sayfa Rxalign arşivindeki "IDS\'te aç" düğmesiyle açılır; geçerli bir istek bulunamadı.', 'error');
+                return;
+            }
+            var name = (request.record.hasta_soyadi + ' ' + request.record.hasta_adi).trim();
+            send({ type: 'rx-open', kind: request.kind, record: request.record, closeSender: true }).then(function (reply) {
+                say(reply.opened === 'new'
+                    ? 'IDS Yeni hasta sayfası açıldı' + (name ? ' ("' + name + '")' : '') + '.'
+                    : reply.opened === 'file' ? 'IDS hasta dosyası açıldı.' : 'IDS hasta listesi açıldı' + (name ? '; "' + name + '" aranıyor' : '') + '.', 'ok');
+                tip('Bu sekmeyi kapatabilirsiniz.');
+            }).catch(function (error) {
+                if (error.message === 'yok') {
+                    say('Bu tarayıcıda IDS Yardımcısı bulunamadı.', 'error');
+                    tip('IDS Yardımcısı eklentisini bu tarayıcıya kurun ya da eklentinin kurulu olduğu tarayıcıda Rxalign arşivini açıp "IDS\'te aç" düğmesini oradan kullanın.');
+                } else {
+                    say('IDS açılamadı: ' + error.message, 'error');
+                }
+            });
+        })();
+    </script>
+    <script src="version.js"></script>
+</body>
+</html>
