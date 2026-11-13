@@ -2,7 +2,7 @@
 //  Invisalign Form - form.html mantığı
 //  Bölümler:
 //   1. Yardımcılar
-//   2. Görünürlük zinciri (form türü > hasta tipi > ürün > paket > detaylı form)
+//   2. Görünürlük zinciri (form türü > hasta tipi > paket > detaylı form)
 //   3. Detaylı form kuralları (tek senkron fonksiyonu, form başına tek listener)
 //   4. Refinement (Ek Hizalayıcılar) kuralları
 //   5. Veri toplama / Firestore kaydet-güncelle / görüntüleme
@@ -100,31 +100,28 @@ function updateCardSelection() {
 // 2. Görünürlük zinciri
 // ---------------------------------------------------------------------
 
-// Hasta tipi -> ürün bölümü
-const PRODUCT_BY_HASTA = {
-    yetiskin: 'urun_yetiskin',
-    ergen: 'urun_ergen',
-    cocuk: 'urun_cocuk'
+// Hasta tipi -> tedavi seçenekleri bölümü. IDS'in Kasım 2026'da yenilenen ekranındaki gibi
+// ürün tipi aşaması yoktur; hasta tipinin tüm paketleri tek ızgarada durur.
+const TREATMENT_BY_HASTA = {
+    yetiskin: 'tedavi_yetiskin',
+    ergen: 'tedavi_ergen',
+    cocuk: 'tedavi_cocuk'
 };
 
-// Ürün radio adı + değeri -> tedavi bölümü
-const TREATMENT_MAP = {
-    urun_tipi_yetiskin: {
-        invisalign_aligner: 'tedavi_yetiskin_invisalign',
-        vivera_retainer: 'tedavi_yetiskin_vivera',
-        gulumseme_mimarisi: 'tedavi_yetiskin_gulumseme'
-    },
-    urun_tipi_ergen: {
-        invisalign_aligner: 'tedavi_ergen_invisalign',
-        vivera_retainer: 'tedavi_ergen_vivera',
-        palatal_genisletici: 'tedavi_ergen_palatal'
-    },
-    urun_tipi_cocuk: {
-        invisalign_first: 'tedavi_cocuk_first',
-        vivera_retainer: 'tedavi_cocuk_vivera',
-        palatal_genisletici: 'tedavi_cocuk_palatal'
-    }
+// Paket radio adı -> kayda yazılan ürün tipi değeri. Ürün tipi artık sorulmaz; alan eski
+// kayıtlarla ve IDS Yardımcısı ile uyum için bölümdeki gizli radio üzerinden yazılmaya devam eder.
+const PRODUCT_OF_PACKAGE = {
+    tedavi_secenegi: 'invisalign_aligner',
+    tedavi_secenegi_ergen: 'invisalign_aligner',
+    tedavi_secenegi_cocuk_first: 'invisalign_first'
 };
+
+// Bölümdeki gizli ürün tipi radio'sunu seçili pakete göre işaretle
+function syncProductType(section, pkg) {
+    section?.querySelectorAll('input.product-type-input').forEach(input => {
+        input.checked = !!pkg && PRODUCT_OF_PACKAGE[pkg.name] === input.value;
+    });
+}
 
 // Paket radio adı:değeri -> detaylı form
 const DETAILED_MAP = {
@@ -139,14 +136,17 @@ const DETAILED_MAP = {
     'tedavi_secenegi_cocuk_first:first_comprehensive': 'detayli_form_cocuk_first'
 };
 
-// Henüz aktif olmayan seçenekler (radio adı:değeri -> uyarı adı)
+// Henüz aktif olmayan seçenekler (alan adı:değeri -> uyarı adı)
 const INACTIVE_CHOICES = {
-    'urun_tipi_yetiskin:vivera_retainer': 'Vivera Retainerları',
-    'urun_tipi_yetiskin:gulumseme_mimarisi': 'Gülümseme Mimarisi',
-    'urun_tipi_ergen:vivera_retainer': 'Vivera Retainerları',
+    'tedavi_secenegi_vivera:vivera_retainer': 'Vivera Retansiyon Apareyleri',
+    'tedavi_secenegi_ergen_vivera:vivera_retainer': 'Vivera Retansiyon Apareyleri',
+    'tedavi_secenegi_cocuk_vivera:vivera_retainer': 'Vivera Retansiyon Apareyleri',
     'tedavi_secenegi_palatal:palatal_genisletici': 'Palatal Genişleticiler',
-    'tedavi_secenegi_cocuk_vivera:vivera_retainer': 'Vivera Retainerları',
-    'tedavi_secenegi_cocuk_palatal:palatal_genisletici': 'Palatal Genişleticiler'
+    'tedavi_secenegi_cocuk_palatal:palatal_genisletici': 'Palatal Genişleticiler',
+    // IDS'te ayrı ürün değil, yetişkin Comprehensive / Moderate / Lite kartındaki anahtar
+    'smile_architect_yetiskin:comprehensive': 'Invisalign Smile Architect (Gülümseme Mimarisi)',
+    'smile_architect_yetiskin:moderate': 'Invisalign Smile Architect (Gülümseme Mimarisi)',
+    'smile_architect_yetiskin:lite': 'Invisalign Smile Architect (Gülümseme Mimarisi)'
 };
 
 // Mevcut seçimlere göre hangi bölümlerin görüneceğini hesapla
@@ -159,10 +159,10 @@ function updateVisibilityChain({ scroll = false } = {}) {
     const formTuru = checkedValue(root, 'form_turu');
     const isFlex = formTuru === 'yeni_hasta_flex';
 
-    document.querySelectorAll('.product-section, .treatment-section, .detailed-form').forEach(hide);
+    document.querySelectorAll('.treatment-section, .detailed-form').forEach(hide);
     hide(flexSection);
 
-    // Refinement: hasta tipi seçimi kalır (erupsiyon bölümü için), ürün/paket gizli, refinement formu açık
+    // Refinement: hasta tipi seçimi kalır (erupsiyon bölümü için), paketler gizli, refinement formu açık
     if (formTuru === 'refinement') {
         show(hastaTipiSection);
         show(refinementSection);
@@ -176,16 +176,11 @@ function updateVisibilityChain({ scroll = false } = {}) {
 
     const hastaTipi = checkedValue(root, 'hasta_tipi');
     if (!hastaTipi) return;
-    show(document.getElementById(PRODUCT_BY_HASTA[hastaTipi]));
-
-    const urunName = 'urun_tipi_' + hastaTipi;
-    const urun = checkedValue(root, urunName);
-    const treatmentId = TREATMENT_MAP[urunName]?.[urun];
-    if (!treatmentId) return;
-    const treatmentSection = document.getElementById(treatmentId);
+    const treatmentSection = document.getElementById(TREATMENT_BY_HASTA[hastaTipi]);
     show(treatmentSection);
 
-    const pkg = treatmentSection?.querySelector('input[type="radio"]:checked');
+    const pkg = treatmentSection?.querySelector('.treatment-card input[type="radio"]:checked');
+    syncProductType(treatmentSection, pkg);
     if (!pkg) return;
 
     // Flex Rx: paket seçildikten sonra tek bir Flex formu açılır
@@ -482,10 +477,10 @@ async function resetDefaultsToFactory(entry) {
     }
 }
 
-// Üst seçim radio'su mu? (form türü, hasta tipi, ürün, paket)
+// Üst seçim radio'su mu? (form türü, hasta tipi, paket)
 function isStructuralInput(input) {
     return input.name === 'form_turu' ||
-        !!input.closest('#hasta_tipi_section, .product-section, .treatment-section');
+        !!input.closest('#hasta_tipi_section, .treatment-section');
 }
 
 // ---------------------------------------------------------------------
@@ -1383,7 +1378,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 t.checked = false;
                 updateCardSelection();
                 updateVisibilityChain();
-                alert(`${inactiveName} henüz aktive edilmemiştir.\n\nLütfen başka bir tedavi seçeneği seçiniz.`);
+                alert(`${inactiveName} henüz aktive edilmemiştir.` +
+                    (t.type === 'radio' ? '\n\nLütfen başka bir tedavi seçeneği seçiniz.' : ''));
                 return;
             }
 

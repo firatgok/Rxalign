@@ -82,84 +82,25 @@
                 </div>
             </section>
 
-            <!-- Hasta Tipi -->
+            <!-- Hasta tipi ve tedavi seçenekleri: IDS'in Kasım 2026'da yenilenen "Tedavi seçenekleri" ekranının düzeni.
+                 Hasta tipi süzgeç çipleriyle seçilir; ürün tipi aşaması yoktur, hasta tipinin tüm paketleri tek ızgarada durur. -->
             <section class="form-section" id="hasta_tipi_section">
                 <h2>Hasta tipi <span class="required">*</span></h2>
                 
-                <div class="option-cards">
-                    <div class="option-card">
-                        <div class="option-icon">👨‍💼</div>
-                        <h3>Yetişkinim</h3>
-                        <p>Daimi dişlere sahip yetişkin hastalar</p>
-                        <label class="option-select">
-                            <input type="radio" name="hasta_tipi" value="yetiskin" required="">
-                            <span>Seç</span>
-                        </label>
-                    </div>
-                    
-                    <div class="option-card">
-                        <div class="option-icon">🧑</div>
-                        <h3>Ergenler</h3>
-                        <p>Daimi, çıkmakta olan daimi veya karma dişlenmeye sahip ergen hastalar</p>
-                        <label class="option-select">
-                            <input type="radio" name="hasta_tipi" value="ergen" required="">
-                            <span>Seç</span>
-                        </label>
-                    </div>
-                    
-                    <div class="option-card">
-                        <div class="option-icon">👦</div>
-                        <h3>Çocuk</h3>
-                        <p>Erken önleyici tedavi gereken karışık diş yapısına sahip çocuklar</p>
-                        <label class="option-select">
-                            <input type="radio" name="hasta_tipi" value="cocuk" required="">
-                            <span>Seç</span>
-                        </label>
-                    </div>
+                <div class="type-chips" role="radiogroup" aria-label="Hasta tipi">
+                    <label class="type-chip"><input type="radio" name="hasta_tipi" value="yetiskin" required=""><span>Yetişkinim</span></label>
+                    <label class="type-chip"><input type="radio" name="hasta_tipi" value="ergen" required=""><span>Ergenler</span></label>
+                    <label class="type-chip"><input type="radio" name="hasta_tipi" value="cocuk" required=""><span>Çocuk</span></label>
                 </div>
             </section>
 
-            <!-- Ürün Tipi - Yetişkinim -->
-            <section class="form-section product-section" id="urun_yetiskin" style="display:none;">
-                <h2>Ürün tipi - Yetişkinim <span class="required">*</span></h2>
-                
-                <div class="option-cards">
-                    <div class="option-card">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 150'%3E%3Crect fill='%23f0f0f0' width='200' height='150'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='14'%3EInvisalign%3C/text%3E%3C/svg%3E" alt="Invisalign şeffaf alignerlar" class="product-image">
-                        <h3>Invisalign şeffat alignerlar</h3>
-                        <label class="option-select">
-                            <input type="radio" name="urun_tipi_yetiskin" value="invisalign_aligner">
-                            <span>Seç</span>
-                        </label>
-                    </div>
-                    
-                    <div class="option-card">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 150'%3E%3Crect fill='%23f0f0f0' width='200' height='150'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='14'%3EVivera%3C/text%3E%3C/svg%3E" alt="Vivera Retainerları" class="product-image">
-                        <h3>Vivera Retainerları</h3>
-                        <label class="option-select">
-                            <input type="radio" name="urun_tipi_yetiskin" value="vivera_retainer">
-                            <span>Seç</span>
-                        </label>
-                    </div>
-                    
-                    <div class="option-card">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 150'%3E%3Crect fill='%23f0f0f0' width='200' height='150'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='14'%3EGülümseme%3C/text%3E%3C/svg%3E" alt="Invisalign Gülümseme Mimarisi" class="product-image">
-                        <h3>Invisalign Gülümseme Mimarisi</h3>
-                        <label class="option-select">
-                            <input type="radio" name="urun_tipi_yetiskin" value="gulumseme_mimarisi">
-                            <span>Seç</span>
-                        </label>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Tedavi Seçenekleri - Yetişkin > Invisalign Şeffaf Alignerlar -->
-            <section class="form-section treatment-section" id="tedavi_yetiskin_invisalign" style="display:none;">
-                <h2>Tedavi seçeneği - Invisalign şeffaf alignerlar <span class="required">*</span></h2>
+            <!-- Tedavi seçenekleri - Yetişkinim -->
+            <section class="form-section treatment-section" id="tedavi_yetiskin" style="display:none;">
+                <h2>Tedavi seçenekleri - Yetişkinim <span class="required">*</span></h2>
                 
                 <div class="treatment-cards">
                     <div class="treatment-card">
-                        <h3>Comprehensive Package</h3>
+                        <h3>Comprehensive Paket</h3>
                         <div class="treatment-details">
                             <p class="stage-info unlimited">Sınırsız aşama</p>
                             <p class="description">Seçilebilir ek hizalayıcı seçenekleri</p>
@@ -178,6 +119,11 @@
                                 </div>
                             </div>
                         </div>
+                        <label class="feature-toggle">
+                            <input type="checkbox" name="smile_architect_yetiskin" value="comprehensive">
+                            <span class="feature-switch" aria-hidden="true"></span>
+                            <span class="feature-text">Ekle <strong>Invisalign Smile Architect™</strong></span>
+                        </label>
                         <label class="option-select">
                             <input type="radio" name="tedavi_secenegi" value="comprehensive">
                             <span>Seç</span>
@@ -195,9 +141,13 @@
                                     <span class="price-label">çift ark</span>
                                     <span class="price-amount">₺57100</span>
                                 </div>
-                                
                             </div>
                         </div>
+                        <label class="feature-toggle">
+                            <input type="checkbox" name="smile_architect_yetiskin" value="moderate">
+                            <span class="feature-switch" aria-hidden="true"></span>
+                            <span class="feature-text">Ekle <strong>Invisalign Smile Architect™</strong></span>
+                        </label>
                         <label class="option-select">
                             <input type="radio" name="tedavi_secenegi" value="moderate">
                             <span>Seç</span>
@@ -205,7 +155,7 @@
                     </div>
                     
                     <div class="treatment-card">
-                        <h3>Lite Paketi</h3>
+                        <h3>Lite Paket</h3>
                         <div class="treatment-details">
                             <p class="stage-info">14 aşamaya kadar</p>
                             <p class="description">2 Set ek aligner dahildir</p>
@@ -221,6 +171,11 @@
                                 </div>
                             </div>
                         </div>
+                        <label class="feature-toggle">
+                            <input type="checkbox" name="smile_architect_yetiskin" value="lite">
+                            <span class="feature-switch" aria-hidden="true"></span>
+                            <span class="feature-text">Ekle <strong>Invisalign Smile Architect™</strong></span>
+                        </label>
                         <label class="option-select">
                             <input type="radio" name="tedavi_secenegi" value="lite">
                             <span>Seç</span>
@@ -228,7 +183,7 @@
                     </div>
                     
                     <div class="treatment-card">
-                        <h3>Express Package</h3>
+                        <h3>Express Paket</h3>
                         <div class="treatment-details">
                             <p class="stage-info">7 aşamaya kadar</p>
                             <p class="description">1 Set ek aligner dahildir</p>
@@ -249,84 +204,39 @@
                             <span>Seç</span>
                         </label>
                     </div>
+                    
+                    <div class="treatment-card">
+                        <h3>Vivera™ Retansiyon Apareyleri</h3>
+                        <div class="treatment-details">
+                            <p class="description">3 set retainer</p>
+                            <div class="pricing">
+                                <div class="price-item">
+                                    <span class="price-label">çift ark</span>
+                                    <span class="price-amount">₺8700</span>
+                                </div>
+                                <div class="price-item">
+                                    <span class="price-label">tek ark</span>
+                                    <span class="price-amount">₺5500</span>
+                                </div>
+                            </div>
+                        </div>
+                        <label class="option-select">
+                            <input type="radio" name="tedavi_secenegi_vivera" value="vivera_retainer">
+                            <span>Seç</span>
+                        </label>
+                    </div>
                 </div>
+                <!-- Ürün tipi artık sorulmaz; seçilen pakete göre script.js işaretler (eski kayıtlar ve IDS Yardımcısı bu alanı okur) -->
+                <input type="radio" class="product-type-input" name="urun_tipi_yetiskin" value="invisalign_aligner" tabindex="-1" aria-hidden="true">
             </section>
 
-            <!-- Ürün Tipi - Ergen -->
-            <section class="form-section product-section" id="urun_ergen" style="display:none;">
-                <h2>Ürün tipi - Ergenler <span class="required">*</span></h2>
-                
-                <div class="option-cards">
-                    <div class="option-card">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 150'%3E%3Crect fill='%23f0f0f0' width='200' height='150'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='14'%3EInvisalign%3C/text%3E%3C/svg%3E" alt="Invisalign şeffaf alignerlar" class="product-image">
-                        <h3>Invisalign şeffat alignerlar</h3>
-                        <label class="option-select">
-                            <input type="radio" name="urun_tipi_ergen" value="invisalign_aligner">
-                            <span>Seç</span>
-                        </label>
-                    </div>
-                    
-                    <div class="option-card">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 150'%3E%3Crect fill='%23f0f0f0' width='200' height='150'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='14'%3EVivera%3C/text%3E%3C/svg%3E" alt="Vivera Retainerları" class="product-image">
-                        <h3>Vivera Retainerları</h3>
-                        <label class="option-select">
-                            <input type="radio" name="urun_tipi_ergen" value="vivera_retainer">
-                            <span>Seç</span>
-                        </label>
-                    </div>
-                    
-                    <div class="option-card">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 150'%3E%3Crect fill='%23f0f0f0' width='200' height='150'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='14'%3EPalatal%3C/text%3E%3C/svg%3E" alt="Invisalign Palatal Genişleticiler" class="product-image">
-                        <h3>Invisalign Palatal Genişleticiler</h3>
-                        <label class="option-select">
-                            <input type="radio" name="urun_tipi_ergen" value="palatal_genisletici">
-                            <span>Seç</span>
-                        </label>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Ürün Tipi - Çocuk -->
-            <section class="form-section product-section" id="urun_cocuk" style="display:none;">
-                <h2>Ürün tipi - Çocuk <span class="required">*</span></h2>
-                
-                <div class="option-cards">
-                    <div class="option-card">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 150'%3E%3Crect fill='%23f0f0f0' width='200' height='150'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='14'%3EFirst%3C/text%3E%3C/svg%3E" alt="Invisalign First şeffaf alignerlar" class="product-image">
-                        <h3>Invisalign First şeffaf alignerlar</h3>
-                        <label class="option-select">
-                            <input type="radio" name="urun_tipi_cocuk" value="invisalign_first">
-                            <span>Seç</span>
-                        </label>
-                    </div>
-                    
-                    <div class="option-card">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 150'%3E%3Crect fill='%23f0f0f0' width='200' height='150'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='14'%3EVivera%3C/text%3E%3C/svg%3E" alt="Vivera Retainerları" class="product-image">
-                        <h3>Vivera Retainerları</h3>
-                        <label class="option-select">
-                            <input type="radio" name="urun_tipi_cocuk" value="vivera_retainer">
-                            <span>Seç</span>
-                        </label>
-                    </div>
-                    
-                    <div class="option-card">
-                        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 150'%3E%3Crect fill='%23f0f0f0' width='200' height='150'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='14'%3EPalatal%3C/text%3E%3C/svg%3E" alt="Invisalign Palatal Genişleticiler" class="product-image">
-                        <h3>Invisalign Palatal Genişleticiler</h3>
-                        <label class="option-select">
-                            <input type="radio" name="urun_tipi_cocuk" value="palatal_genisletici">
-                            <span>Seç</span>
-                        </label>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- Tedavi Seçenekleri - Ergen > Invisalign Şeffaf Alignerlar -->
-            <section class="form-section treatment-section" id="tedavi_ergen_invisalign" style="display:none;">
-                <h2>Tedavi seçeneği - Invisalign şeffaf alignerlar (Ergenler) <span class="required">*</span></h2>
+            <!-- Tedavi seçenekleri - Ergenler -->
+            <section class="form-section treatment-section" id="tedavi_ergen" style="display:none;">
+                <h2>Tedavi seçenekleri - Ergenler <span class="required">*</span></h2>
                 
                 <div class="treatment-cards">
                     <div class="treatment-card">
-                        <h3>Comprehensive Package</h3>
+                        <h3>Comprehensive Paket</h3>
                         <div class="treatment-details">
                             <p class="stage-info unlimited">Sınırsız aşama</p>
                             <p class="description">Seçilebilir ek hizalayıcı seçenekleri</p>
@@ -362,7 +272,6 @@
                                     <span class="price-label">çift ark</span>
                                     <span class="price-amount">₺57100</span>
                                 </div>
-                                
                             </div>
                         </div>
                         <label class="option-select">
@@ -372,7 +281,7 @@
                     </div>
                     
                     <div class="treatment-card">
-                        <h3>Lite Paketi</h3>
+                        <h3>Lite Paket</h3>
                         <div class="treatment-details">
                             <p class="stage-info">14 aşamaya kadar</p>
                             <p class="description">2 Set ek aligner dahildir</p>
@@ -395,7 +304,7 @@
                     </div>
                     
                     <div class="treatment-card">
-                        <h3>Express Package</h3>
+                        <h3>Express Paket</h3>
                         <div class="treatment-details">
                             <p class="stage-info">7 aşamaya kadar</p>
                             <p class="description">1 Set ek aligner dahildir</p>
@@ -416,123 +325,9 @@
                             <span>Seç</span>
                         </label>
                     </div>
-                </div>
-            </section>
-
-            <!-- Tedavi Seçenekleri - Yetişkin > Vivera Retainerları -->
-            <section class="form-section treatment-section" id="tedavi_yetiskin_vivera" style="display:none;">
-                <h2>Tedavi seçeneği - Vivera Retainerları <span class="required">*</span></h2>
-                
-                <div class="treatment-cards">
-                    <div class="treatment-card">
-                        <h3>Vivera Retainer</h3>
-                        <div class="treatment-details">
-                            <p class="description">3 set retainer</p>
-                            <div class="pricing">
-                                <div class="price-item">
-                                    <span class="price-label">çift ark</span>
-                                    <span class="price-amount">₺8700</span>
-                                </div>
-                                <div class="price-item">
-                                    <span class="price-label">tek ark</span>
-                                    <span class="price-amount">₺5500</span>
-                                </div>
-                            </div>
-                        </div>
-                        <label class="option-select">
-                            <input type="radio" name="tedavi_secenegi_vivera" value="vivera_retainer">
-                            <span>Seç</span>
-                        </label>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Tedavi Seçenekleri - Yetişkin > Invisalign Gülümseme Mimarisi -->
-            <section class="form-section treatment-section" id="tedavi_yetiskin_gulumseme" style="display:none;">
-                <h2>Tedavi seçeneği - Invisalign Gülümseme Mimarisi <span class="required">*</span></h2>
-                
-                <div class="treatment-cards">
-                    <div class="treatment-card">
-                        <h3>Comprehensive Package</h3>
-                        <div class="treatment-details">
-                            <p class="stage-info unlimited">Sınırsız aşama</p>
-                            <p class="description">Seçilebilir ek hizalayıcı seçenekleri</p>
-                            <p class="description">Flex Reçete destekleniyor</p>
-                            <div class="pricing">
-                                <div class="price-item">
-                                    <span class="price-label">çift ark</span>
-                                    <span class="price-amount">₺58400</span>
-                                </div>
-                                <div class="price-item sub">
-                                    <span class="price-label">3 yıl 3 set ek hizalayıcı dahil</span>
-                                </div>
-                                <div class="price-item">
-                                    <span class="price-label">5 yıl sınırsız ek hizalayıcı dahil</span>
-                                    <span class="price-amount">₺65500</span>
-                                </div>
-                            </div>
-                        </div>
-                        <label class="option-select">
-                            <input type="radio" name="tedavi_secenegi_gulumseme" value="comprehensive">
-                            <span>Seç</span>
-                        </label>
-                    </div>
                     
                     <div class="treatment-card">
-                        <h3>Moderate Paket</h3>
-                        <div class="treatment-details">
-                            <p class="stage-info">20 aşamaya kadar</p>
-                            <p class="description">2 Set ek aligner dahildir</p>
-                            <p class="description">Flex Reçete destekleniyor</p>
-                            <div class="pricing">
-                                <div class="price-item">
-                                    <span class="price-label">çift ark</span>
-                                    <span class="price-amount">₺51000</span>
-                                </div>
-                                <div class="price-item">
-                                    <span class="price-label">tek ark</span>
-                                    <span class="price-amount">₺38400</span>
-                                </div>
-                            </div>
-                        </div>
-                        <label class="option-select">
-                            <input type="radio" name="tedavi_secenegi_gulumseme" value="moderate">
-                            <span>Seç</span>
-                        </label>
-                    </div>
-                    
-                    <div class="treatment-card">
-                        <h3>Lite Paketi</h3>
-                        <div class="treatment-details">
-                            <p class="stage-info">14 aşamaya kadar</p>
-                            <p class="description">2 Set ek aligner dahildir</p>
-                            <p class="description">Flex Reçete destekleniyor</p>
-                            <div class="pricing">
-                                <div class="price-item">
-                                    <span class="price-label">çift ark</span>
-                                    <span class="price-amount">₺40300</span>
-                                </div>
-                                <div class="price-item">
-                                    <span class="price-label">tek ark</span>
-                                    <span class="price-amount">₺30700</span>
-                                </div>
-                            </div>
-                        </div>
-                        <label class="option-select">
-                            <input type="radio" name="tedavi_secenegi_gulumseme" value="lite">
-                            <span>Seç</span>
-                        </label>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Tedavi Seçenekleri - Ergen > Vivera Retainerları -->
-            <section class="form-section treatment-section" id="tedavi_ergen_vivera" style="display:none;">
-                <h2>Tedavi seçeneği - Vivera Retainerları (Ergenler) <span class="required">*</span></h2>
-                
-                <div class="treatment-cards">
-                    <div class="treatment-card">
-                        <h3>Vivera Retainer</h3>
+                        <h3>Vivera™ Retansiyon Apareyleri</h3>
                         <div class="treatment-details">
                             <p class="description">3 set retainer</p>
                             <div class="pricing">
@@ -551,14 +346,7 @@
                             <span>Seç</span>
                         </label>
                     </div>
-                </div>
-            </section>
-
-            <!-- Tedavi Seçenekleri - Ergen > Invisalign Palatal Genişleticiler -->
-            <section class="form-section treatment-section" id="tedavi_ergen_palatal" style="display:none;">
-                <h2>Tedavi seçeneği - Invisalign Palatal Genişleticiler <span class="required">*</span></h2>
-                
-                <div class="treatment-cards">
+                    
                     <div class="treatment-card">
                         <h3>Invisalign Palatal Genişleticiler</h3>
                         <div class="treatment-details">
@@ -577,11 +365,13 @@
                         </label>
                     </div>
                 </div>
+                <!-- Ürün tipi artık sorulmaz; seçilen pakete göre script.js işaretler (eski kayıtlar ve IDS Yardımcısı bu alanı okur) -->
+                <input type="radio" class="product-type-input" name="urun_tipi_ergen" value="invisalign_aligner" tabindex="-1" aria-hidden="true">
             </section>
 
-            <!-- Tedavi Seçenekleri - Çocuk > Invisalign First -->
-            <section class="form-section treatment-section" id="tedavi_cocuk_first" style="display:none;">
-                <h2>Tedavi seçeneği - Invisalign First şeffaf alignerlar <span class="required">*</span></h2>
+            <!-- Tedavi seçenekleri - Çocuk -->
+            <section class="form-section treatment-section" id="tedavi_cocuk" style="display:none;">
+                <h2>Tedavi seçenekleri - Çocuk <span class="required">*</span></h2>
                 
                 <div class="treatment-cards">
                     <div class="treatment-card">
@@ -605,16 +395,9 @@
                             <span>Seç</span>
                         </label>
                     </div>
-                </div>
-            </section>
-
-            <!-- Tedavi Seçenekleri - Çocuk > Vivera Retainerları -->
-            <section class="form-section treatment-section" id="tedavi_cocuk_vivera" style="display:none;">
-                <h2>Tedavi seçeneği - Vivera Retainerları (Çocuk) <span class="required">*</span></h2>
-                
-                <div class="treatment-cards">
+                    
                     <div class="treatment-card">
-                        <h3>Vivera Retainer</h3>
+                        <h3>Vivera™ Retansiyon Apareyleri</h3>
                         <div class="treatment-details">
                             <p class="description">3 set retainer</p>
                             <div class="pricing">
@@ -633,19 +416,12 @@
                             <span>Seç</span>
                         </label>
                     </div>
-                </div>
-            </section>
-
-            <!-- Tedavi Seçenekleri - Çocuk > Invisalign Palatal Genişleticiler -->
-            <section class="form-section treatment-section" id="tedavi_cocuk_palatal" style="display:none;">
-                <h2>Tedavi seçeneği - Invisalign Palatal Genişleticiler (Çocuk) <span class="required">*</span></h2>
-                
-                <div class="treatment-cards">
+                    
                     <div class="treatment-card">
                         <h3>Invisalign Palatal Genişleticiler</h3>
                         <div class="treatment-details">
                             <p class="stage-info unlimited">Sınırsız aşama</p>
-                            <p class="description">18 eylık sınırsız Invisalign Palatal Genişletici ve Invisalign Palatal Tutucu dâhildir.</p>
+                            <p class="description">18 aylık sınırsız Invisalign Palatal Genişletici ve Invisalign Palatal Tutucu dâhildir.</p>
                             <div class="pricing">
                                 <div class="price-item">
                                     <span class="price-label">fiyat</span>
@@ -659,6 +435,8 @@
                         </label>
                     </div>
                 </div>
+                <!-- Ürün tipi artık sorulmaz; seçilen pakete göre script.js işaretler (eski kayıtlar ve IDS Yardımcısı bu alanı okur) -->
+                <input type="radio" class="product-type-input" name="urun_tipi_cocuk" value="invisalign_first" tabindex="-1" aria-hidden="true">
             </section>
 
             <!-- Detaylı Form Bölümleri - Yetişkin Comprehensive Package -->

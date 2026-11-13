@@ -6,7 +6,14 @@ Geleneksel Reçete (traditional Rx) akışı incelendi. Flex Rx ayrıca eklenece
 ## Genel akış (IDS)
 
 Hasta Verisi → Klinik Koşullar → Hasta Portresi → Tara → Fotoğraflar → Radyograf → Hasta dosyası →
-"Reçeteyi gönder / Başla" → Hasta tipi → Ürün tipi → Tedavi seçenekleri → Rx formu (adımlar) → Tara → Fotoğraflar → Radyograf → İndirim → Özet → Sevk
+"Reçeteyi gönder / Başla" → Tedavi seçenekleri (hasta tipi süzgeci + paket kartları) → Rx formu (adımlar) → Tara → Fotoğraflar → Radyograf → İndirim → Özet → Sevk
+
+13 Kasım 2026: IDS "Tedavi seçenekleri" ekranını yeniledi. Hasta tipi ve ürün tipi aşamaları kalktı; tek sayfada
+hasta tipi süzgeci (Yetişkinim / Ergenler / Çocuk) ve o tipin tüm kartları durur (yetişkin: Comprehensive, Moderate,
+Lite, Express, Vivera; ergen: + Palatal; çocuk: First, Vivera, Palatal). Gülümseme Mimarisi ayrı ürün değil, yetişkin
+Comprehensive / Moderate / Lite kartında "Ekle Invisalign Smile Architect" anahtarı. Form aynı düzene çevrildi:
+hasta tipi çipleri + tek paket ızgarası; `urun_tipi_*` alanı sorulmaz ama seçilen pakete göre kayda yazılmaya devam
+eder (eski kayıtlar ve IDS Yardımcısı için). Aşağıdaki "Ürün tipi" başlıkları eski ekranın dökümüdür.
 
 Kullanıcı kararları:
 - Klinik Koşullar ve Genel Notlar: forma GİRMEYECEK.

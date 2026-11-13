@@ -26,7 +26,7 @@
     const STEP_META = {
         1: { title: 'Hasta', desc: 'Hastanın adı, soyadı ve iki harfli kısaltması (MI).', sub: 'Hasta bilgilerini girin' },
         2: { title: 'Form ve hasta tipi', desc: 'Form türünü ve hastanın yaş grubunu seçin.', sub: 'Form türü ve hasta tipi' },
-        3: { title: 'Ürün ve paket', desc: 'Fiyatlar IDS listesidir; karşılaştırma içindir, forma yazılmaz.', sub: 'Ürün ve paket seçimi' },
+        3: { title: 'Paket seçimi', desc: 'Fiyatlar IDS listesidir; karşılaştırma içindir, forma yazılmaz.', sub: 'Paket seçimi' },
         4: { title: 'Tedavi detayları', desc: 'Tüm gruplar klinik varsayılanlarınızla dolu. Yalnızca değiştirmek istediklerinizi açın; kapalı satırda seçili değer görünür.', sub: 'Tedavi detayları' },
         5: { title: 'Özet ve kaydet', desc: 'Kaydetmeden önce son kontrol. Varsayılandan farklı tercihler üstte listelenir; asistan IDS\'e girerken aynı özeti görür.', sub: 'Özet ve kaydet' }
     };
@@ -37,14 +37,14 @@
     function stepOf(section) {
         if (section.id === 'hasta_bilgileri_section') return 1;
         if (section.id === 'form_turu_section' || section.id === 'hasta_tipi_section') return 2;
-        if (section.classList.contains('product-section') || section.classList.contains('treatment-section')) return 3;
+        if (section.classList.contains('treatment-section')) return 3;
         return 4;
     }
     sections.forEach(s => { s.dataset.step = String(stepOf(s)); });
 
     function inlineVisible(el) { return !!el && el.style.display !== 'none'; }
     function sectionsOf(step) { return sections.filter(s => s.dataset.step === String(step)); }
-    // Adımlar her zaman görünür; yalnızca Refinement'ta ürün/paket adımı atlanır
+    // Adımlar her zaman görünür; yalnızca Refinement'ta paket adımı atlanır
     function stepAvailable(step) {
         if (step === 3) return main.querySelector('input[name="form_turu"]:checked')?.value !== 'refinement';
         return true;
@@ -90,7 +90,7 @@
         const soyad = (main.querySelector('input[name="hasta_soyadi"]')?.value || '').trim();
         return !!(ad && soyad);
     }
-    // Ne kadar ilerlenebilir: 1 hasta, 2 form/hasta tipi, 3 ürün/paket, 4 detaylar hazır
+    // Ne kadar ilerlenebilir: 1 hasta, 2 form/hasta tipi, 3 paket, 4 detaylar hazır
     function computeReach() {
         if (!nameComplete()) return 1;
         if (!picked('form_turu') || !picked('hasta_tipi')) return 2;
@@ -141,13 +141,15 @@
         return '';
     }
 
+    // Açık tedavi seçenekleri bölümünde seçili paketin kartı (bölümdeki gizli ürün tipi radio'su sayılmaz)
+    function packageCard() {
+        const treat = sectionsOf(3).find(inlineVisible);
+        return treat?.querySelector('.treatment-card input[type="radio"]:checked')?.closest('.treatment-card') || null;
+    }
+
     function packageText() {
-        const ht = picked('hasta_tipi');
-        if (!ht) return '';
-        const urun = checkedLabel('urun_tipi_' + ht);
-        const treat = sectionsOf(3).find(s => s.classList.contains('treatment-section') && inlineVisible(s));
-        const pkg = treat ? (treat.querySelector('input[type="radio"]:checked')?.closest('.treatment-card, .option-card')?.querySelector('h3')?.textContent || '') : '';
-        return [shortPackage(pkg), urun.replace(/^Invisalign\s+/i, '')].filter(Boolean).join(' · ');
+        if (!picked('hasta_tipi')) return '';
+        return shortPackage(packageCard()?.querySelector('h3')?.textContent || '');
     }
 
     function changedSummaryText() {
@@ -240,7 +242,7 @@
             setTimeout(() => fresh[0].scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
         }
         // Son seçim yapıldıysa tedavi detaylarına kendiliğinden geç
-        const decisive = t.closest('.treatment-section') || (t.name === 'hasta_tipi' && picked('form_turu') === 'refinement') ||
+        const decisive = (t.checked && t.closest('.treatment-section')) || (t.name === 'hasta_tipi' && picked('form_turu') === 'refinement') ||
             (t.name === 'form_turu' && t.value === 'refinement');
         if (computeReach() >= 4 && decisive) {
             clearTimeout(advanceTimer);
@@ -273,7 +275,7 @@
         }
         if (step === 3) {
             if (!activeDetailSection()) {
-                toast(picked('urun_tipi_' + picked('hasta_tipi')) ? 'Paketi seçin' : 'Ürün tipini seçin');
+                toast('Paketi seçin');
                 scrollToSection(3);
                 return false;
             }
@@ -287,7 +289,7 @@
             for (const n of [1, 2, 3]) {
                 if (stepAvailable(n) && !validateStep(n)) { applyView(); return; }
             }
-            if (!activeDetailSection()) { toast('Ürün ve paketi seçin'); return; }
+            if (!activeDetailSection()) { toast('Paketi seçin'); return; }
             goTo(4);
             return;
         }
@@ -591,11 +593,7 @@
         const esc = s => (window.RX ? RX.escapeHtml(s) : String(s));
         const ft = checkedLabel('form_turu');
         const ht = checkedLabel('hasta_tipi');
-        const htVal = main.querySelector('input[name="hasta_tipi"]:checked')?.value;
-        const urun = htVal ? checkedLabel('urun_tipi_' + htVal) : '';
-        const treat = sectionsOf(3).find(s => s.classList.contains('treatment-section') && inlineVisible(s));
-        const pkgCard = treat?.querySelector('input[type="radio"]:checked')?.closest('.treatment-card, .option-card');
-        const pkg = pkgCard ? shortPackage(pkgCard.querySelector('h3')?.textContent || '') : '';
+        const pkg = packageText();
         const detail = activeDetailSection();
         const groups = detail ? accordionsOf(detail) : [];
         const changed = groups.filter(g => g.classList.contains('changed'));
@@ -622,7 +620,6 @@
                     <div><dt>Hasta</dt><dd>${esc(patientText() || '—')}</dd></div>
                     <div><dt>Form türü</dt><dd>${esc(ft || '—')}</dd></div>
                     <div><dt>Hasta tipi</dt><dd>${esc(ht || '—')}</dd></div>
-                    ${urun ? `<div><dt>Ürün</dt><dd>${esc(urun)}</dd></div>` : ''}
                     ${pkg ? `<div><dt>Paket</dt><dd>${esc(pkg)}</dd></div>` : ''}
                 </dl>
             </div>
@@ -775,7 +772,7 @@
         main.addEventListener('click', e => {
             if (MODE === 'view') return;
             const card = e.target.closest('.option-card, .treatment-card');
-            if (!card || e.target.closest('input, a')) return;
+            if (!card || e.target.closest('input, a, .feature-toggle')) return;
             const radio = card.querySelector('input[type="radio"]');
             if (!radio || radio.checked || radio.disabled) return;
             radio.checked = true;

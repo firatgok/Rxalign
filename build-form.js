@@ -34,7 +34,7 @@ const icon = {
 const steps = [
     ['1', 'Hasta'],
     ['2', 'Form ve hasta tipi'],
-    ['3', 'Ürün ve paket'],
+    ['3', 'Paket seçimi'],
     ['4', 'Tedavi detayları'],
     ['5', 'Özet ve kaydet']
 ];
@@ -128,8 +128,10 @@ ${stepperItems}
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="firebase-config.js"></script>
+    <script src="js/auth.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="defaults.js"></script>

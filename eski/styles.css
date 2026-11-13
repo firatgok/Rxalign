@@ -340,6 +340,100 @@ main {
     display: block;
 }
 
+/* Hasta tipi çipleri ve paket kartı ekleri (IDS'in Kasım 2026 tedavi seçenekleri düzeni) */
+.type-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.type-chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 22px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 999px;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.type-chip input[type="radio"] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.type-chip:hover {
+    border-color: #667eea;
+}
+
+.type-chip:has(input:checked) {
+    border-color: #667eea;
+    background: #f0f2ff;
+    color: #4c5fd5;
+}
+
+.product-type-input {
+    display: none !important;
+}
+
+.feature-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: #666;
+    cursor: pointer;
+}
+
+.feature-toggle input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.feature-switch {
+    position: relative;
+    flex: none;
+    width: 32px;
+    height: 18px;
+    border-radius: 999px;
+    background: #c8c8c8;
+    transition: background 0.15s;
+}
+
+.feature-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.15s;
+}
+
+.feature-toggle input:checked + .feature-switch {
+    background: #667eea;
+}
+
+.feature-toggle input:checked + .feature-switch::after {
+    transform: translateX(14px);
+}
+
 .treatment-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
