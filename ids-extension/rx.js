@@ -1146,19 +1146,22 @@
             const cards = root ? Array.from(root.querySelectorAll('[class*="Card-clickable"]')).map(cardInfo).filter(Boolean) : [];
             const matches = cards.filter(function (c) { return matchScore(c.name, o.record) === 2; });
             const loose = cards.filter(function (c) { return matchScore(c.name, o.record) === 1; });
-            // IDS yeni sekmede varsayılan süzgeci ("Eylem gereklidir") uygular ve aranan hasta gizlenir. Eşleşme yokken süzgeç
-            // bir kez kaldırılır: "filtreleri kaldırın" bağlantısı (arama korunur) ya da "Tümünü temizle" düğmesi.
-            if (root && !cleared && !matches.length && Date.now() - started > 1500) {
-                const reminder = root.querySelector('[class*="FiltersReminderNotification-link"] a');
+            // IDS yeni sekmede varsayılan süzgeci ("Eylem gereklidir") uygular ve aranan hasta gizlenebilir. Süzgeç işaretliyse
+            // sonuç beklenmeden bir kez kaldırılır (kullanıcı kararı): "Tümünü temizle" düğmesi, yoksa "filtreleri kaldırın"
+            // bağlantısı. Arama kutusu boşalırsa soyad yeniden yazılır (typed sıfırlanır).
+            if (root && !cleared) {
                 const chips = root.querySelectorAll('[data-testid^="Tag-tag-"]').length;
-                const clearAll = reminder || (chips ? Array.from(root.querySelectorAll('button')).find(function (b) {
+                const reminder = root.querySelector('[class*="FiltersReminderNotification-link"] a');
+                const clearAll = chips ? Array.from(root.querySelectorAll('button')).find(function (b) {
                     return /^(Tümünü temizle|Clear all)$/i.test(b.textContent.trim());
-                }) : null);
-                if (clearAll) {
+                }) : null;
+                const target = clearAll || reminder;
+                if (target) {
                     cleared = true;
-                    clearAll.click();
+                    target.click();
                     started = Date.now();
                     lastKey = '';
+                    typed = false;
                     ui.say('Rxalign: "' + name + '" için liste süzgeci kaldırıldı; hasta aranıyor…');
                     setTimeout(poll, 1500);
                     return;
