@@ -158,6 +158,15 @@ hasta klasörlerinin üst klasörünü seçmek gerekir (klasör izni site başı
 ya da yükleme bitmezse panel nedenini yazar; "Yükleme bitti, IDS'e bildir" düğmesiyle elle tamamlanan yükleme IDS'e
 bildirilebilir.
 
+## Rxalign arşivinden "IDS'te aç"
+
+Form sitesinin arşivinde giriş bekleyen satırlardaki **IDS'te aç** düğmesi eklentiye ileti gönderir: yeni hasta kaydında IDS Yeni hasta
+sayfası açılır ve ad, soyad, MI dolar; refinement kaydında hasta listesi soyadla aranır (süzgeç işaretliyse kaldırılır), adı tutan
+tek hasta varsa dosyası açılır ve hasta numarası hatırlanır. Site, eklentinin kurulu olmadığı bir tarayıcıda açıksa (ör. Edge)
+düğme `rxalign-ids://` bağlantısını çağırır; Windows eklentinin kurulu olduğu tarayıcıyı `ids-ac.html` köprü sayfasıyla açar ve
+istek oradan eklentiye gider. Bağlantı türünü kurulum dosyası, `Guncelleyiciyi-Kur.bat` ve (güncelleyici kuruluysa) eklentinin
+kendisi her sürümde HKCUSoftwareClassesxalign-ids altına kaydeder.
+
 ## Gizlilik
 
 - Portre seçimi için hasta klasöründeki dikey karelerin (yüz fotoğrafları) küçültülmüş kopyaları (512 piksel)

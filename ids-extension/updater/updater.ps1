@@ -115,6 +115,41 @@ function Install-Zip($zip) {
     try { [IO.Directory]::Delete($stageRoot, $true) } catch {}
 }
 
+# rxalign-ids:// baglanti turu: Rxalign arsivindeki "IDS'te ac" dugmesi, eklentinin kurulu OLMADIGI tarayicida basilinca
+# bu baglantiyi cagirir; Windows eklentinin kurulu oldugu tarayiciyi kopru sayfasiyla (ids-ac.html) acar.
+function Find-Browser($which) {
+    if ($which -eq 'edge') { $exe = 'msedge.exe'; $rel = 'Microsoft\Edge\Application\msedge.exe' }
+    else { $exe = 'chrome.exe'; $rel = 'Google\Chrome\Application\chrome.exe' }
+    $roots = @(
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\',
+        'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\App Paths\',
+        'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\'
+    )
+    foreach ($r in $roots) {
+        try {
+            $p = (Get-ItemProperty -LiteralPath ($r + $exe) -ErrorAction Stop).'(default)'
+            if ($p) { $p = $p.Trim('"'); if (Test-Path -LiteralPath $p) { return $p } }
+        } catch {}
+    }
+    foreach ($base in @($env:ProgramFiles, ${env:ProgramFiles(x86)}, $env:LOCALAPPDATA)) {
+        if ($base) { $p = Join-Path $base $rel; if (Test-Path -LiteralPath $p) { return $p } }
+    }
+    return $null
+}
+
+function Register-Protocol($which) {
+    $exe = Find-Browser $which
+    if (-not $exe) { throw ('tarayici bulunamadi: ' + $which) }
+    $key = 'HKCU:\Software\Classes\rxalign-ids'
+    $cmdKey = $key + '\shell\open\command'
+    New-Item -Path $cmdKey -Force | Out-Null
+    Set-ItemProperty -Path $key -Name '(default)' -Value 'URL:IDS Yardimcisi'
+    Set-ItemProperty -Path $key -Name 'URL Protocol' -Value ''
+    # "--" tarayicinin anahtar okumasini bitirir: baglantidan gelen metin anahtar olarak yorumlanamaz.
+    Set-ItemProperty -Path $cmdKey -Name '(default)' -Value ('"' + $exe + '" -- "https://rxalign.fgoapps.com/ids-ac.html#%1"')
+    return $exe
+}
+
 function Remove-OldTemp {
     # Onceki surumlerden kalan gecici zip ve acilmis klasorler temizlenir.
     try {
@@ -141,6 +176,12 @@ try {
             Install-Zip $zip
             Remove-OldTemp
             Write-Message @{ ok = $true; version = (Get-ExtensionVersion) }
+        }
+        'protocol' {
+            $which = 'chrome'
+            if ($msg.browser -eq 'edge') { $which = 'edge' }
+            $exe = Register-Protocol $which
+            Write-Message @{ ok = $true; browser = $which; exe = $exe }
         }
         default {
             Write-Message @{ ok = $false; error = ('bilinmeyen eylem: ' + $msg.action) }

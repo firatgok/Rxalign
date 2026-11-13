@@ -66,6 +66,11 @@ Source: "{#ExtDir}\*"; DestDir: "{tmp}\pa_ext"; Flags: dontcopy recursesubdirs c
 [Registry]
 Root: HKCU; Subkey: "Software\Google\Chrome\NativeMessagingHosts\{#HostName}"; ValueType: string; ValueName: ""; ValueData: "{code:HostJsonPath}"; Flags: uninsdeletekey
 Root: HKCU; Subkey: "Software\Microsoft\Edge\NativeMessagingHosts\{#HostName}"; ValueType: string; ValueName: ""; ValueData: "{code:HostJsonPath}"; Flags: uninsdeletekey
+; rxalign-ids:// baglanti turu: Rxalign arsivindeki "IDS'te ac" dugmesi eklentinin kurulu olmadigi tarayicida basilinca
+; eklentinin kurulu oldugu tarayici kopru sayfasiyla (ids-ac.html) acilir. Eklenti de her surumde kendi tarayicisina gore yeniler.
+Root: HKCU; Subkey: "Software\Classes\rxalign-ids"; ValueType: string; ValueName: ""; ValueData: "URL:IDS Yardimcisi"; Check: HasProtoBrowser; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\rxalign-ids"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""; Check: HasProtoBrowser
+Root: HKCU; Subkey: "Software\Classes\rxalign-ids\shell\open\command"; ValueType: string; ValueName: ""; ValueData: "{code:ProtoCommand}"; Check: HasProtoBrowser
 
 [UninstallDelete]
 ; Guncelleyicinin sonradan getirdigi dosyalar kurulum kaydinda yok.
@@ -987,6 +992,29 @@ end;
 function AdoptedDirCode(Param: String): String;
 begin
   Result := FindAdoptedDir();
+end;
+
+// rxalign-ids baglantisinin acacagi tarayici: eklentinin kuruldugu (secilen ya da zaten ekli olan) tarayici; Chrome oncelikli.
+function ProtoBrowserExe(): String;
+begin
+  ExtInit();
+  if (BrExe[BR_CHROME] <> '') and (BrWanted(BR_CHROME) or ExtensionInstalled(BR_CHROME) or (BrExe[BR_EDGE] = '')) then
+    Result := BrExe[BR_CHROME]
+  else if (BrExe[BR_EDGE] <> '') and (BrWanted(BR_EDGE) or ExtensionInstalled(BR_EDGE) or (BrExe[BR_CHROME] = '')) then
+    Result := BrExe[BR_EDGE]
+  else
+    Result := BrExe[BR_CHROME];
+end;
+
+function HasProtoBrowser(): Boolean;
+begin
+  Result := ProtoBrowserExe() <> '';
+end;
+
+// "--" tarayicinin anahtar okumasini bitirir: baglantidan gelen metin anahtar olarak yorumlanamaz.
+function ProtoCommand(Param: String): String;
+begin
+  Result := '"' + ProtoBrowserExe() + '" -- "https://rxalign.fgoapps.com/ids-ac.html#%1"';
 end;
 
 function HostJsonPath(Param: String): String;

@@ -18150,8 +18150,25 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === UPDATE_ALARM) checkForUpdate().catch(() => {
   });
 });
+async function registerProtocol() {
+  const browser = /\bEdg\//.test(navigator.userAgent) ? "edge" : "chrome";
+  const version = chrome.runtime.getManifest().version;
+  const done = (await chrome.storage.local.get("idsProtocol")).idsProtocol;
+  if (done && done.version === version && done.browser === browser) return;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      await updaterCall({ action: "protocol", browser });
+      await chrome.storage.local.set({ idsProtocol: { version, browser, at: Date.now() } });
+      return;
+    } catch (error) {
+      if (!/bilinmeyen eylem/.test(error?.message || "")) return;
+    }
+  }
+}
 chrome.runtime.onInstalled.addListener((details) => {
   ensureUpdateAlarm().catch(() => {
+  });
+  registerProtocol().catch(() => {
   });
   const version = chrome.runtime.getManifest().version;
   const announced = details.reason === "update" && details.previousVersion && details.previousVersion !== version ? setUpdateState({ status: "current", version, announce: version, snoozedAt: null, error: null }) : Promise.resolve();
@@ -18160,6 +18177,8 @@ chrome.runtime.onInstalled.addListener((details) => {
 });
 chrome.runtime.onStartup.addListener(() => {
   ensureUpdateAlarm().catch(() => {
+  });
+  registerProtocol().catch(() => {
   });
   checkForUpdate().catch(() => {
   });
@@ -18226,7 +18245,7 @@ var EXTERNAL_HANDLERS = {
     if (current && current.source === "site") await setAuthState(null);
     return {};
   },
-  "rx-open": async (msg) => {
+  "rx-open": async (msg, sender) => {
     const record = msg.record || {};
     if (!record.id) throw new Error("kay\u0131t kimli\u011Fi yok");
     const kind = msg.kind === "refinement" ? "refinement" : "new";
@@ -18250,6 +18269,11 @@ var EXTERNAL_HANDLERS = {
       [PICK_KEY]: { id: record.id, at: Date.now() }
     });
     await chrome.tabs.create({ url, active: true });
+    if (msg.closeSender && sender?.tab?.id != null) {
+      const senderTab = sender.tab.id;
+      setTimeout(() => chrome.tabs.remove(senderTab).catch(() => {
+      }), 1200);
+    }
     return filePatientId ? { opened, patientId: filePatientId } : { opened };
   }
 };

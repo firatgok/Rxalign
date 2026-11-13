@@ -1002,8 +1002,31 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === UPDATE_ALARM) checkForUpdate().catch(() => {});
 });
 
+// ---------- rxalign-ids bağlantı türü ----------
+// Rxalign arşivindeki "IDS'te aç" düğmesine eklentinin kurulu olmadığı tarayıcıda basılırsa site rxalign-ids:// bağlantısını
+// çağırır; Windows bu tarayıcıyı https://rxalign.fgoapps.com/ids-ac.html#<bağlantı> ile açar ve köprü sayfası isteği buraya
+// iletir (rx-open). Bağlantı türünü güncelleyici (updater.ps1, "protocol" eylemi) HKCU'ya kaydeder; her sürümde bir kez
+// yenilenir. Güncelleyici kurulu değilse sessizce geçilir (kurulum dosyası ve Guncelleyiciyi-Kur.bat da kaydeder).
+async function registerProtocol() {
+  const browser = /\bEdg\//.test(navigator.userAgent) ? "edge" : "chrome";
+  const version = chrome.runtime.getManifest().version;
+  const done = (await chrome.storage.local.get("idsProtocol")).idsProtocol;
+  if (done && done.version === version && done.browser === browser) return;
+  // Güncellemeden sonraki ilk çağrıyı eski updater.ps1 karşılayabilir ("bilinmeyen eylem"); o çağrı yeni betiği yerine koyar.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      await updaterCall({ action: "protocol", browser });
+      await chrome.storage.local.set({ idsProtocol: { version, browser, at: Date.now() } });
+      return;
+    } catch (error) {
+      if (!/bilinmeyen eylem/.test(error?.message || "")) return;
+    }
+  }
+}
+
 chrome.runtime.onInstalled.addListener((details) => {
   ensureUpdateAlarm().catch(() => {});
+  registerProtocol().catch(() => {});
   const version = chrome.runtime.getManifest().version;
   const announced = details.reason === "update" && details.previousVersion && details.previousVersion !== version
     ? setUpdateState({ status: "current", version, announce: version, snoozedAt: null, error: null })
@@ -1012,6 +1035,7 @@ chrome.runtime.onInstalled.addListener((details) => {
 });
 chrome.runtime.onStartup.addListener(() => {
   ensureUpdateAlarm().catch(() => {});
+  registerProtocol().catch(() => {});
   checkForUpdate().catch(() => {});
 });
 ensureUpdateAlarm().catch(() => {});
@@ -1088,7 +1112,7 @@ const EXTERNAL_HANDLERS = {
     if (current && current.source === "site") await setAuthState(null);
     return {};
   },
-  "rx-open": async (msg) => {
+  "rx-open": async (msg, sender) => {
     const record = msg.record || {};
     if (!record.id) throw new Error("kayıt kimliği yok");
     const kind = msg.kind === "refinement" ? "refinement" : "new";
@@ -1111,6 +1135,11 @@ const EXTERNAL_HANDLERS = {
       [PICK_KEY]: { id: record.id, at: Date.now() },
     });
     await chrome.tabs.create({ url, active: true });
+    // Köprü sayfası (ids-ac.html) işi bitince kendi sekmesinin kapatılmasını ister; yanıt gittikten sonra kapatılır.
+    if (msg.closeSender && sender?.tab?.id != null) {
+      const senderTab = sender.tab.id;
+      setTimeout(() => chrome.tabs.remove(senderTab).catch(() => {}), 1200);
+    }
     return filePatientId ? { opened, patientId: filePatientId } : { opened };
   },
 };
