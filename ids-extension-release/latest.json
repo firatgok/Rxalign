@@ -1,6 +1,6 @@
 {
-  "version": "0.35.2",
-  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.35.2.zip",
-  "notes": "0.35.2: Rxalign arşivi eklentinin kurulu olmadığı bir tarayıcıda (ör. Edge) açıksa 'IDS'te aç' düğmesi IDS'i eklentinin kurulu olduğu tarayıcıda açar. Bunun için Windows'a rxalign-ids bağlantı türü kaydedilir (güncelleyici kuruluysa kendiliğinden). Köprü sekmesi iş bitince kapanır.",
-  "at": "2026-11-13T20:15:45.057Z"
+  "version": "0.35.3",
+  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.35.3.zip",
+  "notes": "0.35.3: IDS'in yenilenen tedavi seçenekleri (paket seçim) ekranına uyum. Hasta tipi süzgeci (Yetişkinim / Ergenler / Çocuk) kayıtlı forma göre kendiliğinden seçilir, kayıtlı formdaki paketin kartı turuncu çerçeveyle gösterilir; paketi yine siz seçersiniz. Önceki sürüm bu ekranda 'Kayıtlı form aranıyor…' yazısında kalıyordu.",
+  "at": "2026-11-13T20:23:35.661Z"
 }

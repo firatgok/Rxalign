@@ -2464,24 +2464,52 @@
         });
     }
 
-    // ---------- Hasta tipi / ürün tipi / tedavi seçeneği ----------
-    // Tek sayfada üç aşama art arda gösterilir. Hasta tipi ve ürün tipi kayıtlı forma göre
-    // tıklanır; paketi (tedavi seçeneği) kullanıcı seçer. Paket tıklanınca reçete sayfası açılır.
+    // ---------- Tedavi seçenekleri: hasta tipi süzgeci ve paket kartları ----------
+    // Kasım 2026'da IDS bu sayfayı yeniledi: hasta tipi ve ürün aşamaları kalktı. Tek sayfada hasta
+    // tipi süzgeci (Yetişkinim / Ergenler / Çocuk) ile paket kartları durur; içerik #psp altındaki
+    // açık shadow DOM'da bir React uygulamasıdır. Süzgeç reçetenin hasta tipini belirler, karttaki
+    // "Seç" reçeteyi doğrudan açar. Süzgeç kayıtlı forma göre işaretlenir ve kayıtlı formdaki paketin
+    // kartı çerçevelenir; paketi kullanıcı seçer (kullanıcı kararı).
 
-    const TYPE_TITLE = { yetiskin: /Yetişkin|Adult/i, ergen: /Ergen|Teen/i, cocuk: /Çocuk|Child|Kid/i };
+    const TYPE_FILTER = { yetiskin: 'ADULT', ergen: 'TEEN', cocuk: 'CHILD' };
+    // Kart kimliğinin (data-id) ön eki; yetişkin ve ergen aynı kartları kullanır.
+    const PACKAGE_CARD = {
+        comprehensive: 'COMPREHENSIVE_MAUI', moderate: 'MODERATE_MAUI', lite: 'LITE_MAUI',
+        express: 'EXPRESS_MAUI', first: 'FIRST_COMPREHENSIVE'
+    };
+    const CARD_MARK = 'data-idsfy-mark';
 
-    function selectButtons() {
-        return Array.from(document.querySelectorAll('button.cardSelectButton, button.selectOption'))
-            .filter(function (b) { return b.offsetWidth > 0; })
-            .map(function (b) {
-                let card = b;
-                for (let i = 0; i < 6 && card && !card.querySelector('.cardHeader, a.expand'); i++) card = card.parentElement;
-                const head = card && card.querySelector('.cardHeader, a.expand');
-                return { button: b, title: head ? head.textContent.trim().replace(/\s+/g, ' ') : '' };
-            });
+    function productRoot() {
+        const nodes = document.querySelectorAll('#psp *');
+        for (let i = 0; i < nodes.length; i++) {
+            const root = nodes[i].shadowRoot;
+            if (root && root.querySelector('[data-testid="CategoryToggle-root"]')) return root;
+        }
+        return null;
     }
 
-    async function chooseProduct(patientId) {
+    function typeFilter(root, code) {
+        const input = root.querySelector('[data-testid="CategoryToggle-root"] input[value="' + code + '"]');
+        const label = input && input.closest('label');
+        return label ? { input: input, label: label, title: label.textContent.trim() } : null;
+    }
+
+    // Kimliği verilen ön ekle başlayan kart çerçevelenir, öbürlerinin çerçevesi kaldırılır.
+    function markCards(root, prefix) {
+        let marked = null;
+        Array.from(root.querySelectorAll('[data-testid="Card-root"]')).forEach(function (card) {
+            const on = !!prefix && (card.getAttribute('data-id') || '').indexOf(prefix) === 0;
+            if (on) marked = card;
+            if (on === card.hasAttribute(CARD_MARK)) return;
+            if (on) card.setAttribute(CARD_MARK, '1');
+            else card.removeAttribute(CARD_MARK);
+            card.style.outline = on ? '3px solid #f39c12' : '';
+            card.style.outlineOffset = on ? '2px' : '';
+        });
+        return marked;
+    }
+
+    async function chooseProduct() {
         const ui = statusPanel('Kayıtlı form aranıyor…');
         let found;
         try {
@@ -2496,12 +2524,106 @@
         }
         ui.title(found.title);
         const record = found.record;
-        const type = record.hasta_tipi;
         const info = packageOf(Object.assign({}, record, found.data));
         if (!info || info.refinement) {
             ui.say('Bu kayıt türü için ürün seçimi otomatik değil (Vivera, palatal, Flex, refinement); seçimleri elle yapın.', true);
             return;
         }
+        // Sayfanın çizilmesi beklenir; eski üç aşamalı ekran çıkarsa eski yöntemle sürülür.
+        let root = null;
+        for (let i = 0; i < 40 && !root; i++) {
+            if (selectButtons().length) return chooseProductLegacy(ui, record, info);
+            root = productRoot();
+            if (!root) await sleep(500);
+        }
+        if (!root) {
+            ui.say(/^404\b/.test(document.title)
+                ? 'IDS bu sayfayı bulamadı (404); reçeteyi hasta dosyasından yeniden açın.'
+                : 'Tedavi seçenekleri ekranı tanınmadı; hasta tipini ve paketi elle seçin.', true);
+            return;
+        }
+        // Reçete açılınca kayıt önerilsin: işaret şimdi ve bir kartın düğmesine basılırken yazılır
+        // (işaretin ömrü kısadır, kullanıcı bu sayfada oyalanabilir).
+        const arm = function () { return setStored(AUTO_KEY, { docId: record.id, at: Date.now() }); };
+        await arm();
+        document.addEventListener('click', function (event) {
+            const path = event.composedPath ? event.composedPath() : [];
+            if (path.some(function (node) {
+                return node.getAttribute && node.getAttribute('data-testid') === 'Card-button';
+            })) arm();
+        }, true);
+
+        const code = TYPE_FILTER[info.type];
+        const prefix = PACKAGE_CARD[info.page];
+        const filter = typeFilter(root, code);
+        if (!filter) {
+            ui.say('Hasta tipi süzgeci bulunamadı; hasta tipini ve paketi elle seçin. Kayıtlı form: ' +
+                info.type + ' ' + info.paket + '.', true);
+            return;
+        }
+        const filterOn = function (current) {
+            const item = typeFilter(current, code);
+            return !!(item && item.input.checked);
+        };
+        if (!filterOn(root)) {
+            ui.say('Hasta tipi seçiliyor: ' + filter.title);
+            filter.label.click();
+            for (let i = 0; i < 16 && !filterOn(productRoot() || root); i++) await sleep(250);
+        }
+        // Kartlar süzgeç değişince yeniden çizilir; çerçeve yalnızca doğru hasta tipi seçiliyken durur.
+        let last = '';
+        let scrolled = false;
+        let missing = 0;
+        const refresh = function () {
+            const current = productRoot();
+            if (!current) return;
+            const ok = filterOn(current);
+            const card = markCards(current, ok ? prefix : null);
+            // Kartlar süzgeçten biraz sonra çizilir; "listede yok" demeden önce birkaç tur beklenir.
+            missing = ok && !card ? missing + 1 : 0;
+            if (missing > 0 && missing < 4) return;
+            let text;
+            if (!ok) {
+                text = 'Hasta tipi "' + filter.title + '" seçili değil; kayıtlı form: ' + info.type + ' ' + info.paket + '.';
+            } else if (card) {
+                const head = card.querySelector('[data-testid="Card-subHeader"]');
+                text = 'Hasta tipi: ' + filter.title + '. Paketi siz seçin; kayıtlı formdaki paket çerçeveli: ' +
+                    (head ? head.textContent.trim() : info.paket) + '.';
+                if (!scrolled) {
+                    scrolled = true;
+                    card.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+                }
+            } else {
+                text = 'Hasta tipi: ' + filter.title + '. Kayıtlı formdaki paket (' + info.paket +
+                    ') listede görünmüyor; elle seçin.';
+            }
+            if (text === last) return;
+            last = text;
+            ui.say(text, !ok || !card);
+        };
+        refresh();
+        setInterval(refresh, 700);
+    }
+
+    // ---------- Eski tedavi seçenekleri ekranı (Kasım 2026 öncesi) ----------
+    // Tek sayfada üç aşama art arda gösterilirdi. Hasta tipi ve ürün tipi kayıtlı forma göre
+    // tıklanır; paketi (tedavi seçeneği) kullanıcı seçer. IDS eski ekrana dönerse diye duruyor.
+
+    const TYPE_TITLE = { yetiskin: /Yetişkin|Adult/i, ergen: /Ergen|Teen/i, cocuk: /Çocuk|Child|Kid/i };
+
+    function selectButtons() {
+        return Array.from(document.querySelectorAll('button.cardSelectButton, button.selectOption'))
+            .filter(function (b) { return b.offsetWidth > 0; })
+            .map(function (b) {
+                let card = b;
+                for (let i = 0; i < 6 && card && !card.querySelector('.cardHeader, a.expand'); i++) card = card.parentElement;
+                const head = card && card.querySelector('.cardHeader, a.expand');
+                return { button: b, title: head ? head.textContent.trim().replace(/\s+/g, ' ') : '' };
+            });
+    }
+
+    async function chooseProductLegacy(ui, record, info) {
+        const type = info.type;
         const paket = info.paket;
         const productRe = info.child ? /First/i : /aligner/i;
         const pick = function (list, test) {
@@ -2594,7 +2716,7 @@
         const params = new URLSearchParams(location.search);
         const path = location.pathname;
         if (/\/rx\/mauiProduct\.action$/.test(path)) {
-            chooseProduct(params.get('patientId'));
+            chooseProduct();
         } else if (/\/rx\/i20\/(?:maui\/)?\w+\.action$/.test(path)) {
             switchToTraditional().then(function (handled) {
                 if (handled) return;
