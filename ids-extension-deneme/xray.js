@@ -110,11 +110,17 @@
         const files = await folder.images(handle);
         const file = files.length ? await findPanoramic(files) : null;
         if (!file) {
-            setStatus('"' + handle.name + '" klasöründe panoramik röntgen bulunamadı.', true);
-            showActions([{ text: 'Radyografsız devam et', run: async function () { goNext(); } }, pickPatient]);
+            setStatus('"' + handle.name + '" klasöründe panoramik röntgen bulunamadı. ' + PASTE_HINT, true);
+            showActions([pasteAction, { text: 'Radyografsız devam et', run: async function () { goNext(); } }, pickPatient]);
             return;
         }
-        setStatus('Yükleniyor: ' + file.name);
+        await uploadFile(file, file.name);
+    }
+
+    // Seçilen dosya (klasörden ya da panodan) IDS'in girişine verilir, yüklenince sonraki adıma geçilir.
+    async function uploadFile(file, label) {
+        showActions([]);
+        setStatus('Yükleniyor: ' + label);
         const online = document.getElementById('onlineonline');
         if (online && !online.checked) online.click();
         const wrapper = input.closest('.photoWrapper') || document;
@@ -133,12 +139,63 @@
         if (!loaded) throw new Error('IDS röntgeni yüklemedi; elle deneyin.');
         // Sayfaya geri dönüldüğünde yeniden yükleyip ilerlememek için hasta başına bir kez geçilir.
         sessionStorage.setItem(flag, '1');
-        setStatus('Panoramik yüklendi: ' + file.name + '. Sonraki adıma geçiliyor…');
+        setStatus('Panoramik yüklendi: ' + label + '. Sonraki adıma geçiliyor…');
         await sleep(1200);
         goNext();
     }
 
     const flag = 'idsfy-xray-' + (params.get('patientId') || 'rx-' + params.get('formId'));
+
+    // Panodan yükleme (13 Kasım 2026): klasörde röntgen yoksa röntgenin ekran görüntüsü bu sayfada Ctrl+V ile
+    // yapıştırılır ya da düğmeyle panodan okunur. Yüklü röntgen varken yapıştırma yok sayılır (yanlışlıkla değişmesin).
+    const PASTE_HINT = 'Röntgenin ekran görüntüsünü alıp bu sayfada Ctrl+V ile yapıştırabilirsiniz.';
+    function xrayLoaded() {
+        return !!(input.closest('.photoWrapper') || document).querySelector('img.loadedimage');
+    }
+    function fileFromClipboard(data) {
+        const items = Array.from((data && data.items) || []);
+        const item = items.find(function (it) { return it.kind === 'file' && /^image\//.test(it.type); });
+        return item ? item.getAsFile() : null;
+    }
+    function namedFile(blob, type) {
+        return new File([blob], 'rontgen-ekran-goruntusu.' + (/png/.test(type) ? 'png' : 'jpg'), { type: type });
+    }
+    async function uploadPasted(file) {
+        try {
+            await uploadFile(namedFile(file, file.type), 'panodaki ekran görüntüsü');
+        } catch (error) {
+            setStatus('Hata: ' + error.message, true);
+            showActions([pasteAction, pickPatient]);
+        }
+    }
+    document.addEventListener('paste', function (event) {
+        if (busy || xrayLoaded()) return;
+        const file = fileFromClipboard(event.clipboardData);
+        if (!file) return;
+        event.preventDefault();
+        busy = true;
+        uploadPasted(file).finally(function () { busy = false; });
+    });
+    const pasteAction = {
+        text: 'Ekran görüntüsünü yapıştır',
+        run: async function () {
+            let file = null;
+            try {
+                const items = await navigator.clipboard.read();
+                for (const item of items) {
+                    const type = item.types.find(function (t) { return /^image\//.test(t); });
+                    if (type) { file = await item.getType(type); file = namedFile(file, type); break; }
+                }
+            } catch (error) {
+                // Pano izni verilmedi ya da okunamadı: Ctrl+V yolu kalır.
+            }
+            if (!file) {
+                setStatus('Panoda resim bulunamadı. ' + PASTE_HINT, true);
+                return;
+            }
+            await uploadPasted(file);
+        }
+    };
     const pickPatient = {
         text: 'Bu hastanın klasörünü elle seç',
         run: async function () { await uploadFrom(await folder.pickPatient()); }
@@ -162,11 +219,11 @@
                 await uploadFrom(found.handle);
             } catch (error) {
                 setStatus('Hata: ' + error.message, true);
-                showActions([pickPatient]);
+                showActions([pasteAction, pickPatient]);
             }
         } else if (found.status === 'no-root') {
-            setStatus('Hasta klasörlerinin bulunduğu ana klasörü bir kez seçin.');
-            showActions([pickRoot('Ana klasörü seç')]);
+            setStatus('Hasta klasörlerinin bulunduğu ana klasörü bir kez seçin. ' + PASTE_HINT);
+            showActions([pickRoot('Ana klasörü seç'), pasteAction]);
         } else if (found.status === 'needs-permission') {
             waitingPermission = true;
             setStatus('Chrome, ana klasörü okumak için izninizi istiyor' +
@@ -180,10 +237,10 @@
             }]);
         } else if (found.status === 'ambiguous') {
             setStatus('"' + folder.patientName() + '" adına birden fazla klasör uyuyor: ' + found.names.join(', '), true);
-            showActions([pickPatient]);
+            showActions([pickPatient, pasteAction]);
         } else {
-            setStatus('"' + found.root + '" içinde "' + folder.patientName() + '" adını taşıyan klasör bulunamadı.', true);
-            showActions([pickPatient, pickRoot('Ana klasörü değiştir')]);
+            setStatus('"' + found.root + '" içinde "' + folder.patientName() + '" adını taşıyan klasör bulunamadı. ' + PASTE_HINT, true);
+            showActions([pasteAction, pickPatient, pickRoot('Ana klasörü değiştir')]);
         }
     }
 
@@ -196,7 +253,7 @@
         if (rxStopped) {
             // Form doldurucu "Durdur" ile durdurulmuş: reçete elle sürdürülüyor, ilerletilmez.
             setStatus('Form doldurucu durduruldu; röntgen adımı size bırakıldı.');
-            showActions(existing ? resume : [{ text: 'Klasörden yükle', run: start }]);
+            showActions(existing ? resume : [{ text: 'Klasörden yükle', run: start }, pasteAction]);
         } else if (existing && inRx) {
             // Reçetede, hasta sihirbazında yüklenen röntgen görünür; yeniden yüklenmeden geçilir
             // (aynı reçeteye ikinci kez gelinse de).
