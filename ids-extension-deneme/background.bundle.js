@@ -18198,6 +18198,10 @@ async function knownPatientId(record) {
   const hit = entries.find(([, recId]) => sameName.has(recId));
   return hit ? hit[0] : null;
 }
+function searchWord(record) {
+  const longest = (text) => nameTokens(text).split(" ").filter(Boolean).sort((a, b) => b.length - a.length)[0] || "";
+  return longest(record.hasta_soyadi) || longest(record.hasta_adi);
+}
 var EXTERNAL_HANDLERS = {
   "rx-ping": async () => ({ version: chrome.runtime.getManifest().version, auth: publicAuth(await authState()) }),
   // Sitedeki Firebase oturumu: yenileme anahtarı eklentinin kendi girişiyle aynı yere yazılır.
@@ -18238,7 +18242,8 @@ var EXTERNAL_HANDLERS = {
         url = IDS_PATIENT_FILE_URL + encodeURIComponent(patientId);
         opened = "file";
       } else {
-        url = IDS_PATIENTS_URL;
+        const word = searchWord(record);
+        url = IDS_PATIENTS_URL + (word ? "#search=" + encodeURIComponent(word) : "");
         opened = "list";
       }
     }

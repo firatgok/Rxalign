@@ -1102,28 +1102,74 @@
         return (o.record.hasta_soyadi || '') + ' ' + (o.record.hasta_adi || '');
     }
 
-    // Hasta listesi: refinement için gelen hasta panelde yazılır; arama kutusu bulunursa adı yazılır.
+    // Hasta listesi (refinement için Rxalign'dan gelindiğinde): liste #patient-list öğesinin shadow DOM'unda bir React
+    // uygulamasıdır. Arka plan sayfayı #search=<soyad> ile açar (IDS araması yalnız tek sözcükle sonuç verir). Kartlardaki
+    // ad ("Ad Soyad" + "#hastaNo") kayıtla karşılaştırılır; adı tutan tek kart varsa hasta dosyası açılır, yoksa seçim
+    // kullanıcıya bırakılır (aynı soyadlı başka hasta kendiliğinden açılmaz).
     async function showPatientListHint() {
         const o = await rxalignOpen('refinement');
         if (!o) return;
-        const ui = statusPanel('Rxalign: "' + openName(o).trim() + '" için refinement. Hastayı listeden açın; dosyada "Ek Hizalayıcıları başlat" görünecek.');
         await markOpenApplied(o);
-        const deadline = Date.now() + 20000;
-        const tryFill = function () {
-            const box = Array.from(document.querySelectorAll('input[type="text"], input[type="search"], input:not([type])')).find(function (i) {
-                const hint = (i.placeholder || '') + ' ' + (i.getAttribute('aria-label') || '') + ' ' + (i.name || '') + ' ' + (i.id || '');
-                return /ara|search|hasta|patient|name|isim/i.test(hint) && i.offsetParent !== null;
-            });
-            if (box) {
-                setText(box, withoutTurkish(openName(o).trim()));
-                box.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
-                ui.say('Arama kutusuna "' + openName(o).trim() + '" yazıldı; hastayı açın.');
-                return true;
-            }
-            if (Date.now() < deadline) setTimeout(tryFill, 700);
-            return false;
+        const name = openName(o).trim();
+        const ui = statusPanel('Rxalign: "' + name + '" için refinement. Hasta listede aranıyor…');
+        const surname = tokens(o.record.hasta_soyadi).sort(function (a, b) { return b.length - a.length; })[0] ||
+            tokens(o.record.hasta_adi)[0] || '';
+        const listRoot = function () {
+            const host = document.getElementById('patient-list');
+            return host && host.shadowRoot;
         };
-        tryFill();
+        const cardInfo = function (card) {
+            const names = card.querySelector('[class*="Patient-names"]');
+            if (!names) return null;
+            const text = names.children.length ? names.children[0].textContent : names.textContent;
+            const id = /#(\d{5,})/.exec(names.textContent);
+            return { card: card, name: text.replace(/#\d+/g, ' ').trim(), id: id ? id[1] : '' };
+        };
+        const started = Date.now();
+        let typed = false;
+        let lastKey = '';
+        const poll = async function () {
+            const root = listRoot();
+            const box = root && root.querySelector('input[name="search"]');
+            // Arama kutusu boşsa (sayfa #search olmadan açıldıysa) soyad yazılır; React girdisi olduğundan yerel ayarlayıcı kullanılır.
+            if (box && !typed) {
+                typed = true;
+                if (surname && !box.value.trim()) {
+                    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+                    box.focus();
+                    setter.call(box, surname);
+                    box.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+                }
+            }
+            const cards = root ? Array.from(root.querySelectorAll('[class*="Card-clickable"]')).map(cardInfo).filter(Boolean) : [];
+            const matches = cards.filter(function (c) { return matchScore(c.name, o.record) === 2; });
+            const loose = cards.filter(function (c) { return matchScore(c.name, o.record) === 1; });
+            const key = matches.map(function (c) { return c.id || c.name; }).join('|');
+            // Sonuç iki ardışık okumada aynıysa (arama yerleşti) karar verilir.
+            if (matches.length === 1 && key === lastKey && Date.now() - started > 2000) {
+                const hit = matches[0];
+                ui.say('"' + hit.name + '" bulundu; hasta dosyası açılıyor…');
+                if (hit.id) {
+                    await rememberPatient(hit.id, o.record.id);
+                    location.href = '/v3/auth/patient/patientFile.action?patientId=' + encodeURIComponent(hit.id);
+                } else {
+                    hit.card.click();
+                }
+                return;
+            }
+            lastKey = key;
+            if (Date.now() - started < 15000) { setTimeout(poll, 800); return; }
+            if (matches.length > 1) {
+                ui.say('"' + name + '" adıyla ' + matches.length + ' hasta var; doğru hastayı listeden açın. Dosyada "Ek Hizalayıcıları başlat" görünecek.', true);
+            } else if (loose.length) {
+                ui.say('"' + name + '" ile birebir tutan hasta yok; benzer ' + loose.length + ' kayıt var. Doğru hastayı listeden açın.', true);
+            } else if (cards.length) {
+                ui.say('"' + surname + '" aramasında ' + cards.length + ' hasta çıktı ama adı "' + name + '" ile tutmuyor. IDS\'te ad farklı yazılmış ya da liste süzgeci hastayı gizliyor olabilir; hastayı kendiniz açın.', true);
+            } else {
+                ui.say('"' + surname + '" aramasında hasta bulunamadı. Liste süzgecini (durum) kontrol edip hastayı kendiniz açın; dosyada "Ek Hizalayıcıları başlat" görünecek.', true);
+            }
+        };
+        poll();
     }
 
     // ---------- Dentsoft köprüsü ----------

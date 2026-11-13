@@ -1059,6 +1059,11 @@ async function knownPatientId(record) {
   return hit ? hit[0] : null;
 }
 
+function searchWord(record) {
+  const longest = (text) => nameTokens(text).split(" ").filter(Boolean).sort((a, b) => b.length - a.length)[0] || "";
+  return longest(record.hasta_soyadi) || longest(record.hasta_adi);
+}
+
 const EXTERNAL_HANDLERS = {
   "rx-ping": async () => ({ version: chrome.runtime.getManifest().version, auth: publicAuth(await authState()) }),
   // Sitedeki Firebase oturumu: yenileme anahtarı eklentinin kendi girişiyle aynı yere yazılır.
@@ -1096,7 +1101,12 @@ const EXTERNAL_HANDLERS = {
     if (kind === "refinement") {
       const patientId = await knownPatientId(record).catch(() => null);
       if (patientId) { url = IDS_PATIENT_FILE_URL + encodeURIComponent(patientId); opened = "file"; }
-      else { url = IDS_PATIENTS_URL; opened = "list"; }
+      else {
+        // IDS araması yalnızca tek sözcükle sonuç verir (ad + soyad birlikte yazılınca boş döner); soyadın en uzun sözcüğü aranır.
+        const word = searchWord(record);
+        url = IDS_PATIENTS_URL + (word ? "#search=" + encodeURIComponent(word) : "");
+        opened = "list";
+      }
     }
     await chrome.tabs.create({ url, active: true });
     return { opened };
