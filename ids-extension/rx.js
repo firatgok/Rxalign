@@ -1126,8 +1126,9 @@
             const id = /#(\d{5,})/.exec(names.textContent);
             return { card: card, name: text.replace(/#\d+/g, ' ').trim(), id: id ? id[1] : '' };
         };
-        const started = Date.now();
+        let started = Date.now();
         let typed = false;
+        let cleared = false;
         let lastKey = '';
         const poll = async function () {
             const root = listRoot();
@@ -1145,6 +1146,24 @@
             const cards = root ? Array.from(root.querySelectorAll('[class*="Card-clickable"]')).map(cardInfo).filter(Boolean) : [];
             const matches = cards.filter(function (c) { return matchScore(c.name, o.record) === 2; });
             const loose = cards.filter(function (c) { return matchScore(c.name, o.record) === 1; });
+            // IDS yeni sekmede varsayılan süzgeci ("Eylem gereklidir") uygular ve aranan hasta gizlenir. Eşleşme yokken süzgeç
+            // bir kez kaldırılır: "filtreleri kaldırın" bağlantısı (arama korunur) ya da "Tümünü temizle" düğmesi.
+            if (root && !cleared && !matches.length && Date.now() - started > 1500) {
+                const reminder = root.querySelector('[class*="FiltersReminderNotification-link"] a');
+                const chips = root.querySelectorAll('[data-testid^="Tag-tag-"]').length;
+                const clearAll = reminder || (chips ? Array.from(root.querySelectorAll('button')).find(function (b) {
+                    return /^(Tümünü temizle|Clear all)$/i.test(b.textContent.trim());
+                }) : null);
+                if (clearAll) {
+                    cleared = true;
+                    clearAll.click();
+                    started = Date.now();
+                    lastKey = '';
+                    ui.say('Rxalign: "' + name + '" için liste süzgeci kaldırıldı; hasta aranıyor…');
+                    setTimeout(poll, 1500);
+                    return;
+                }
+            }
             const key = matches.map(function (c) { return c.id || c.name; }).join('|');
             // Sonuç iki ardışık okumada aynıysa (arama yerleşti) karar verilir.
             if (matches.length === 1 && key === lastKey && Date.now() - started > 2000) {
