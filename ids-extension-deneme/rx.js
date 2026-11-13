@@ -1315,10 +1315,17 @@
         });
     }
 
-    // Rxalign arşivindeki "IDS'te aç" ile açılan Yeni hasta sayfası: gelen kayıt işaretli gelir ve
-    // kendiliğinden seçilir; ad, soyad ve MI doldurulur. Kimlik bilgilerini asistan girer.
+    // Rxalign arşivindeki "IDS'te aç" ile açılan Yeni hasta sayfası: kayıt arşivde düğmeyle seçildiği için
+    // ad, soyad ve MI hemen doldurulur (alanlar boşsa). Kayıt listede bulunamazsa ya da alanlar doluysa seçici açılır.
+    // Kimlik bilgilerini (cinsiyet, doğum tarihi, T.C. no) asistan girer.
     async function showNewPatientFromRxalign(o, message) {
         await markOpenApplied(o);
+        let record = null;
+        try {
+            const records = (await ask({ type: 'ids-forms-list' })).records;
+            record = records.find(function (r) { return r.id === o.record.id; }) || null;
+        } catch (error) { /* seçici aynı hatayı gösterir */ }
+        if (record && nameFieldsEmpty()) return fillNamesFromRecord(record, true);
         return showPicker({
             intro: 'Yeni hasta: Rxalign\'dan gelen kayıt "' + openName(o).trim() + '" işaretli. Onaylayın ya da başka kayıt seçin.',
             message: message,
@@ -1331,21 +1338,22 @@
             autoSelect: true,
             preferFirst: true,
             preferNew: true,
-            onPick: async function (record) {
-                if (!record) return;
-                Object.keys(NAME_FIELDS).forEach(function (key) {
-                    const field = document.getElementById(NAME_FIELDS[key]);
-                    if (field) setText(field, withoutTurkish(record[key]));
-                });
-                await savePick(record);
-                const body = ensurePanel();
-                body.textContent = '';
-                body.appendChild(el('div', 'idsfy-info', describeRecord(record)));
-                body.appendChild(el('div', 'idsfy-status', 'Ad ve soyad dolduruldu. Cinsiyet, doğum tarihi ve T.C. kimlik numarasını girip "İleri"ye basın. ' +
-                    'Reçete adımlarında bu kayıt kendiliğinden seçilecek.'));
-                body.appendChild(button('Başka kayıt seç', function () { showNewPatient(); }));
-            }
+            onPick: function (picked) { if (picked) return fillNamesFromRecord(picked, false); }
         });
+    }
+
+    async function fillNamesFromRecord(record, fromRxalign) {
+        Object.keys(NAME_FIELDS).forEach(function (key) {
+            const field = document.getElementById(NAME_FIELDS[key]);
+            if (field) setText(field, withoutTurkish(record[key]));
+        });
+        await savePick(record);
+        const body = ensurePanel();
+        body.textContent = '';
+        body.appendChild(el('div', 'idsfy-info', describeRecord(record)));
+        body.appendChild(el('div', 'idsfy-status', (fromRxalign ? 'Rxalign\'dan gelen kayıt seçildi; ad ve soyad dolduruldu. ' : 'Ad ve soyad dolduruldu. ') +
+            'Cinsiyet, doğum tarihi ve T.C. kimlik numarasını girip "İleri"ye basın. Reçete adımlarında bu kayıt kendiliğinden seçilecek.'));
+        body.appendChild(button('Başka kayıt seç', function () { showNewPatient(); }));
     }
 
     function markDentsoftApplied(p) {
