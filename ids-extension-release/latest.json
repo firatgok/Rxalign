@@ -1,6 +1,6 @@
 {
-  "version": "0.35.1",
-  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.35.1.zip",
-  "notes": "0.35.1: Arşivdeki 'IDS'te aç' refinement düzeltmeleri: hasta listesi soyadla aranır, adı tutan tek hasta açılır, gerçek hasta numarası dosya sayfasından hatırlanır, bozuk eşleştirme kendini onarır; yeni hasta kaydında ad alanları kendiliğinden dolar. Röntgen adımında klasörde röntgen yoksa ekran görüntüsü Ctrl+V ya da 'Ekran görüntüsünü yapıştır' ile yüklenir. Güncelleyici Edge'e de kaydedilir ve klasörleri iç içe bırakmaz.",
-  "at": "2026-11-13T19:46:14.056Z"
+  "version": "0.35.2",
+  "url": "https://raw.githubusercontent.com/firatgok/Rxalign/main/ids-extension-release/ids-yardimcisi-0.35.2.zip",
+  "notes": "0.35.2: Rxalign arşivi eklentinin kurulu olmadığı bir tarayıcıda (ör. Edge) açıksa 'IDS'te aç' düğmesi IDS'i eklentinin kurulu olduğu tarayıcıda açar. Bunun için Windows'a rxalign-ids bağlantı türü kaydedilir (güncelleyici kuruluysa kendiliğinden). Köprü sekmesi iş bitince kapanır.",
+  "at": "2026-11-13T20:15:45.057Z"
 }
