@@ -1092,15 +1092,12 @@ const EXTERNAL_HANDLERS = {
     const record = msg.record || {};
     if (!record.id) throw new Error("kayıt kimliği yok");
     const kind = msg.kind === "refinement" ? "refinement" : "new";
-    await chrome.storage.local.set({
-      [OPEN_KEY]: { kind, record, at: Date.now() },
-      [PICK_KEY]: { id: record.id, at: Date.now() },
-    });
     let url = IDS_NEW_PATIENT_URL;
     let opened = "new";
+    let filePatientId = null;
     if (kind === "refinement") {
       const patientId = await knownPatientId(record).catch(() => null);
-      if (patientId) { url = IDS_PATIENT_FILE_URL + encodeURIComponent(patientId); opened = "file"; }
+      if (patientId) { url = IDS_PATIENT_FILE_URL + encodeURIComponent(patientId); opened = "file"; filePatientId = patientId; }
       else {
         // IDS araması yalnızca tek sözcükle sonuç verir (ad + soyad birlikte yazılınca boş döner); soyadın en uzun sözcüğü aranır.
         const word = searchWord(record);
@@ -1108,8 +1105,13 @@ const EXTERNAL_HANDLERS = {
         opened = "list";
       }
     }
+    // opened: rx.js hangi sayfanın bu isteği devralacağını bilir ("file" isteği liste sayfasını yönlendirmez).
+    await chrome.storage.local.set({
+      [OPEN_KEY]: { kind, record, at: Date.now(), opened },
+      [PICK_KEY]: { id: record.id, at: Date.now() },
+    });
     await chrome.tabs.create({ url, active: true });
-    return { opened };
+    return filePatientId ? { opened, patientId: filePatientId } : { opened };
   },
 };
 

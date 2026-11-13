@@ -18230,25 +18230,27 @@ var EXTERNAL_HANDLERS = {
     const record = msg.record || {};
     if (!record.id) throw new Error("kay\u0131t kimli\u011Fi yok");
     const kind = msg.kind === "refinement" ? "refinement" : "new";
-    await chrome.storage.local.set({
-      [OPEN_KEY]: { kind, record, at: Date.now() },
-      [PICK_KEY]: { id: record.id, at: Date.now() }
-    });
     let url = IDS_NEW_PATIENT_URL;
     let opened = "new";
+    let filePatientId = null;
     if (kind === "refinement") {
       const patientId = await knownPatientId(record).catch(() => null);
       if (patientId) {
         url = IDS_PATIENT_FILE_URL + encodeURIComponent(patientId);
         opened = "file";
+        filePatientId = patientId;
       } else {
         const word = searchWord(record);
         url = IDS_PATIENTS_URL + (word ? "#search=" + encodeURIComponent(word) : "");
         opened = "list";
       }
     }
+    await chrome.storage.local.set({
+      [OPEN_KEY]: { kind, record, at: Date.now(), opened },
+      [PICK_KEY]: { id: record.id, at: Date.now() }
+    });
     await chrome.tabs.create({ url, active: true });
-    return { opened };
+    return filePatientId ? { opened, patientId: filePatientId } : { opened };
   }
 };
 chrome.runtime.onMessageExternal.addListener((msg, sender, sendResponse) => {

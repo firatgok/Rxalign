@@ -842,7 +842,8 @@
     // ---------- Hasta eşleştirme ----------
 
     function patientName() {
-        const header = document.querySelector('.patientHeader .patientName');
+        // Reçete sayfalarında .patientHeader içinde; hasta dosyasında yalnız .patientName ("Soyad, Ad").
+        const header = document.querySelector('.patientHeader .patientName') || document.querySelector('.patientName');
         return header ? header.textContent.trim().split('\n')[0].trim() : '';
     }
 
@@ -1090,7 +1091,7 @@
 
     async function rxalignOpen(kind) {
         const o = await getStored(OPEN_KEY);
-        if (!o || !o.record || o.applied || Date.now() - (o.at || 0) > OPEN_TTL) return null;
+        if (!o || !o.record || o.applied || o.opened === 'file' || Date.now() - (o.at || 0) > OPEN_TTL) return null;
         return !kind || o.kind === kind ? o : null;
     }
 
@@ -1148,13 +1149,10 @@
             // Sonuç iki ardışık okumada aynıysa (arama yerleşti) karar verilir.
             if (matches.length === 1 && key === lastKey && Date.now() - started > 2000) {
                 const hit = matches[0];
-                ui.say('"' + hit.name + '" bulundu; hasta dosyası açılıyor…');
-                if (hit.id) {
-                    await rememberPatient(hit.id, o.record.id);
-                    location.href = '/v3/auth/patient/patientFile.action?patientId=' + encodeURIComponent(hit.id);
-                } else {
-                    hit.card.click();
-                }
+                // Karttaki "#numara" hasta dosyası adresindeki patientId değildir (o adres 500 verir): kart tıklanır, IDS
+                // dosyayı yeni sekmede açar; gerçek hasta numarası dosya sayfasında hatırlanır (rememberFromRxalign).
+                hit.card.click();
+                ui.say('"' + hit.name + '" bulundu; hasta dosyası yeni sekmede açıldı. Açılmadıysa hastaya listeden tıklayın.');
                 return;
             }
             lastKey = key;
@@ -1170,6 +1168,43 @@
             }
         };
         poll();
+    }
+
+    // Hasta dosyası Rxalign'daki "IDS'te aç" isteğinin hastasına aitse (ad birebir tutuyorsa) gerçek IDS hasta numarası
+    // hatırlanır; sonraki "IDS'te aç" dosyayı doğrudan açar. İstek 10 dakika içinde verilmiş olmalı.
+    async function rememberFromRxalign(patientId) {
+        const o = await getStored(OPEN_KEY);
+        if (!patientId || !o || !o.record || o.kind !== 'refinement' || Date.now() - (o.at || 0) > OPEN_TTL) return false;
+        if (matchScore(patientName(), o.record) !== 2) return false;
+        await rememberPatient(patientId, o.record.id);
+        return true;
+    }
+
+    // IDS hasta dosyasını bu numarayla açamadıysa ("500 - beklenmeyen hata") kayıtlı eşleştirme bozuktur: silinir.
+    // İstek tazeyse hasta listesinde soyadla aranır (liste sayfası isteği devralır).
+    async function healBrokenPatientFile(patientId) {
+        const map = (await getStored(PATIENTS_KEY)) || {};
+        if (!patientId || !(patientId in map)) return;
+        delete map[patientId];
+        await setStored(PATIENTS_KEY, map);
+        const o = await getStored(OPEN_KEY);
+        const fresh = o && o.record && o.kind === 'refinement' && Date.now() - (o.at || 0) < OPEN_TTL;
+        statusPanel('IDS bu hasta numarasıyla dosyayı açamadı; kayıtlı eşleştirme silindi.' + (fresh ? ' Hasta listesinde aranıyor…' : ''));
+        if (!fresh) return;
+        await setStored(OPEN_KEY, Object.assign({}, o, { opened: 'list', applied: false }));
+        const word = tokens(o.record.hasta_soyadi).sort(function (a, b) { return b.length - a.length; })[0] || '';
+        location.href = '/v3/auth/patients.action' + (word ? '#search=' + encodeURIComponent(word) : '');
+    }
+
+    // Hasta dosyasında başlatma bağlantısı yok (IDS düğmeleri kapalı): Rxalign'dan gelindiyse nedeni yazılır.
+    async function noteNoStart() {
+        const o = await getStored(OPEN_KEY);
+        if (!o || !o.record || o.kind !== 'refinement' || Date.now() - (o.at || 0) > OPEN_TTL) return;
+        if (matchScore(patientName(), o.record) === 0) return;
+        const closed = Array.from(document.querySelectorAll('button')).some(function (b) {
+            return /Ek Hizalay|Additional Aligners/i.test(b.textContent) && (b.disabled || /\bdisabled\b/.test(b.className));
+        });
+        if (closed) statusPanel('Rxalign: bu hastada IDS şu an "Ek Hizalayıcılar" başlatmaya izin vermiyor (düğme kapalı). Açık bir sipariş ya da tamamlanmamış bir işlem olabilir.');
     }
 
     // ---------- Dentsoft köprüsü ----------
@@ -2381,7 +2416,7 @@
         });
         const newLink = links.find(function (a) { return !/formType=/.test(a.getAttribute('onclick')); });
         const refLink = links.find(function (a) { return /formType=ADDITIONAL_ALIGNERS_INT_2_0/.test(a.getAttribute('onclick')); });
-        if (!newLink && !refLink) return;
+        if (!newLink && !refLink) { noteNoStart(); return; }
         const ui = statusPanel('Bu hasta için reçete başlatılabilir.');
         const flag = 'idsfy-start-' + patientId;
         const fromWizard = /editPatient\.action.*currentStep=XRAY/.test(document.referrer);
@@ -2547,7 +2582,13 @@
             if (pagePackage()) run();
             else statusPanel('Bu reçete türü desteklenmiyor (yalnızca Ek Hizalayıcılar doldurulur).');
         } else if (/\/patient\/patientFile\.action$/.test(path)) {
-            startPrescription(params.get('patientId'));
+            if (/^500\b/.test(document.title)) {
+                healBrokenPatientFile(params.get('patientId'));
+            } else {
+                rememberFromRxalign(params.get('patientId')).catch(function () {}).then(function () {
+                    startPrescription(params.get('patientId'));
+                });
+            }
         } else if (/\/patients\.action$/.test(path)) {
             showPatientListHint();
         } else if (/\/patient\/editPatient\.action$/.test(path)) {
