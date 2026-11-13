@@ -62,8 +62,29 @@ function Download-Zip($url, $version) {
     return $zip
 }
 
+function Copy-Merged($source, $destination) {
+    # Klasor icerigi var olan hedefin icine birlestirilir. Copy-Item -Recurse, hedef klasor
+    # zaten varsa kaynagi onun icine (src/src gibi) kopyalar; o yuzden dosya dosya yuruyoruz.
+    if (-not (Test-Path -LiteralPath $destination)) { New-Item -ItemType Directory -Path $destination | Out-Null }
+    Get-ChildItem -LiteralPath $source -Force | ForEach-Object {
+        $target = Join-Path $destination $_.Name
+        if ($_.PSIsContainer) {
+            Copy-Merged $_.FullName $target
+        } else {
+            Copy-Item -LiteralPath $_.FullName -Destination $target -Force
+        }
+    }
+}
+
+function Copy-Entry($item, $destination) {
+    # Tek bir dosya ya da klasor hedefe kopyalanir (klasorse birlestirilerek).
+    if ($item.PSIsContainer) { Copy-Merged $item.FullName $destination }
+    else { Copy-Item -LiteralPath $item.FullName -Destination $destination -Force }
+}
+
 function Install-Zip($zip) {
-    $stage = Join-Path $tempDir ('ids-yardimcisi-stage-' + [Guid]::NewGuid().ToString('N'))
+    $stageRoot = Join-Path $tempDir ('ids-yardimcisi-stage-' + [Guid]::NewGuid().ToString('N'))
+    $stage = $stageRoot
     Expand-Archive -LiteralPath $zip -DestinationPath $stage -Force
     $items = @(Get-ChildItem -LiteralPath $stage -Force)
     if ($items.Count -eq 1 -and $items[0].PSIsContainer) { $stage = $items[0].FullName }
@@ -84,14 +105,14 @@ function Install-Zip($zip) {
                         Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $target $name) -Force
                     }
                 } else {
-                    Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $target $name) -Recurse -Force
+                    Copy-Entry $_ (Join-Path $target $name)
                 }
             }
         } else {
-            Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $dir $_.Name) -Recurse -Force
+            Copy-Entry $_ (Join-Path $dir $_.Name)
         }
     }
-    try { [IO.Directory]::Delete($stage, $true) } catch {}
+    try { [IO.Directory]::Delete($stageRoot, $true) } catch {}
 }
 
 function Remove-OldTemp {
