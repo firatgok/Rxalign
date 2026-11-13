@@ -55,7 +55,7 @@
                 <h1 id="listTitle">Form arşivi</h1>
                 <p id="listSubtitle">Yükleniyor…</p>
             </div>
-            <a class="btn btn-accent btn-lg btn-new" href="form.html" id="newFormBtn" hidden>
+            <a class="btn btn-accent btn-lg btn-new" href="form.html" id="newFormBtn">
                 <span class="plus"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></span>
                 <span>Yeni form oluştur</span>
             </a>
@@ -116,7 +116,7 @@
         <button type="button" class="btn btn-secondary btn-block mobile-only" id="moreBtnMobile" hidden>Daha fazla göster</button>
     </main>
 
-    <a class="fab" href="form.html" id="fabNew" hidden>
+    <a class="fab" href="form.html" id="fabNew">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
         <span>Yeni form</span>
     </a>
@@ -151,7 +151,9 @@
                 $('roleBadge').className = 'role-badge ' + (doctor ? 'doctor' : 'assistant');
                 $('roleAvatar').textContent = doctor ? 'FG' : 'AS';
                 $('roleName').textContent = doctor ? 'Hekim' : 'Asistan';
-                ['navNewForm', 'navSettings', 'newFormBtn', 'fabNew'].forEach(id => { $(id).hidden = !doctor; });
+                ['navNewForm', 'navSettings'].forEach(id => { $(id).hidden = !doctor; });
+                // Yeni form düğmeleri asistanda da görünür; hekim oturumu yoksa tıklanınca PIN sorulur (13 Kasım 2026).
+                ['newFormBtn', 'fabNew'].forEach(id => $(id).addEventListener('click', onNewForm));
                 $('listTitle').textContent = doctor ? 'Form arşivi' : 'Giriş bekleyen formlar';
                 if (!doctor) {
                     status = 'pending';
@@ -159,6 +161,18 @@
                     $('sortSelect').value = 'oldest';
                     $('statusSeg').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.status === 'pending')));
                 }
+            }
+
+            // Asistan görünümünde yeni form: hekim bu cihazda hatırlanıyorsa doğrudan, yoksa tek seferlik PIN onayıyla açılır.
+            let askingNew = false;
+            async function onNewForm(e) {
+                if (userRole === 'doctor' || RX.doctorRemembered()) return;
+                e.preventDefault();
+                if (askingNew) return;
+                askingNew = true;
+                const ok = await RX.askPin({ title: 'Yeni form', text: 'Yeni form oluşturmak için hekim PIN kodunu girin.', rememberOption: false, grantSession: false });
+                askingNew = false;
+                if (ok) window.location.href = 'form.html';
             }
 
             async function ensureRole() {
